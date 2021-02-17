@@ -1,4 +1,4 @@
-use crate::*;
+use crate::fungible_token::*;
 use near_sdk::json_types::ValidAccountId;
 use near_sdk::{ext_contract, Gas, PromiseResult};
 

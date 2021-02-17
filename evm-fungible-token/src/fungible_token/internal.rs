@@ -1,4 +1,4 @@
-use crate::*;
+use crate::fungible_token::*;
 
 pub(crate) fn assert_one_yocto() {
     assert_eq!(
