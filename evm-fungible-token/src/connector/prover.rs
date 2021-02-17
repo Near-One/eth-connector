@@ -1,16 +1,16 @@
+#![allow(unused_imports)]
 use std::convert::From;
 
 use borsh::{BorshDeserialize, BorshSerialize};
 use eth_types::*;
 use ethabi::param_type::Writer;
 use ethabi::{Event, EventParam, Hash, Log, ParamType, RawLog, Token};
-//use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::ext_contract;
 
 use tiny_keccak::Keccak;
 
 pub type EthAddress = [u8; 20];
-
+/*
 pub fn validate_eth_address(address: String) -> EthAddress {
     let data = hex::decode(address).expect("address should be a valid hex string.");
     assert_eq!(data.len(), 20, "address should be 20 bytes long");
@@ -134,3 +134,4 @@ fn fill_signature(name: &str, params: &[ParamType], result: &mut [u8]) {
     sponge.update(&data);
     sponge.finalize(result);
 }
+*/

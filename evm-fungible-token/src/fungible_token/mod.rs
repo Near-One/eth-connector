@@ -16,16 +16,13 @@ use near_sdk::{env, near_bindgen, AccountId, Balance, Promise, StorageUsage};
 
 pub use crate::fungible_token::fungible_token_core::*;
 pub use crate::fungible_token::fungible_token_metadata::*;
-pub use crate::fungible_token::internal::*;
+use crate::fungible_token::internal::*;
 pub use crate::fungible_token::storage_manager::*;
 
 mod fungible_token_core;
 mod fungible_token_metadata;
 mod internal;
 mod storage_manager;
-
-#[global_allocator]
-static ALLOC: near_sdk::wee_alloc::WeeAlloc<'_> = near_sdk::wee_alloc::WeeAlloc::INIT;
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize)]
