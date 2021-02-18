@@ -268,6 +268,7 @@ dependencies = [
  "ethabi",
  "hex",
  "near-sdk 2.0.1",
+ "rlp",
  "tiny-keccak 1.5.0",
  "wee_alloc",
 ]

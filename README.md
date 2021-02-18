@@ -1,9 +1,5 @@
-<<<<<<< HEAD
 # ETH connector
 
-TODO
-=======
-# NEAR-ETH Connector
+**NEAR-ETH Connector**
 
-SmartContract for NEAR-EVM ETH Connecting
->>>>>>> master
+SmartContract for **NEAR-EVM <-> Etherium** Connecting
