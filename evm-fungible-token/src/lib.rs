@@ -9,6 +9,7 @@ use connector::prover::{ext_prover, validate_eth_address, EthAddress, Proof};
 use connector::unlock_event::EthUnlockedEvent;
 
 mod connector;
+// mod fungible_token;
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
@@ -138,14 +139,14 @@ impl EthConnector {
             NO_DEPOSIT,
             env::prepaid_gas() / 4,
         )
-            .then(ext_self::finish_deposit(
-                event.recipient,
-                event.amount,
-                proof_1,
-                &env::current_account_id(),
-                env::attached_deposit(),
-                env::prepaid_gas() / 2,
-            ))
+        .then(ext_self::finish_deposit(
+            event.recipient,
+            event.amount,
+            proof_1,
+            &env::current_account_id(),
+            env::attached_deposit(),
+            env::prepaid_gas() / 2,
+        ))
     }
 
     /// Finish depositing once the proof was successfully validated.
@@ -221,14 +222,14 @@ impl EthConnector {
             env::attached_deposit(),
             TRANSFER_FROM_GAS,
         )
-            .then(ext_self::finish_lock(
-                amount.into(),
-                address,
-                token,
-                &env::current_account_id(),
-                NO_DEPOSIT,
-                env::prepaid_gas() / 3,
-            ))
+        .then(ext_self::finish_lock(
+            amount.into(),
+            address,
+            token,
+            &env::current_account_id(),
+            NO_DEPOSIT,
+            env::prepaid_gas() / 3,
+        ))
     }
 
     /// Callback after transfer_from happened.
@@ -269,15 +270,15 @@ impl EthConnector {
             NO_DEPOSIT,
             env::prepaid_gas() / 4,
         )
-            .then(ext_self::finish_unlock(
-                event.token,
-                event.recipient,
-                event.amount,
-                proof_1,
-                &env::current_account_id(),
-                env::attached_deposit(),
-                env::prepaid_gas() / 2,
-            ))
+        .then(ext_self::finish_unlock(
+            event.token,
+            event.recipient,
+            event.amount,
+            proof_1,
+            &env::current_account_id(),
+            env::attached_deposit(),
+            env::prepaid_gas() / 2,
+        ))
     }
 
     #[payable]

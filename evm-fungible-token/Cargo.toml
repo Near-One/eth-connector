@@ -19,11 +19,22 @@ panic = "abort"
 debug-assertions = false
 
 [dependencies]
-wee_alloc = { version = "0.4.5", default-features = false }
-borsh = { version = "0.8.1", default-features = false }
-near-sdk = "2.0"
+serde = { version = "*", features = ["derive"] }
+serde_json = "*"
+# TODO: upgrade it
+near-sdk = "0.11.0"
+borsh = "0.6.2"
+uint = { version = "0.8.3", default-features = false }
+wee_alloc = { version = "0.4.5", default-features = false, features = [] }
+# TODO: temporary solution
+near-lib = { git = "https://github.com/ilblackdragon/balancer-near", rev = "a386305c9829d2e5302a78fdc475c8a279fcf6ed"}
+eth-types =  { git = "https://github.com/near/rainbow-bridge" }
+rlp = "0.4.2"
 ethabi = "12.0.0"
 hex = "0.4.2"
 tiny-keccak = "1.4.0"
-eth-types =  { git = "https://github.com/near/rainbow-bridge" }
-rlp = "0.4.2"
+
+[dev-dependencies]
+near-test = { git = "https://github.com/ilblackdragon/balancer-near", rev = "a386305c9829d2e5302a78fdc475c8a279fcf6ed"}
+lazy_static = "1.4.0"
+rand = "0.7.3"
