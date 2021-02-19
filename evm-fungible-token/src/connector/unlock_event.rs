@@ -1,13 +1,13 @@
-use crate::prover::{EthAddress, EthEvent, EthEventParams};
-use ethabi::{ParamType, Token};
+use super::prover::{EthAddress, EthEvent, EthEventParams};
+use ethabi::ParamType;
 use hex::ToHex;
 use near_sdk::{AccountId, Balance};
-use crate::connector::prover::{EthAddress, EthEvent};
 
 /// Data that was emitted by the Ethereum Unlocked event.
 #[derive(Debug, Eq, PartialEq)]
 pub struct EthUnlockedEvent {
-    pub eth_custodian_address: EthAddress,
+    pub locker_address: EthAddress,
+    pub token: String,
     pub sender: String,
     pub amount: Balance,
     pub recipient: AccountId,
@@ -16,6 +16,7 @@ pub struct EthUnlockedEvent {
 impl EthUnlockedEvent {
     fn event_params() -> EthEventParams {
         vec![
+            ("token".to_string(), ParamType::String, false),
             ("sender".to_string(), ParamType::Address, true),
             ("amount".to_string(), ParamType::Uint(256), false),
             ("account_id".to_string(), ParamType::String, false),
@@ -37,25 +38,12 @@ impl EthUnlockedEvent {
             .as_u128();
         let recipient = event.log.params[3].value.clone().to_string().unwrap();
         Self {
-            eth_custodian_address: event.eth_castodian_address,
+            locker_address: event.eth_custodian_address,
+            token,
             sender,
             amount,
             recipient,
         }
-    }
-
-    pub fn to_log_entry_data(&self) -> Vec<u8> {
-        EthEvent::to_log_entry_data(
-            "Withdraw",
-            EthUnlockedEvent::event_params(),
-            self.locker_address,
-            vec![hex::decode(self.sender.clone()).unwrap()],
-            vec![
-                Token::String(self.token.clone()),
-                Token::Uint(self.amount.into()),
-                Token::String(self.recipient.clone()),
-            ],
-        )
     }
 }
 
@@ -63,8 +51,8 @@ impl std::fmt::Display for EthUnlockedEvent {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "sender: {}; amount: {}; recipient: {}",
-            self.sender, self.amount, self.recipient
+            "token: {}; sender: {}; amount: {}; recipient: {}",
+            self.token, self.sender, self.amount, self.recipient
         )
     }
 }

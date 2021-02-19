@@ -1,136 +1,58 @@
-#![allow(unused_imports)]
-use std::convert::From;
+use crate::prover::{EthAddress, EthEvent, EthEventParams};
+use ethabi::ParamType;
+use hex::ToHex;
+use near_sdk::{AccountId, Balance};
 
-use borsh::{BorshDeserialize, BorshSerialize};
-use eth_types::*;
-use ethabi::param_type::Writer;
-use ethabi::{Event, EventParam, Hash, Log, ParamType, RawLog, Token};
-use near_sdk::ext_contract;
-
-use tiny_keccak::Keccak;
-
-pub type EthAddress = [u8; 20];
-
-pub fn validate_eth_address(address: String) -> EthAddress {
-    let data = hex::decode(address).expect("address should be a valid hex string.");
-    assert_eq!(data.len(), 20, "address should be 20 bytes long");
-    let mut result = [0u8; 20];
-    result.copy_from_slice(&data);
-    result
+/// Data that was emitted by the Ethereum Unlocked event.
+#[derive(Debug, Eq, PartialEq)]
+pub struct EthUnlockedEvent {
+    pub locker_address: EthAddress,
+    pub token: String,
+    pub sender: String,
+    pub amount: Balance,
+    pub recipient: AccountId,
 }
 
-#[ext_contract(ext_prover)]
-pub trait Prover {
-    #[result_serializer(borsh)]
-    fn verify_log_entry(
-        &self,
-        #[serializer(borsh)] log_index: u64,
-        #[serializer(borsh)] log_entry_data: Vec<u8>,
-        #[serializer(borsh)] receipt_index: u64,
-        #[serializer(borsh)] receipt_data: Vec<u8>,
-        #[serializer(borsh)] header_data: Vec<u8>,
-        #[serializer(borsh)] proof: Vec<Vec<u8>>,
-        #[serializer(borsh)] skip_bridge_call: bool,
-    ) -> bool;
-}
+impl EthUnlockedEvent {
+    fn event_params() -> EthEventParams {
+        vec![
+            ("token".to_string(), ParamType::String, false),
+            ("sender".to_string(), ParamType::Address, true),
+            ("amount".to_string(), ParamType::Uint(256), false),
+            ("account_id".to_string(), ParamType::String, false),
+        ]
+    }
 
-#[derive(Default, BorshDeserialize, BorshSerialize, Clone)]
-pub struct Proof {
-    pub log_index: u64,
-    pub log_entry_data: Vec<u8>,
-    pub receipt_index: u64,
-    pub receipt_data: Vec<u8>,
-    pub header_data: Vec<u8>,
-    pub proof: Vec<Vec<u8>>,
-}
-
-pub type EthEventParams = Vec<(String, ParamType, bool)>;
-
-pub struct EthEvent {
-    pub eth_castodian_address: EthAddress,
-    pub log: Log,
-}
-
-impl EthEvent {
-    pub fn from_log_entry_data(name: &str, params: EthEventParams, data: &[u8]) -> Self {
-        let event = Event {
-            name: name.to_string(),
-            inputs: params
-                .into_iter()
-                .map(|(name, kind, indexed)| EventParam {
-                    name,
-                    kind,
-                    indexed,
-                })
-                .collect(),
-            anonymous: false,
-        };
-        let log_entry: LogEntry = rlp::decode(data).expect("Invalid RLP");
-        let eth_castodian_address = (log_entry.address.clone().0).0;
-        let topics = log_entry
-            .topics
-            .iter()
-            .map(|h| Hash::from(&((h.0).0)))
-            .collect();
-
-        let raw_log = RawLog {
-            topics,
-            data: log_entry.data.clone(),
-        };
-
-        let log = event.parse_log(raw_log).expect("Failed to parse event log");
+    /// Parse raw log entry data.
+    pub fn from_log_entry_data(data: &[u8]) -> Self {
+        let event =
+            EthEvent::from_log_entry_data("Withdraw", EthUnlockedEvent::event_params(), data);
+        let token = event.log.params[0].value.clone().to_string().unwrap();
+        let sender = event.log.params[1].value.clone().to_address().unwrap().0;
+        let sender = (&sender).encode_hex::<String>();
+        let amount = event.log.params[2]
+            .value
+            .clone()
+            .to_uint()
+            .unwrap()
+            .as_u128();
+        let recipient = event.log.params[3].value.clone().to_string().unwrap();
         Self {
-            eth_castodian_address,
-            log,
+            locker_address: event.eth_custodian_address,
+            token,
+            sender,
+            amount,
+            recipient,
         }
     }
+}
 
-    pub fn to_log_entry_data(
-        name: &str,
-        params: EthEventParams,
-        eth_castodian_address: EthAddress,
-        indexes: Vec<Vec<u8>>,
-        values: Vec<Token>,
-    ) -> Vec<u8> {
-        let event = Event {
-            name: name.to_string(),
-            inputs: params
-                .into_iter()
-                .map(|(name, kind, indexed)| EventParam {
-                    name: name.to_string(),
-                    kind,
-                    indexed,
-                })
-                .collect(),
-            anonymous: false,
-        };
-        let params: Vec<ParamType> = event.inputs.iter().map(|p| p.kind.clone()).collect();
-        let topics = indexes.into_iter().map(|value| H256::from(value)).collect();
-        let log_entry = LogEntry {
-            address: eth_castodian_address.into(),
-            topics: vec![vec![long_signature(&event.name, &params).0.into()], topics].concat(),
-            data: ethabi::encode(&values),
-        };
-        rlp::encode(&log_entry)
+impl std::fmt::Display for EthUnlockedEvent {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "token: {}; sender: {}; amount: {}; recipient: {}",
+            self.token, self.sender, self.amount, self.recipient
+        )
     }
-}
-
-fn long_signature(name: &str, params: &[ParamType]) -> Hash {
-    let mut result = [0u8; 32];
-    fill_signature(name, params, &mut result);
-    result.into()
-}
-
-fn fill_signature(name: &str, params: &[ParamType], result: &mut [u8]) {
-    let types = params
-        .iter()
-        .map(Writer::write)
-        .collect::<Vec<String>>()
-        .join(",");
-
-    let data: Vec<u8> = From::from(format!("{}({})", name, types).as_str());
-
-    let mut sponge = Keccak::new_keccak256();
-    sponge.update(&data);
-    sponge.finalize(result);
 }
