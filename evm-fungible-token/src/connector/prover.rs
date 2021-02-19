@@ -47,7 +47,7 @@ pub struct Proof {
 pub type EthEventParams = Vec<(String, ParamType, bool)>;
 
 pub struct EthEvent {
-    pub locker_address: EthAddress,
+    pub eth_castodian_address: EthAddress,
     pub log: Log,
 }
 
@@ -66,7 +66,7 @@ impl EthEvent {
             anonymous: false,
         };
         let log_entry: LogEntry = rlp::decode(data).expect("Invalid RLP");
-        let locker_address = (log_entry.address.clone().0).0;
+        let eth_castodian_address = (log_entry.address.clone().0).0;
         let topics = log_entry
             .topics
             .iter()
@@ -80,7 +80,7 @@ impl EthEvent {
 
         let log = event.parse_log(raw_log).expect("Failed to parse event log");
         Self {
-            locker_address,
+            eth_castodian_address,
             log,
         }
     }
@@ -88,7 +88,7 @@ impl EthEvent {
     pub fn to_log_entry_data(
         name: &str,
         params: EthEventParams,
-        locker_address: EthAddress,
+        eth_castodian_address: EthAddress,
         indexes: Vec<Vec<u8>>,
         values: Vec<Token>,
     ) -> Vec<u8> {
@@ -107,7 +107,7 @@ impl EthEvent {
         let params: Vec<ParamType> = event.inputs.iter().map(|p| p.kind.clone()).collect();
         let topics = indexes.into_iter().map(|value| H256::from(value)).collect();
         let log_entry = LogEntry {
-            address: locker_address.into(),
+            address: eth_castodian_address.into(),
             topics: vec![vec![long_signature(&event.name, &params).0.into()], topics].concat(),
             data: ethabi::encode(&values),
         };

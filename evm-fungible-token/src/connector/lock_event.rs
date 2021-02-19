@@ -2,6 +2,7 @@ use crate::prover::{EthAddress, EthEvent, EthEventParams};
 use ethabi::{ParamType, Token};
 use hex::ToHex;
 use near_sdk::{AccountId, Balance};
+use crate::connector::prover::{EthEventParams, EthEvent};
 
 /// Data that was emitted by the Ethereum Locked event.
 #[derive(Debug, Eq, PartialEq)]
@@ -11,21 +12,22 @@ pub struct EthLockedEvent {
     pub sender: String,
     pub amount: Balance,
     pub recipient: AccountId,
+    pub fee: Balance,
 }
 
 impl EthLockedEvent {
     fn event_params() -> EthEventParams {
         vec![
-            ("token".to_string(), ParamType::Address, true),
             ("sender".to_string(), ParamType::Address, true),
             ("amount".to_string(), ParamType::Uint(256), false),
             ("account_id".to_string(), ParamType::String, false),
+            ("fee".to_string(), ParamType::Uint(256), false),
         ]
     }
 
     /// Parse raw log entry data.
     pub fn from_log_entry_data(data: &[u8]) -> Self {
-        let event = EthEvent::from_log_entry_data("Locked", EthLockedEvent::event_params(), data);
+        let event = EthEvent::from_log_entry_data("Deposited", EthLockedEvent::event_params(), data);
         let token = event.log.params[0].value.clone().to_address().unwrap().0;
         let token = (&token).encode_hex::<String>();
         let sender = event.log.params[1].value.clone().to_address().unwrap().0;
@@ -36,13 +38,19 @@ impl EthLockedEvent {
             .to_uint()
             .unwrap()
             .as_u128();
+        let fee = event.log.params[3]
+            .value
+            .clone()
+            .to_uint()
+            .unwrap()
+            .as_u128();
         let recipient = event.log.params[3].value.clone().to_string().unwrap();
         Self {
-            locker_address: event.locker_address,
-            token,
+            locker_address: event.eth_castodian_address,
             sender,
             amount,
             recipient,
+            fee,
         }
     }
 
