@@ -59,8 +59,8 @@ contract EthCustodian is ProofKeeper {
         returns (BurnResult memory result)
     {
         Borsh.Data memory borshData = Borsh.from(data);
-        result.amount = borshData.decodeU128();
         bytes20 recipient = borshData.decodeBytes20();
+        result.amount = borshData.decodeU128();
         result.recipient = address(uint160(recipient));
     }
 
