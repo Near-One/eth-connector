@@ -2,12 +2,12 @@ use crate::prover::{EthAddress, EthEvent, EthEventParams};
 use ethabi::{ParamType, Token};
 use hex::ToHex;
 use near_sdk::{AccountId, Balance};
+use crate::connector::prover::{EthAddress, EthEvent};
 
 /// Data that was emitted by the Ethereum Unlocked event.
 #[derive(Debug, Eq, PartialEq)]
 pub struct EthUnlockedEvent {
-    pub locker_address: EthAddress,
-    pub token: String,
+    pub eth_custodian_address: EthAddress,
     pub sender: String,
     pub amount: Balance,
     pub recipient: AccountId,
@@ -16,7 +16,6 @@ pub struct EthUnlockedEvent {
 impl EthUnlockedEvent {
     fn event_params() -> EthEventParams {
         vec![
-            ("token".to_string(), ParamType::String, false),
             ("sender".to_string(), ParamType::Address, true),
             ("amount".to_string(), ParamType::Uint(256), false),
             ("account_id".to_string(), ParamType::String, false),
@@ -38,8 +37,7 @@ impl EthUnlockedEvent {
             .as_u128();
         let recipient = event.log.params[3].value.clone().to_string().unwrap();
         Self {
-            locker_address: event.locker_address,
-            token,
+            eth_custodian_address: event.eth_castodian_address,
             sender,
             amount,
             recipient,
@@ -65,8 +63,8 @@ impl std::fmt::Display for EthUnlockedEvent {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "token: {}; sender: {}; amount: {}; recipient: {}",
-            self.token, self.sender, self.amount, self.recipient
+            "sender: {}; amount: {}; recipient: {}",
+            self.sender, self.amount, self.recipient
         )
     }
 }
