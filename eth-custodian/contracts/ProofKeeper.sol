@@ -1,4 +1,4 @@
-pragma solidity ^0.6;
+pragma solidity ^0.6.12;
 
 import "rainbow-bridge/contracts/eth/nearprover/contracts/INearProver.sol";
 import "rainbow-bridge/contracts/eth/nearprover/contracts/ProofDecoder.sol";
@@ -9,16 +9,16 @@ contract ProofKeeper {
     using ProofDecoder for Borsh.Data;
 
     INearProver public prover_;
-    bytes public nearProofProducer_;
+    bytes public nearProofProducerAccount_;
 
     // OutcomeReciptId -> Used
     mapping(bytes32 => bool) public usedEvents_;
 
-    constructor(bytes memory nearProofProducer, INearProver prover) public {
-        require(nearProofProducer.length > 0, "Invalid Near ProofProducer address");
+    constructor(bytes memory nearProofProducerAccount, INearProver prover) public {
+        require(nearProofProducerAccount.length > 0, "Invalid Near ProofProducer address");
         require(address(prover) != address(0), "Invalid Near prover address");
 
-        nearProofProducer_ = nearProofProducer;
+        nearProofProducerAccount_ = nearProofProducerAccount;
         prover_ = prover;
     }
 
@@ -40,7 +40,7 @@ contract ProofKeeper {
         usedEvents_[receiptId] = true;
 
         require(keccak256(fullOutcomeProof.outcome_proof.outcome_with_id.outcome.executor_id)
-                == keccak256(nearProofProducer_),
+                == keccak256(nearProofProducerAccount_),
                 "Can only unlock tokens from the linked proof producer on Near blockchain.");
 
         result = fullOutcomeProof.outcome_proof.outcome_with_id.outcome.status;
