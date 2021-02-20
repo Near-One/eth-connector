@@ -4,8 +4,6 @@ const { expect } = require('chai');
 const { serialize } = require('rainbow-bridge-lib/rainbow/borsh.js');
 const { borshifyOutcomeProof } = require('rainbow-bridge-lib/rainbow/borshify-proof.js');
 
-//const NearProverMock = artifacts.require('test/NearProverMock')
-
 const SCHEMA = {
   'Withdrawn': {
     kind: 'struct', fields: [
@@ -127,8 +125,8 @@ describe('EthCustodian contract', () => {
     });
 
     describe('Withdraw', () => {
-        const proof = require('./proof_template.json');
-        const proof_executor_id = proof.outcome_proof.outcome.executor_id;
+        let proof = require('./proof_template.json');
+        const proofExecutorId = proof.outcome_proof.outcome.executor_id;
 
         beforeEach(async () => {
             let fee = 100;  // wei
@@ -142,9 +140,12 @@ describe('EthCustodian contract', () => {
 
             let signed_tx = await walletUser1.signTransaction(unsigned_tx);
             await ethers.provider.sendTransaction(signed_tx)
+
+            // Manually set the executor id to the original one before each call
+            proof.outcome_proof.outcome.executor_id = proofExecutorId;
         });
 
-        it('Should revert when the proof producer (nearEvmAccount) is differs from the linked one', async () => {
+        it('Should revert when the proof producer (nearEvmAccount) differs from the linked one', async () => {
             let amount = 5000;
             proof.outcome_proof.outcome.status.SuccessValue = serialize(SCHEMA, 'Withdrawn', {
                 recipient: ethers.utils.arrayify(user2.address),
@@ -167,8 +168,6 @@ describe('EthCustodian contract', () => {
                 recipient: ethers.utils.arrayify(user2.address),
                 amount: amount,
             }).toString('base64');
-            // Set the executor_id manually (orginal proof executor) due to cloning issues
-            proof.outcome_proof.outcome.executor_id = proof_executor_id;
 
             let balanceBefore = ethers.BigNumber.from(await ethers.provider.getBalance(user2.address));
 
@@ -195,8 +194,6 @@ describe('EthCustodian contract', () => {
                 recipient: ethers.utils.arrayify(user2.address),
                 amount: amount,
             }).toString('base64');
-            // Set the executor_id manually (orginal proof executor) due to cloning issues
-            proof.outcome_proof.outcome.executor_id = proof_executor_id;
 
             // Withdraw for the first time
             await ethCustodian.withdraw(borshifyOutcomeProof(proof), 1099);
