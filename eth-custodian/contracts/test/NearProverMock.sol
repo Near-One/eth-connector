@@ -7,3 +7,9 @@ contract NearProverMock is INearProver {
         return true;
     }
 }
+
+contract NearNegativeProverMock is INearProver {
+    function proveOutcome(bytes memory proofData, uint64 blockHeight) override public view returns(bool) {
+        return false;
+    }
+}
