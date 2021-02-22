@@ -2,19 +2,19 @@
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 //use near_sdk::json_types::U128;
 use near_sdk::serde_json::{self, json};
-use near_sdk::{env, near_bindgen, AccountId, Balance, Gas, Promise, PromiseResult};
+use near_sdk::{env, near_bindgen, AccountId, Balance, Gas, Promise, PromiseResult, PanicOnDefault};
 
 //use near_sdk::collections::UnorderedSet;
 //use near_sdk::{env, ext_contract, near_bindgen, AccountId, Balance, Gas, Promise, PromiseResult};
 
-use crate::connector::prover::Proof;
-use connector::deposit_event::EthDepositedEvent;
+// use crate::connector::prover::Proof;
+// use connector::deposit_event::EthDepositedEvent;
 use connector::prover::{validate_eth_address, EthAddress};
-use connector::withdraw_event::EthWithdrawEvent;
+// use connector::withdraw_event::EthWithdrawEvent;
 use near_sdk::collections::{LookupSet, UnorderedMap};
 
 mod connector;
-mod fungible_token;
+// mod fungible_token;
 
 near_sdk::setup_alloc!();
 
@@ -32,20 +32,15 @@ pub enum ResultType {
 }
 
 #[near_bindgen]
-#[derive(BorshDeserialize, BorshSerialize)]
+#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct EthConnector {
+    pub account_id: String,
     /// The account of the prover that we can use to prove
     pub prover_account: AccountId,
     /// Address of the Ethereum custodian contract.
     pub eth_custodian_address: EthAddress,
     // Hashes of the events that were already used.
     pub used_events: LookupSet<Vec<u8>>,
-}
-
-impl Default for EthConnector {
-    fn default() -> Self {
-        panic!("Fun token should be initialized before usage")
-    }
 }
 
 pub fn assert_self() {
@@ -72,13 +67,16 @@ impl EthConnector {
     #[init]
     pub fn new(prover_account: AccountId, eth_custodian_address: String) -> Self {
         assert!(!env::state_exists(), "Already initialized");
+        let account_id = "".to_string();
         Self {
+            account_id,
             prover_account,
-            eth_custodian_address: validate_eth_address(eth_custodian_address),
+            eth_custodian_address:  validate_eth_address(eth_custodian_address),
             used_events: LookupSet::new(b"u".to_vec()),
         }
     }
-
+}
+/*
     /// Deposit from Ethereum to NEAR based on the proof of the locked tokens.
     /// Must attach enough NEAR funds to cover for storage of the proof.
     #[payable]
@@ -126,7 +124,7 @@ impl EthConnector {
         );
         env::promise_return(promise1);
     }
-    /*
+
         /// Finish depositing once the proof was successfully validated.
         /// Can only be called by the contract itself.
         #[payable]
@@ -313,4 +311,4 @@ impl EthConnector {
             attached_deposit - required_deposit
         }
     */
-}
+

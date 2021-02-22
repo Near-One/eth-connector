@@ -20,11 +20,11 @@ debug-assertions = false
 
 [dependencies]
 near-sdk = { git = "https://github.com/near/near-sdk-rs", rev = "1d3535bd131b68f97a216e643ad1cba19e16dddf"}
-# near-sdk = { path = "../../near-sdk-rs/near-sdk" }
 eth-types =  { git = "https://github.com/near/rainbow-bridge" }
 rlp = "0.4.2"
 ethabi = "12.0.0"
 hex = "0.4.2"
+funty = "=1.1.0"
 
 [dev-dependencies]
-near-sdk-sim = { path = "../../near-sdk-rs/near-sdk-sim" }
+near-sdk-sim = { git = "https://github.com/near/near-sdk-rs", rev = "1d3535bd131b68f97a216e643ad1cba19e16dddf"}
