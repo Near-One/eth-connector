@@ -1,21 +1,19 @@
-// use borsh::{BorshDeserialize, BorshSerialize};
-// use eth_types::*;
-// use ethabi::{Event, EventParam, Hash, Log, ParamType, RawLog};
-// use near_sdk::ext_contract;
-// use std::convert::From;
+use eth_types::*;
+use ethabi::{Event, EventParam, Hash, Log, ParamType, RawLog};
+use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
+use std::convert::From;
 
 pub type EthAddress = [u8; 20];
 
 /// Validate Etherium address from string and return EthAddress
 pub fn validate_eth_address(address: String) -> EthAddress {
-    // let data = hex::decode(address).expect("ETH address should be a valid hex string.");
-    // assert_eq!(data.len(), 20, "ETH address should be 20 bytes long");
-    // let mut result = [0u8; 20];
-    // result.copy_from_slice(&data);
-    // result
-    [0u8; 20]
+    let data = hex::decode(address).expect("ETH address should be a valid hex string.");
+    assert_eq!(data.len(), 20, "ETH address should be 20 bytes long");
+    let mut result = [0u8; 20];
+    result.copy_from_slice(&data);
+    result
 }
-/*
+
 #[derive(Default, BorshDeserialize, BorshSerialize, Clone)]
 pub struct Proof {
     pub log_index: u64,
@@ -70,4 +68,3 @@ impl EthEvent {
         }
     }
 }
-*/
