@@ -19,18 +19,12 @@ panic = "abort"
 debug-assertions = false
 
 [dependencies]
-serde = { version = "*", features = ["derive"] }
-serde_json = "*"
-# TODO: upgrade it
 near-sdk = { git = "https://github.com/near/near-sdk-rs", rev = "1d3535bd131b68f97a216e643ad1cba19e16dddf"}
-# near-sdk = "0.11"
-borsh = "0.8.1"
-uint = { version = "0.8.3", default-features = false }
-wee_alloc = { version = "0.4.5", default-features = false, features = [] }
-# TODO: temporary solution
-# near-lib = { git = "https://github.com/ilblackdragon/balancer-near", rev = "a386305c9829d2e5302a78fdc475c8a279fcf6ed"}
+# near-sdk = { path = "../../near-sdk-rs/near-sdk" }
 eth-types =  { git = "https://github.com/near/rainbow-bridge" }
 rlp = "0.4.2"
 ethabi = "12.0.0"
 hex = "0.4.2"
-tiny-keccak = "1.4.0"
+
+[dev-dependencies]
+near-sdk-sim = { path = "../../near-sdk-rs/near-sdk-sim" }

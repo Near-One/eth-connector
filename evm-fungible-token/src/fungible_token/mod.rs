@@ -48,7 +48,7 @@ impl Default for Contract {
 #[near_bindgen]
 impl Contract {
     #[init]
-    pub fn new(
+    pub fn fungible_token(
         total_supply: U128,
         version: String,
         name: String,

@@ -1,6 +1,7 @@
 use eth_types::*;
 use ethabi::{Event, EventParam, Hash, Log, ParamType, RawLog};
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
+use near_sdk::serde::{Deserialize, Serialize};
 use std::convert::From;
 
 pub type EthAddress = [u8; 20];
@@ -14,7 +15,8 @@ pub fn validate_eth_address(address: String) -> EthAddress {
     result
 }
 
-#[derive(Default, BorshDeserialize, BorshSerialize, Clone)]
+#[derive(Default, BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone)]
+#[serde(crate = "near_sdk::serde")]
 pub struct Proof {
     pub log_index: u64,
     pub log_entry_data: Vec<u8>,

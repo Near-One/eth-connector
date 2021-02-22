@@ -1,15 +1,17 @@
 #![allow(dead_code, unused_imports)]
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 //use near_sdk::json_types::U128;
-//use near_sdk::serde_json::{self, json};
-use near_sdk::{env, near_bindgen, AccountId, Balance, Gas, PromiseResult};
+use near_sdk::serde_json::{self, json};
+use near_sdk::{env, near_bindgen, AccountId, Balance, Gas, Promise, PromiseResult};
 
 //use near_sdk::collections::UnorderedSet;
 //use near_sdk::{env, ext_contract, near_bindgen, AccountId, Balance, Gas, Promise, PromiseResult};
 
+use crate::connector::prover::Proof;
 use connector::deposit_event::EthDepositedEvent;
 use connector::prover::{validate_eth_address, EthAddress};
 use connector::withdraw_event::EthWithdrawEvent;
+use near_sdk::collections::{LookupSet, UnorderedMap};
 
 mod connector;
 mod fungible_token;
@@ -25,8 +27,8 @@ const TRANSFER_GAS: Gas = 10_000_000_000_000;
 
 #[derive(Debug, Eq, PartialEq, BorshSerialize, BorshDeserialize)]
 pub enum ResultType {
+    Deposit,
     Withdraw,
-    Lock,
 }
 
 #[near_bindgen]
@@ -37,7 +39,7 @@ pub struct EthConnector {
     /// Address of the Ethereum custodian contract.
     pub eth_custodian_address: EthAddress,
     // Hashes of the events that were already used.
-    //pub used_events: UnorderedSet<Vec<u8>>,
+    pub used_events: LookupSet<Vec<u8>>,
 }
 
 impl Default for EthConnector {
@@ -73,45 +75,58 @@ impl EthConnector {
         Self {
             prover_account,
             eth_custodian_address: validate_eth_address(eth_custodian_address),
-            //used_events: UnorderedSet::new(b"u".to_vec()),
+            used_events: LookupSet::new(b"u".to_vec()),
         }
     }
-    /*
-        /// Deposit from Ethereum to NEAR based on the proof of the locked tokens.
-        /// Must attach enough NEAR funds to cover for storage of the proof.
-        #[payable]
-        pub fn deposit(&mut self, #[serializer(borsh)] proof: Proof) -> Promise {
-            let event = EthLockedEvent::from_log_entry_data(&proof.log_entry_data);
-            assert_eq!(
-                event.eth_custodian_address,
-                self.eth_custodian_address,
-                "Event's address {} does not match custodian address {}",
-                hex::encode(&event.eth_custodian_address),
-                hex::encode(&self.eth_custodian_address),
-            );
-            let proof_1 = proof.clone();
-            ext_prover::verify_log_entry(
-                proof.log_index,
-                proof.log_entry_data,
-                proof.receipt_index,
-                proof.receipt_data,
-                proof.header_data,
-                proof.proof,
-                false, // Do not skip bridge call. This is only used for development and diagnostics.
-                &self.prover_account,
-                NO_DEPOSIT,
-                env::prepaid_gas() / 4,
-            )
-            .then(ext_self::finish_deposit(
-                event.recipient,
-                event.amount,
-                proof_1,
-                &env::current_account_id(),
-                env::attached_deposit(),
-                env::prepaid_gas() / 2,
-            ))
-        }
 
+    /// Deposit from Ethereum to NEAR based on the proof of the locked tokens.
+    /// Must attach enough NEAR funds to cover for storage of the proof.
+    #[payable]
+    pub fn deposit(&mut self, proof: Proof) {
+        let event = EthDepositedEvent::from_log_entry_data(&proof.log_entry_data);
+        assert_eq!(
+            event.eth_custodian_address,
+            self.eth_custodian_address,
+            "Event's address {} does not match custodian address {}",
+            hex::encode(&event.eth_custodian_address),
+            hex::encode(&self.eth_custodian_address),
+        );
+        let proof_1 = proof.clone();
+        let account_id = env::current_account_id();
+        let prepaid_gas = env::prepaid_gas();
+        let promise0 = env::promise_create(
+            account_id.clone(),
+            b"merge_sort",
+            json!({
+                "log_index": proof.log_index,
+            "log_entry_data": proof.log_entry_data,
+            "receipt_index": proof.receipt_index,
+                "receipt_data": proof.receipt_data,
+                "header_data": proof.header_data,
+                "proof": proof.proof,
+            })
+            .to_string()
+            .as_bytes(),
+            NO_DEPOSIT,
+            prepaid_gas / 4,
+        );
+        let promise1 = env::promise_then(
+            promise0,
+            account_id,
+            b"get_status",
+            json!({
+                "new_owner_id": event.recipient,
+                "amount": event.amount,
+                "proof": proof_1,
+            })
+            .to_string()
+            .as_bytes(),
+            NO_DEPOSIT,
+            prepaid_gas / 4,
+        );
+        env::promise_return(promise1);
+    }
+    /*
         /// Finish depositing once the proof was successfully validated.
         /// Can only be called by the contract itself.
         #[payable]
