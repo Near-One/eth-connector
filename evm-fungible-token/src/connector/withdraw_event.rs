@@ -3,56 +3,61 @@ use ethabi::ParamType;
 use hex::ToHex;
 use near_sdk::{AccountId, Balance};
 
-/// Data that was emitted by the Ethereum Unlocked event.
+/// Data that was emitted by the Ethereum Withdraw event.
 #[derive(Debug, Eq, PartialEq)]
-pub struct EthUnlockedEvent {
-    pub locker_address: EthAddress,
-    pub token: String,
+pub struct EthWithdrawEvent {
+    pub eth_custodian_address: EthAddress,
     pub sender: String,
     pub amount: Balance,
     pub recipient: AccountId,
+    pub fee: Balance,
 }
 
-impl EthUnlockedEvent {
+impl EthWithdrawEvent {
     fn event_params() -> EthEventParams {
         vec![
-            ("token".to_string(), ParamType::String, false),
             ("sender".to_string(), ParamType::Address, true),
             ("amount".to_string(), ParamType::Uint(256), false),
-            ("account_id".to_string(), ParamType::String, false),
+            ("recipient".to_string(), ParamType::String, false),
+            ("fee".to_string(), ParamType::Uint(256), false),
         ]
     }
 
     /// Parse raw log entry data.
     pub fn from_log_entry_data(data: &[u8]) -> Self {
         let event =
-            EthEvent::from_log_entry_data("Withdraw", EthUnlockedEvent::event_params(), data);
-        let token = event.log.params[0].value.clone().to_string().unwrap();
-        let sender = event.log.params[1].value.clone().to_address().unwrap().0;
+            EthEvent::from_log_entry_data("Withdraw", EthWithdrawEvent::event_params(), data);
+        let sender = event.log.params[0].value.clone().to_address().unwrap().0;
         let sender = (&sender).encode_hex::<String>();
-        let amount = event.log.params[2]
+        let amount = event.log.params[1]
             .value
             .clone()
             .to_uint()
             .unwrap()
             .as_u128();
-        let recipient = event.log.params[3].value.clone().to_string().unwrap();
+        let recipient = event.log.params[2].value.clone().to_string().unwrap();
+        let fee = event.log.params[3]
+            .value
+            .clone()
+            .to_uint()
+            .unwrap()
+            .as_u128();
         Self {
-            locker_address: event.eth_custodian_address,
-            token,
+            eth_custodian_address: event.eth_custodian_address,
             sender,
             amount,
             recipient,
+            fee,
         }
     }
 }
 
-impl std::fmt::Display for EthUnlockedEvent {
+impl std::fmt::Display for EthWithdrawEvent {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "token: {}; sender: {}; amount: {}; recipient: {}",
-            self.token, self.sender, self.amount, self.recipient
+            "sender: {}; amount: {}; recipient: {}; fee: {}",
+            self.sender, self.amount, self.recipient, self.fee,
         )
     }
 }

@@ -3,9 +3,9 @@ use ethabi::ParamType;
 use hex::ToHex;
 use near_sdk::{AccountId, Balance};
 
-/// Data that was emitted by the Ethereum Locked event.
+/// Data that was emitted by the Ethereum Deposited event.
 #[derive(Debug, Eq, PartialEq)]
-pub struct EthLockedEvent {
+pub struct EthDepositedEvent {
     pub eth_custodian_address: EthAddress,
     pub sender: String,
     pub amount: Balance,
@@ -13,7 +13,7 @@ pub struct EthLockedEvent {
     pub fee: Balance,
 }
 
-impl EthLockedEvent {
+impl EthDepositedEvent {
     fn event_params() -> EthEventParams {
         vec![
             ("sender".to_string(), ParamType::Address, true),
@@ -30,7 +30,7 @@ impl EthLockedEvent {
     /// Parse raw log Etherium proof entry data.
     pub fn from_log_entry_data(data: &[u8]) -> Self {
         let event =
-            EthEvent::from_log_entry_data("Deposited", EthLockedEvent::event_params(), data);
+            EthEvent::from_log_entry_data("Deposited", EthDepositedEvent::event_params(), data);
         let sender = event.log.params[0].value.clone().to_address().unwrap().0;
         let sender = (&sender).encode_hex::<String>();
         let amount = event.log.params[1]
@@ -56,7 +56,7 @@ impl EthLockedEvent {
     }
 }
 
-impl std::fmt::Display for EthLockedEvent {
+impl std::fmt::Display for EthDepositedEvent {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,

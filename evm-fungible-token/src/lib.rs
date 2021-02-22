@@ -7,9 +7,9 @@ use near_sdk::{env, near_bindgen, AccountId, Balance, Gas, PromiseResult};
 //use near_sdk::collections::UnorderedSet;
 //use near_sdk::{env, ext_contract, near_bindgen, AccountId, Balance, Gas, Promise, PromiseResult};
 
-use connector::deposit_event::EthLockedEvent;
+use connector::deposit_event::EthDepositedEvent;
 use connector::prover::{validate_eth_address, EthAddress};
-use connector::withdraw_event::EthUnlockedEvent;
+use connector::withdraw_event::EthWithdrawEvent;
 
 mod connector;
 mod fungible_token;
