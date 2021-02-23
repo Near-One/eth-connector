@@ -1,14 +1,17 @@
-#![allow(dead_code, unused_imports)]
+#![allow(dead_code, unused_imports, unused_variables)]
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::json_types::U128;
 use near_sdk::collections::{LookupSet, UnorderedMap};
+use near_sdk::json_types::U128;
 use near_sdk::serde_json::{self, json};
-use near_sdk::{env, log, near_bindgen, AccountId, Balance, Gas, PanicOnDefault, Promise, PromiseResult, PromiseOrValue};
+use near_sdk::{
+    env, log, near_bindgen, AccountId, Balance, Gas, PanicOnDefault, Promise, PromiseOrValue,
+    PromiseResult,
+};
 
+use crate::fungible_token::{FungibleToken, FungibleTokenMetadataProvider};
 use connector::deposit_event::EthDepositedEvent;
 pub use connector::prover::{validate_eth_address, EthAddress, Proof};
 use connector::withdraw_event::EthWithdrawEvent;
-use crate::fungible_token::{FungibleToken, FungibleTokenMetadataProvider};
 
 mod connector;
 mod fungible_token;
@@ -71,7 +74,7 @@ impl EthConnector {
         let code: &[u8] = include_bytes!("../res/eth_prover.wasm");
         env::promise_batch_action_deploy_contract(promise_idx, code);
     }
-    
+
     /// Initializes the contract.
     /// `prover_account`: NEAR account of the Near Prover contract;
     /// `eth_custodian_address`: Ethereum address of the custodian contract, in hex.
@@ -82,7 +85,14 @@ impl EthConnector {
             prover_account,
             eth_custodian_address: validate_eth_address(eth_custodian_address),
             used_events: LookupSet::new(b"u".to_vec()),
-            token: FungibleToken::fungible_token(U128::from(1000), "".into(), "".into(), "nETH".into(), "".into(), 0),
+            token: FungibleToken::fungible_token(
+                U128::from(1000),
+                "".into(),
+                "".into(),
+                "nETH".into(),
+                "".into(),
+                0,
+            ),
         }
     }
 
@@ -93,14 +103,14 @@ impl EthConnector {
         log!("Deposit started");
         //let event = EthDepositedEvent::from_log_entry_data(&proof.log_entry_data);
         // TODO: for testing only
-        let event = EthDepositedEvent{
+        let event = EthDepositedEvent {
             eth_custodian_address: self.eth_custodian_address,
             sender: "sender1".into(),
             amount: 100,
             recipient: "rcv1".into(),
             fee: 10,
         };
-        
+
         assert_eq!(
             event.eth_custodian_address,
             self.eth_custodian_address,
@@ -150,13 +160,11 @@ impl EthConnector {
     /// Can only be called by the contract itself.
     #[payable]
     #[private]
-    pub fn finish_deposit(
-        &mut self,
-        new_owner_id: AccountId,
-        amount: u64,
-        proof: Proof,
-    ) {
-        log!("finish_deposit - Promise results: {:?}", env::promise_results_count());
+    pub fn finish_deposit(&mut self, new_owner_id: AccountId, amount: u64, proof: Proof) {
+        log!(
+            "finish_deposit - Promise results: {:?}",
+            env::promise_results_count()
+        );
         log!("Amount: {:?}", amount);
         assert_eq!(env::promise_results_count(), 1);
         let data0: Vec<u8> = match env::promise_result(0) {
@@ -180,74 +188,74 @@ impl EthConnector {
     }
 
     /*
-        /// Burn given amount of tokens and unlock it on the Ethereum side for the recipient address.
-        /// We return the amount as u128 and the address of the beneficiary as `[u8; 20]` for ease of
-        /// processing on Solidity side.
-        /// Caller must be <token_address>.<current_account_id>, where <token_address> exists in the `tokens`.
-        #[result_serializer(borsh)]
-        pub fn finish_withdraw(
-            &mut self,
-            #[serializer(borsh)] amount: Balance,
-            #[serializer(borsh)] recipient: String,
-        ) -> (ResultType, u128, [u8; 20], [u8; 20]) {
-            let token = env::predecessor_account_id();
-            let parts: Vec<&str> = token.split(".").collect();
-            assert_eq!(
-                token,
-                format!("{}.{}", parts[0], env::current_account_id()),
-                "Only sub accounts of EthConnector can call this method."
-            );
-            let token_address = validate_eth_address(parts[0].to_string());
-            let recipient_address = validate_eth_address(recipient);
-            (
-                ResultType::Withdraw,
-                amount.into(),
-                token_address,
-                recipient_address,
-            )
-        }
+            /// Burn given amount of tokens and unlock it on the Ethereum side for the recipient address.
+            /// We return the amount as u128 and the address of the beneficiary as `[u8; 20]` for ease of
+            /// processing on Solidity side.
+            /// Caller must be <token_address>.<current_account_id>, where <token_address> exists in the `tokens`.
+            #[result_serializer(borsh)]
+            pub fn finish_withdraw(
+                &mut self,
+                #[serializer(borsh)] amount: Balance,
+                #[serializer(borsh)] recipient: String,
+            ) -> (ResultType, u128, [u8; 20], [u8; 20]) {
+                let token = env::predecessor_account_id();
+                let parts: Vec<&str> = token.split(".").collect();
+                assert_eq!(
+                    token,
+                    format!("{}.{}", parts[0], env::current_account_id()),
+                    "Only sub accounts of EthConnector can call this method."
+                );
+                let token_address = validate_eth_address(parts[0].to_string());
+                let recipient_address = validate_eth_address(recipient);
+                (
+                    ResultType::Withdraw,
+                    amount.into(),
+                    token_address,
+                    recipient_address,
+                )
+            }
 
-        pub fn get_bridge_token_account_id(&self, address: String) -> AccountId {
-            let address = address.to_lowercase();
-            let _ = validate_eth_address(address.clone());
-            format!("{}.{}", address, env::current_account_id())
-        }
+            pub fn get_bridge_token_account_id(&self, address: String) -> AccountId {
+                let address = address.to_lowercase();
+                let _ = validate_eth_address(address.clone());
+                format!("{}.{}", address, env::current_account_id())
+            }
 
-        #[payable]
-        pub fn unlock(&mut self, #[serializer(borsh)] proof: Proof) -> Promise {
-            assert!(false, "Native NEP21 on Ethereum is disabled.");
-            let event = EthUnlockedEvent::from_log_entry_data(&proof.log_entry_data);
-            assert_eq!(
-                event.locker_address,
-                self.eth_custodian_address,
-                "Event's address {} does not match custodian address of this token {}",
-                hex::encode(&event.locker_address),
-                hex::encode(&self.eth_custodian_address),
-            );
-            let proof_1 = proof.clone();
-            ext_prover::verify_log_entry(
-                proof.log_index,
-                proof.log_entry_data,
-                proof.receipt_index,
-                proof.receipt_data,
-                proof.header_data,
-                proof.proof,
-                false, // Do not skip bridge call. This is only used for development and diagnostics.
-                &self.prover_account,
-                NO_DEPOSIT,
-                env::prepaid_gas() / 4,
-            )
-            // .then(ext_self::finish_unlock(
-            //     event.token,
-            //     event.recipient,
-            //     event.amount,
-            //     proof_1,
-            //     &env::current_account_id(),
-            //     env::attached_deposit(),
-            //     env::prepaid_gas() / 2,
-            // ))
-        }
-*/
+            #[payable]
+            pub fn unlock(&mut self, #[serializer(borsh)] proof: Proof) -> Promise {
+                assert!(false, "Native NEP21 on Ethereum is disabled.");
+                let event = EthUnlockedEvent::from_log_entry_data(&proof.log_entry_data);
+                assert_eq!(
+                    event.locker_address,
+                    self.eth_custodian_address,
+                    "Event's address {} does not match custodian address of this token {}",
+                    hex::encode(&event.locker_address),
+                    hex::encode(&self.eth_custodian_address),
+                );
+                let proof_1 = proof.clone();
+                ext_prover::verify_log_entry(
+                    proof.log_index,
+                    proof.log_entry_data,
+                    proof.receipt_index,
+                    proof.receipt_data,
+                    proof.header_data,
+                    proof.proof,
+                    false, // Do not skip bridge call. This is only used for development and diagnostics.
+                    &self.prover_account,
+                    NO_DEPOSIT,
+                    env::prepaid_gas() / 4,
+                )
+                // .then(ext_self::finish_unlock(
+                //     event.token,
+                //     event.recipient,
+                //     event.amount,
+                //     proof_1,
+                //     &env::current_account_id(),
+                //     env::attached_deposit(),
+                //     env::prepaid_gas() / 2,
+                // ))
+            }
+    */
 
     /// Record proof to make sure it is not re-used later for anther deposit.
     #[private]

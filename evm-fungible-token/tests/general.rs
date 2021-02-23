@@ -1,6 +1,5 @@
 use near_sdk_sim::{
-    call, deploy, init_simulator, to_yocto, view, ContractAccount, UserAccount, DEFAULT_GAS,
-    STORAGE_AMOUNT,
+    call, deploy, init_simulator, to_yocto, ContractAccount, UserAccount, DEFAULT_GAS,
 };
 
 extern crate eth_connector;
@@ -38,19 +37,19 @@ fn init_test() {
 #[test]
 fn test_sim_deposit() {
     let (master_account, contract, _alice) = init();
-/*
-    // Deplot Eth Verifier Contract 
-    let status_id = "acc1".to_string();
-    let status_amt = to_yocto("100");
-    let res = call!(
-        master_account,
-        contract.deploy(status_id.clone(), status_amt.into()),
-        STORAGE_AMOUNT * 1000,
-        DEFAULT_GAS
-    );
-    println!("CALL: {:#?}", res);
-    println!("#2: {:#?}", res.promise_results());
-*/    
+    /*
+        // Deplot Eth Verifier Contract
+        let status_id = "acc1".to_string();
+        let status_amt = to_yocto("100");
+        let res = call!(
+            master_account,
+            contract.deploy(status_id.clone(), status_amt.into()),
+            STORAGE_AMOUNT * 1000,
+            DEFAULT_GAS
+        );
+        println!("CALL: {:#?}", res);
+        println!("#2: {:#?}", res.promise_results());
+    */
     let proof = Proof {
         log_index: 0,
         log_entry_data: vec![],

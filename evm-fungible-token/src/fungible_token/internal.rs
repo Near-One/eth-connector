@@ -1,4 +1,4 @@
-use crate::fungible_token::*;
+use super::*;
 
 pub(crate) fn assert_one_yocto() {
     assert_eq!(
@@ -16,7 +16,7 @@ pub(crate) fn assert_self() {
     );
 }
 
-impl Contract {
+impl FungibleToken {
     pub(crate) fn internal_deposit(&mut self, account_id: &AccountId, amount: Balance) {
         let balance = self
             .accounts

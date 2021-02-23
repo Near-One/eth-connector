@@ -1,7 +1,7 @@
-use crate::fungible_token::*;
+use super::*;
 use near_sdk::json_types::ValidAccountId;
-use near_sdk::{ext_contract, Gas, PromiseResult};
 use near_sdk::near_bindgen;
+use near_sdk::{ext_contract, Gas, PromiseResult};
 
 const GAS_FOR_RESOLVE_TRANSFER: Gas = 5_000_000_000_000;
 const GAS_FOR_FT_TRANSFER_CALL: Gas = 25_000_000_000_000 + GAS_FOR_RESOLVE_TRANSFER;
@@ -90,9 +90,7 @@ trait FungibleTokenResolver {
     ) -> U128;
 }
 
-#[near_bindgen]
-impl FungibleTokenCore for Contract {
-    #[payable]
+impl FungibleTokenCore for FungibleToken {
     fn ft_transfer(&mut self, receiver_id: ValidAccountId, amount: U128, memo: Option<String>) {
         assert_one_yocto();
         let sender_id = env::predecessor_account_id();
@@ -100,7 +98,6 @@ impl FungibleTokenCore for Contract {
         self.internal_transfer(&sender_id, receiver_id.as_ref(), amount, memo);
     }
 
-    #[payable]
     fn ft_transfer_call(
         &mut self,
         receiver_id: ValidAccountId,
@@ -140,8 +137,7 @@ impl FungibleTokenCore for Contract {
     }
 }
 
-#[near_bindgen]
-impl FungibleTokenResolver for Contract {
+impl FungibleTokenResolver for FungibleToken {
     fn ft_resolve_transfer(
         &mut self,
         sender_id: AccountId,
