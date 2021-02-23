@@ -15,8 +15,7 @@ pub trait FungibleTokenMetadataProvider {
     fn ft_metadata(&self) -> FungibleTokenMetadata;
 }
 
-#[near_bindgen]
-impl FungibleTokenMetadataProvider for Contract {
+impl FungibleTokenMetadataProvider for FungibleToken {
     fn ft_metadata(&self) -> FungibleTokenMetadata {
         self.metadata.clone()
     }

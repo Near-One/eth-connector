@@ -8,9 +8,10 @@ use near_sdk::{env, log, near_bindgen, AccountId, Balance, Gas, PanicOnDefault, 
 use connector::deposit_event::EthDepositedEvent;
 pub use connector::prover::{validate_eth_address, EthAddress, Proof};
 use connector::withdraw_event::EthWithdrawEvent;
+use crate::fungible_token::{FungibleToken, FungibleTokenMetadataProvider};
 
 mod connector;
-// mod fungible_token;
+mod fungible_token;
 
 near_sdk::setup_alloc!();
 
@@ -36,6 +37,7 @@ pub struct EthConnector {
     pub eth_custodian_address: EthAddress,
     // Hashes of the events that were already used.
     pub used_events: LookupSet<Vec<u8>>,
+    pub token: FungibleToken,
 }
 
 pub fn assert_self() {
@@ -80,6 +82,7 @@ impl EthConnector {
             prover_account,
             eth_custodian_address: validate_eth_address(eth_custodian_address),
             used_events: LookupSet::new(b"u".to_vec()),
+            token: FungibleToken::fungible_token(U128::from(1000), "".into(), "".into(), "nETH".into(), "".into(), 0),
         }
     }
 
@@ -163,6 +166,8 @@ impl EthConnector {
         let verification_success: bool = serde_json::from_slice(&data0).unwrap();
         assert!(verification_success, "Failed to verify the proof");
         self.record_proof(&proof.get_key());
+        let md = self.token.ft_metadata();
+        log!("Metadata: {:?}", md.symbol);
 
         // TODO: improve
         /*mint(
@@ -208,51 +213,6 @@ impl EthConnector {
             format!("{}.{}", address, env::current_account_id())
         }
 
-        /// Locks NEP-21 token on NEAR side to mint on Ethereum it's counterpart.
-        #[payable]
-        pub fn lock(&mut self, token: AccountId, amount: U128, recipient: String) -> Promise {
-            assert!(false, "Native NEP21 on Ethereum is disabled.");
-            let address = validate_eth_address(recipient);
-            // ext_nep21::transfer_from(
-            //     env::predecessor_account_id(),
-            //     env::current_account_id(),
-            //     amount,
-            //     &token,
-            //     env::attached_deposit(),
-            //     TRANSFER_FROM_GAS,
-            // )
-            // .then(ext_self::finish_lock(
-            //     amount.into(),
-            //     address,
-            //     token,
-            //     &env::current_account_id(),
-            //     NO_DEPOSIT,
-            //     env::prepaid_gas() / 3,
-            // ))
-            ext_self::finish_lock(
-                amount.into(),
-                address,
-                token,
-                &env::current_account_id(),
-                NO_DEPOSIT,
-                env::prepaid_gas() / 3,
-            )
-        }
-
-        /// Callback after transfer_from happened.
-        #[result_serializer(borsh)]
-        pub fn finish_lock(
-            &self,
-            #[serializer(borsh)] amount: Balance,
-            #[serializer(borsh)] recipient: [u8; 20],
-            #[serializer(borsh)] token: String,
-        ) -> (ResultType, String, u128, [u8; 20]) {
-            assert!(false, "Native NEP21 on Ethereum is disabled.");
-            assert_self();
-            assert!(is_promise_success());
-            (ResultType::Lock, token, amount.into(), recipient)
-        }
-
         #[payable]
         pub fn unlock(&mut self, #[serializer(borsh)] proof: Proof) -> Promise {
             assert!(false, "Native NEP21 on Ethereum is disabled.");
@@ -287,31 +247,8 @@ impl EthConnector {
             //     env::prepaid_gas() / 2,
             // ))
         }
+*/
 
-        // #[payable]
-        // pub fn finish_unlock(
-        //     &mut self,
-        //     #[callback]
-        //     #[serializer(borsh)]
-        //     verification_success: bool,
-        //     #[serializer(borsh)] token: AccountId,
-        //     #[serializer(borsh)] recipient: AccountId,
-        //     #[serializer(borsh)] amount: Balance,
-        //     #[serializer(borsh)] proof: Proof,
-        // ) -> Promise {
-        //     assert!(false, "Native NEP21 on Ethereum is disabled.");
-        //     assert_self();
-        //     assert!(verification_success, "Failed to verify the proof");
-        //     self.record_proof(&proof);
-        //     ext_nep21::transfer(
-        //         recipient,
-        //         amount.into(),
-        //         &token,
-        //         env::attached_deposit(),
-        //         TRANSFER_GAS,
-        //     )
-        // }
-    */
     /// Record proof to make sure it is not re-used later for anther deposit.
     #[private]
     fn record_proof(&mut self, key: &Vec<u8>) -> Balance {
