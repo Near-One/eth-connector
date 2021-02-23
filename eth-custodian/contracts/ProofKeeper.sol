@@ -11,15 +11,20 @@ contract ProofKeeper {
     INearProver public prover_;
     bytes public nearProofProducerAccount_;
 
+    /// Proofs from blocks that are below the acceptance height will be rejected.
+    // If `minBlockAcceptanceHeight_` value is zero - proofs from block with any height are accepted.
+    uint64 public minBlockAcceptanceHeight_;
+
     // OutcomeReciptId -> Used
     mapping(bytes32 => bool) public usedEvents_;
 
-    constructor(bytes memory nearProofProducerAccount, INearProver prover) public {
+    constructor(bytes memory nearProofProducerAccount, INearProver prover, uint64 minBlockAcceptanceHeight) public {
         require(nearProofProducerAccount.length > 0, "Invalid Near ProofProducer address");
         require(address(prover) != address(0), "Invalid Near prover address");
 
         nearProofProducerAccount_ = nearProofProducerAccount;
         prover_ = prover;
+        minBlockAcceptanceHeight_ = minBlockAcceptanceHeight;
     }
 
     /// Parses the provided proof and consumes it if it's not already used.
@@ -28,6 +33,7 @@ contract ProofKeeper {
         internal
         returns (ProofDecoder.ExecutionStatus memory result)
     {
+        require(proofBlockHeight >= minBlockAcceptanceHeight_, "Proof is from the ancient block");
         require(prover_.proveOutcome(proofData, proofBlockHeight), "Proof should be valid");
 
         // Unpack the proof and extract the execution outcome.

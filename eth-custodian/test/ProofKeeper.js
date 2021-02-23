@@ -19,6 +19,7 @@ describe('ProofKeeper contract', () => {
     let proofKeeperContractFactory;
     let proofKeeper;
     let ethRecipient;
+    let minBlockAcceptanceHeight;
 
     const nearProofProducerAccount = Buffer.from('evm.near');
 
@@ -28,14 +29,17 @@ describe('ProofKeeper contract', () => {
         nearProverMockContractFactory = await ethers.getContractFactory('NearProverMock')
         nearProver = await nearProverMockContractFactory.deploy();
 
+        // Proofs coming from blocks below this value should be rejected
+        minBlockAcceptanceHeight = 1000;
+
         proofKeeperContractFactory = await ethers.getContractFactory('ProofKeeperInheritorMock');
-        proofKeeper = await proofKeeperContractFactory.deploy(nearProofProducerAccount, nearProver.address);
+        proofKeeper = await proofKeeperContractFactory.deploy(nearProofProducerAccount, nearProver.address, minBlockAcceptanceHeight);
     });
 
     describe('Deployment', () => {
         it('Should revert when prover is zero address', async () => {
             await expect(
-                proofKeeperContractFactory.deploy(nearProofProducerAccount, ethers.constants.AddressZero)
+                proofKeeperContractFactory.deploy(nearProofProducerAccount, ethers.constants.AddressZero, minBlockAcceptanceHeight)
             )
                 .to
                 .be
@@ -44,13 +48,12 @@ describe('ProofKeeper contract', () => {
 
         it('Should revert when nearProofProducerAccount is zero address', async () => {
             await expect(
-                proofKeeperContractFactory.deploy(Buffer.from(''), nearProver.address)
+                proofKeeperContractFactory.deploy(Buffer.from(''), nearProver.address, minBlockAcceptanceHeight)
             )
                 .to
                 .be
                 .revertedWith('Invalid Near ProofProducer address');
         });
-
     });
 
     describe('Parse and Consume proof', () => {
@@ -71,12 +74,23 @@ describe('ProofKeeper contract', () => {
             serializedProof = borshifyOutcomeProof(proof);
         });
 
+        it('Should revert when the proof is coming from the ancient block', async () => {
+            proofBlockHeight = 999;
+
+            await expect(
+                proofKeeper.parseAndConsumeProof(serializedProof, proofBlockHeight)
+            )
+                .to
+                .be
+                .revertedWith('Proof is from the ancient block');
+        });
+
         it('Should revert when the proof is invalid', async () => {
             // Create negative prover mock which always rejects proofs
             let nearNegativeProverMockContractFactory = await ethers.getContractFactory('NearNegativeProverMock')
             let nearNegativeProver = await nearNegativeProverMockContractFactory.deploy();
             let proofKeeperWithNegativeMockProver
-                = await proofKeeperContractFactory.deploy(nearProofProducerAccount, nearNegativeProver.address);
+                = await proofKeeperContractFactory.deploy(nearProofProducerAccount, nearNegativeProver.address, minBlockAcceptanceHeight);
 
             await expect(
                 proofKeeperWithNegativeMockProver.parseAndConsumeProof(serializedProof, proofBlockHeight)

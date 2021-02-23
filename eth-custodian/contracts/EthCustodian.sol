@@ -26,8 +26,8 @@ contract EthCustodian is ProofKeeper {
 
     /// EthCustodian is linked to the EVM on NEAR side.
     /// It also links to the prover that it uses to withdraw the tokens.
-    constructor(bytes memory nearEvm, INearProver prover, address _admin)
-        ProofKeeper(nearEvm, prover)
+    constructor(bytes memory nearEvm, INearProver prover, uint64 minBlockAcceptanceHeight, address _admin)
+        ProofKeeper(nearEvm, prover, minBlockAcceptanceHeight)
         public
     {
         admin = _admin;

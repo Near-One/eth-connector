@@ -23,6 +23,7 @@ describe('EthCustodian contract', () => {
     let walletUser1;
     let user2;
     let ethRecipientOnNear;
+    let minBlockAcceptanceHeight;
 
     const nearEvmAccount = Buffer.from('evm.near');
 
@@ -35,8 +36,15 @@ describe('EthCustodian contract', () => {
         nearProverMockContractFactory = await ethers.getContractFactory('NearProverMock')
         nearProver = await nearProverMockContractFactory.deploy();
 
+        // Proofs coming from blocks below this value should be rejected
+        minBlockAcceptanceHeight = 1000;
+
         ethCustodianContractFactory = await ethers.getContractFactory('EthCustodian');
-        ethCustodian = await ethCustodianContractFactory.deploy(nearEvmAccount, nearProver.address, adminAccount.address);
+        ethCustodian = await ethCustodianContractFactory.deploy(
+            nearEvmAccount,
+            nearProver.address,
+            minBlockAcceptanceHeight,
+            adminAccount.address);
 
         let hardhatTestMnemonic = 'test test test test test test test test test test test junk';
         let derivationPathUser1 = 'm/44\'/60\'/0\'/0/5';
@@ -44,20 +52,26 @@ describe('EthCustodian contract', () => {
     });
 
     describe('Deployment', () => {
-        // TODO move this test to ProofKeeper tests
         it('Should revert when prover is zero address', async () => {
             await expect(
-                ethCustodianContractFactory.deploy(nearEvmAccount, ethers.constants.AddressZero, adminAccount.address)
+                ethCustodianContractFactory.deploy(
+                    nearEvmAccount,
+                    ethers.constants.AddressZero,
+                    minBlockAcceptanceHeight,
+                    adminAccount.address)
             )
                 .to
                 .be
                 .revertedWith('Invalid Near prover address');
         });
 
-        // TODO move this test to ProofKeeper tests
         it('Should revert when nearEvmAccount is zero address', async () => {
             await expect(
-                ethCustodianContractFactory.deploy(Buffer.from(''), nearProver.address, adminAccount.address)
+                ethCustodianContractFactory.deploy(
+                    Buffer.from(''),
+                    nearProver.address,
+                    minBlockAcceptanceHeight,
+                    adminAccount.address)
             )
                 .to
                 .be
@@ -205,6 +219,23 @@ describe('EthCustodian contract', () => {
                 .to
                 .be
                 .revertedWith('The burn event cannot be reused');
+        });
+
+        it('Should revert when the proof is coming from the ancient block', async () => {
+            let amount = 5000;
+            proof.outcome_proof.outcome.status.SuccessValue = serialize(SCHEMA, 'Withdrawn', {
+                recipient: ethers.utils.arrayify(user2.address),
+                amount: amount,
+            }).toString('base64');
+
+            let proofBlockHeight = minBlockAcceptanceHeight - 1;
+
+            await expect(
+                ethCustodian.withdraw(borshifyOutcomeProof(proof), proofBlockHeight)
+            )
+                .to
+                .be
+                .revertedWith('Proof is from the ancient block');
         });
     });
 });

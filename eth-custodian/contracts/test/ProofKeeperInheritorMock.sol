@@ -5,8 +5,8 @@ import "rainbow-bridge/contracts/eth/nearprover/contracts/ProofDecoder.sol";
 import { INearProver, ProofKeeper } from "../ProofKeeper.sol";
 
 contract ProofKeeperInheritorMock is ProofKeeper {
-    constructor(bytes memory nearProofProducerAccount, INearProver prover)
-        ProofKeeper(nearProofProducerAccount, prover)
+    constructor(bytes memory nearProofProducerAccount, INearProver prover, uint64 minBlockAcceptanceHeight)
+        ProofKeeper(nearProofProducerAccount, prover, minBlockAcceptanceHeight)
         public
     {
     }
