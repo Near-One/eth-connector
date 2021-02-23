@@ -38,7 +38,8 @@ fn init_test() {
 #[test]
 fn test_sim_deposit() {
     let (master_account, contract, _alice) = init();
-
+/*
+    // Deplot Eth Verifier Contract 
     let status_id = "acc1".to_string();
     let status_amt = to_yocto("100");
     let res = call!(
@@ -49,7 +50,7 @@ fn test_sim_deposit() {
     );
     println!("CALL: {:#?}", res);
     println!("#2: {:#?}", res.promise_results());
-    
+*/    
     let proof = Proof {
         log_index: 0,
         log_entry_data: vec![],

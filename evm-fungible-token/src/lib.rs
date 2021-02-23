@@ -3,9 +3,7 @@ use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::json_types::U128;
 use near_sdk::collections::{LookupSet, UnorderedMap};
 use near_sdk::serde_json::{self, json};
-use near_sdk::{
-    env, log, near_bindgen, AccountId, Balance, Gas, PanicOnDefault, Promise, PromiseResult,
-};
+use near_sdk::{env, log, near_bindgen, AccountId, Balance, Gas, PanicOnDefault, Promise, PromiseResult, PromiseOrValue};
 
 use connector::deposit_event::EthDepositedEvent;
 pub use connector::prover::{validate_eth_address, EthAddress, Proof};
@@ -58,6 +56,7 @@ pub fn is_promise_success() -> bool {
 
 #[near_bindgen]
 impl EthConnector {
+    /// Test solution for Eth verify log contract
     pub fn deploy(&self, account_id: String, amount: U128) {
         let promise_idx = env::promise_batch_create(&account_id);
         env::promise_batch_action_create_account(promise_idx);
@@ -120,6 +119,7 @@ impl EthConnector {
                 "receipt_data": proof.receipt_data,
                 "header_data": proof.header_data,
                 "proof": proof.proof,
+                "skip_bridge_call": false,
             })
             .to_string()
             .as_bytes(),
@@ -132,7 +132,7 @@ impl EthConnector {
             b"finish_deposit",
             json!({
                 "new_owner_id": event.recipient,
-                "amount": event.amount,
+                "amount": 10,
                 "proof": proof_1,
             })
             .to_string()
@@ -140,19 +140,6 @@ impl EthConnector {
             NO_DEPOSIT,
             prepaid_gas / 4,
         );
-        /*let promise0 = env::promise_create(
-            account_id,
-            b"finish_deposit",
-            json!({
-                "new_owner_id": event.recipient,
-                "amount": 10,
-                "proof": proof_1,
-            })
-                .to_string()
-                .as_bytes(),
-            NO_DEPOSIT,
-            prepaid_gas / 4,
-        );*/
         env::promise_return(promise0);
     }
 
@@ -162,16 +149,19 @@ impl EthConnector {
     #[private]
     pub fn finish_deposit(
         &mut self,
-        // #[callback]
-        // #[serializer(borsh)]
-        // verification_success: bool,
         new_owner_id: AccountId,
         amount: u64,
         proof: Proof,
     ) {
         log!("finish_deposit - Promise results: {:?}", env::promise_results_count());
         log!("Amount: {:?}", amount);
-        //assert!(verification_success, "Failed to verify the proof");
+        assert_eq!(env::promise_results_count(), 1);
+        let data0: Vec<u8> = match env::promise_result(0) {
+            PromiseResult::Successful(x) => x,
+            _ => panic!("Promise with index 0 failed"),
+        };
+        let verification_success: bool = serde_json::from_slice(&data0).unwrap();
+        assert!(verification_success, "Failed to verify the proof");
         self.record_proof(&proof.get_key());
 
         // TODO: improve
@@ -336,5 +326,18 @@ impl EthConnector {
         let required_deposit =
             Balance::from(current_storage - initial_storage) * STORAGE_PRICE_PER_BYTE;
         attached_deposit - required_deposit
+    }
+
+    pub fn verify_log_entry(
+        &self,
+        log_index: u64,
+        log_entry_data: Vec<u8>,
+        receipt_index: u64,
+        receipt_data: Vec<u8>,
+        header_data: Vec<u8>,
+        proof: Vec<Vec<u8>>,
+        skip_bridge_call: bool,
+    ) -> bool {
+        true
     }
 }
