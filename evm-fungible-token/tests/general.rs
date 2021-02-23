@@ -1,6 +1,4 @@
-use near_sdk_sim::{
-    deploy, init_simulator, to_yocto,  ContractAccount, UserAccount,
-};
+use near_sdk_sim::{deploy, init_simulator, to_yocto, ContractAccount, UserAccount};
 
 extern crate eth_connector;
 use eth_connector::EthConnectorContract;
@@ -17,7 +15,7 @@ fn init(
     UserAccount,
 ) {
     let master_account = init_simulator(None);
-     let eth_proof = "eth_proof".to_string();
+    let eth_proof = "eth_proof".to_string();
     // let acc = master_account.deploy(&TOKEN_WASM_BYTES, eth_proof, near_sdk_sim::STORAGE_AMOUNT);
     // let contract_account = near_sdk_sim::ContractAccount{
     //     user_account: acc,

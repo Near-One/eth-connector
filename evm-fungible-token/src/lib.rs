@@ -2,15 +2,17 @@
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 //use near_sdk::json_types::U128;
 use near_sdk::serde_json::{self, json};
-use near_sdk::{env, near_bindgen, AccountId, Balance, Gas, Promise, PromiseResult, PanicOnDefault};
+use near_sdk::{
+    env, near_bindgen, AccountId, Balance, Gas, PanicOnDefault, Promise, PromiseResult,
+};
 
 //use near_sdk::collections::UnorderedSet;
 //use near_sdk::{env, ext_contract, near_bindgen, AccountId, Balance, Gas, Promise, PromiseResult};
 
-// use crate::connector::prover::Proof;
-// use connector::deposit_event::EthDepositedEvent;
+use crate::connector::prover::Proof;
+use connector::deposit_event::EthDepositedEvent;
 use connector::prover::{validate_eth_address, EthAddress};
-// use connector::withdraw_event::EthWithdrawEvent;
+use connector::withdraw_event::EthWithdrawEvent;
 use near_sdk::collections::{LookupSet, UnorderedMap};
 
 mod connector;
@@ -71,16 +73,16 @@ impl EthConnector {
         Self {
             account_id,
             prover_account,
-            eth_custodian_address:  validate_eth_address(eth_custodian_address),
+            eth_custodian_address: validate_eth_address(eth_custodian_address),
             used_events: LookupSet::new(b"u".to_vec()),
         }
     }
-}
-/*
+
     /// Deposit from Ethereum to NEAR based on the proof of the locked tokens.
     /// Must attach enough NEAR funds to cover for storage of the proof.
     #[payable]
     pub fn deposit(&mut self, proof: Proof) {
+        env::log(b"Deposit started");
         let event = EthDepositedEvent::from_log_entry_data(&proof.log_entry_data);
         assert_eq!(
             event.eth_custodian_address,
@@ -94,11 +96,11 @@ impl EthConnector {
         let prepaid_gas = env::prepaid_gas();
         let promise0 = env::promise_create(
             account_id.clone(),
-            b"merge_sort",
+            b"verify_log_entry",
             json!({
                 "log_index": proof.log_index,
-            "log_entry_data": proof.log_entry_data,
-            "receipt_index": proof.receipt_index,
+                "log_entry_data": proof.log_entry_data,
+                "receipt_index": proof.receipt_index,
                 "receipt_data": proof.receipt_data,
                 "header_data": proof.header_data,
                 "proof": proof.proof,
@@ -111,7 +113,7 @@ impl EthConnector {
         let promise1 = env::promise_then(
             promise0,
             account_id,
-            b"get_status",
+            b"finish_deposit",
             json!({
                 "new_owner_id": event.recipient,
                 "amount": event.amount,
@@ -125,33 +127,33 @@ impl EthConnector {
         env::promise_return(promise1);
     }
 
-        /// Finish depositing once the proof was successfully validated.
-        /// Can only be called by the contract itself.
-        #[payable]
-        pub fn finish_deposit(
-            &mut self,
-            #[callback]
-            #[serializer(borsh)]
-            verification_success: bool,
-            #[serializer(borsh)] new_owner_id: AccountId,
-            #[serializer(borsh)] amount: Balance,
-            #[serializer(borsh)] proof: Proof,
-        ) -> Promise {
-            assert_self();
-            assert!(verification_success, "Failed to verify the proof");
-            self.record_proof(&proof);
+    /// Finish depositing once the proof was successfully validated.
+    /// Can only be called by the contract itself.
+    #[payable]
+    pub fn finish_deposit(
+        &mut self,
+        #[callback]
+        #[serializer(borsh)]
+        verification_success: bool,
+        #[serializer(borsh)] _new_owner_id: AccountId,
+        #[serializer(borsh)] _amount: Balance,
+        #[serializer(borsh)] proof: Proof,
+    ) {
+        assert_self();
+        assert!(verification_success, "Failed to verify the proof");
+        self.record_proof(&proof.get_key());
 
-            // TODO: refactor
-            let token = String::from("");
-            ext_bridge_token::mint(
-                new_owner_id,
-                amount.into(),
-                &self.get_bridge_token_account_id(token),
-                NO_DEPOSIT,
-                env::prepaid_gas() / 2,
-            )
-        }
+        // TODO: improve
+        /*mint(
+            new_owner_id,
+            amount.into(),
+            &self.get_bridge_token_account_id(token),
+            NO_DEPOSIT,
+            env::prepaid_gas() / 2,
+        )*/
+    }
 
+    /*
         /// Burn given amount of tokens and unlock it on the Ethereum side for the recipient address.
         /// We return the amount as u128 and the address of the beneficiary as `[u8; 20]` for ease of
         /// processing on Solidity side.
@@ -288,27 +290,20 @@ impl EthConnector {
         //         TRANSFER_GAS,
         //     )
         // }
-
-        /// Record proof to make sure it is not re-used later for anther deposit.
-        fn record_proof(&mut self, proof: &Proof) -> Balance {
-            // TODO: Instead of sending the full proof (clone only relevant parts of the Proof)
-            //       log_index / receipt_index / header_data
-            assert_self();
-            let initial_storage = env::storage_usage();
-            let mut data = proof.log_index.try_to_vec().unwrap();
-            data.extend(proof.receipt_index.try_to_vec().unwrap());
-            data.extend(proof.header_data.clone());
-            let key = env::sha256(&data);
-            // assert!(
-            //     !self.used_events.contains(&key),
-            //     "Event cannot be reused for depositing. Proof already exist."
-            // );
-            // self.used_events.insert(&key);
-            let current_storage = env::storage_usage();
-            let attached_deposit = env::attached_deposit();
-            let required_deposit =
-                Balance::from(current_storage - initial_storage) * STORAGE_PRICE_PER_BYTE;
-            attached_deposit - required_deposit
-        }
     */
-
+    /// Record proof to make sure it is not re-used later for anther deposit.
+    #[private]
+    fn record_proof(&mut self, key: &Vec<u8>) -> Balance {
+        let initial_storage = env::storage_usage();
+        assert!(
+            !self.used_events.contains(&key),
+            "Event cannot be reused for depositing. Proof already exist."
+        );
+        self.used_events.insert(&key);
+        let current_storage = env::storage_usage();
+        let attached_deposit = env::attached_deposit();
+        let required_deposit =
+            Balance::from(current_storage - initial_storage) * STORAGE_PRICE_PER_BYTE;
+        attached_deposit - required_deposit
+    }
+}

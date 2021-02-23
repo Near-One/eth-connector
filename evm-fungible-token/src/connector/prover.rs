@@ -1,6 +1,7 @@
 use eth_types::*;
 use ethabi::{Event, EventParam, Hash, Log, ParamType, RawLog};
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
+use near_sdk::env;
 use near_sdk::serde::{Deserialize, Serialize};
 use std::convert::From;
 
@@ -24,6 +25,15 @@ pub struct Proof {
     pub receipt_data: Vec<u8>,
     pub header_data: Vec<u8>,
     pub proof: Vec<Vec<u8>>,
+}
+
+impl Proof {
+    pub fn get_key(&self) -> Vec<u8> {
+        let mut data = self.log_index.try_to_vec().unwrap();
+        data.extend(self.receipt_index.try_to_vec().unwrap());
+        data.extend(self.header_data.clone());
+        env::sha256(&data)
+    }
 }
 
 /// Parameters of Etherium event
