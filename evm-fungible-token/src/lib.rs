@@ -1,19 +1,15 @@
 #![allow(dead_code, unused_imports)]
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-//use near_sdk::json_types::U128;
+use near_sdk::json_types::U128;
+use near_sdk::collections::{LookupSet, UnorderedMap};
 use near_sdk::serde_json::{self, json};
 use near_sdk::{
-    env, near_bindgen, AccountId, Balance, Gas, PanicOnDefault, Promise, PromiseResult,
+    env, log, near_bindgen, AccountId, Balance, Gas, PanicOnDefault, Promise, PromiseResult,
 };
 
-//use near_sdk::collections::UnorderedSet;
-//use near_sdk::{env, ext_contract, near_bindgen, AccountId, Balance, Gas, Promise, PromiseResult};
-
-use crate::connector::prover::Proof;
 use connector::deposit_event::EthDepositedEvent;
-use connector::prover::{validate_eth_address, EthAddress};
+pub use connector::prover::{validate_eth_address, EthAddress, Proof};
 use connector::withdraw_event::EthWithdrawEvent;
-use near_sdk::collections::{LookupSet, UnorderedMap};
 
 mod connector;
 // mod fungible_token;
@@ -36,7 +32,6 @@ pub enum ResultType {
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct EthConnector {
-    pub account_id: String,
     /// The account of the prover that we can use to prove
     pub prover_account: AccountId,
     /// Address of the Ethereum custodian contract.
@@ -63,15 +58,26 @@ pub fn is_promise_success() -> bool {
 
 #[near_bindgen]
 impl EthConnector {
+    pub fn deploy(&self, account_id: String, amount: U128) {
+        let promise_idx = env::promise_batch_create(&account_id);
+        env::promise_batch_action_create_account(promise_idx);
+        env::promise_batch_action_transfer(promise_idx, amount.0);
+        env::promise_batch_action_add_key_with_full_access(
+            promise_idx,
+            &env::signer_account_pk(),
+            0,
+        );
+        let code: &[u8] = include_bytes!("../res/eth_prover.wasm");
+        env::promise_batch_action_deploy_contract(promise_idx, code);
+    }
+    
     /// Initializes the contract.
     /// `prover_account`: NEAR account of the Near Prover contract;
     /// `eth_custodian_address`: Ethereum address of the custodian contract, in hex.
     #[init]
     pub fn new(prover_account: AccountId, eth_custodian_address: String) -> Self {
         assert!(!env::state_exists(), "Already initialized");
-        let account_id = "".to_string();
         Self {
-            account_id,
             prover_account,
             eth_custodian_address: validate_eth_address(eth_custodian_address),
             used_events: LookupSet::new(b"u".to_vec()),
@@ -82,8 +88,17 @@ impl EthConnector {
     /// Must attach enough NEAR funds to cover for storage of the proof.
     #[payable]
     pub fn deposit(&mut self, proof: Proof) {
-        env::log(b"Deposit started");
-        let event = EthDepositedEvent::from_log_entry_data(&proof.log_entry_data);
+        log!("Deposit started");
+        //let event = EthDepositedEvent::from_log_entry_data(&proof.log_entry_data);
+        // TODO: for testing only
+        let event = EthDepositedEvent{
+            eth_custodian_address: self.eth_custodian_address,
+            sender: "sender1".into(),
+            amount: 100,
+            recipient: "rcv1".into(),
+            fee: 10,
+        };
+        
         assert_eq!(
             event.eth_custodian_address,
             self.eth_custodian_address,
@@ -94,6 +109,7 @@ impl EthConnector {
         let proof_1 = proof.clone();
         let account_id = env::current_account_id();
         let prepaid_gas = env::prepaid_gas();
+        log!("Deposit verify_log_entry");
         let promise0 = env::promise_create(
             account_id.clone(),
             b"verify_log_entry",
@@ -124,23 +140,38 @@ impl EthConnector {
             NO_DEPOSIT,
             prepaid_gas / 4,
         );
-        env::promise_return(promise1);
+        /*let promise0 = env::promise_create(
+            account_id,
+            b"finish_deposit",
+            json!({
+                "new_owner_id": event.recipient,
+                "amount": 10,
+                "proof": proof_1,
+            })
+                .to_string()
+                .as_bytes(),
+            NO_DEPOSIT,
+            prepaid_gas / 4,
+        );*/
+        env::promise_return(promise0);
     }
 
     /// Finish depositing once the proof was successfully validated.
     /// Can only be called by the contract itself.
     #[payable]
+    #[private]
     pub fn finish_deposit(
         &mut self,
-        #[callback]
-        #[serializer(borsh)]
-        verification_success: bool,
-        #[serializer(borsh)] _new_owner_id: AccountId,
-        #[serializer(borsh)] _amount: Balance,
-        #[serializer(borsh)] proof: Proof,
+        // #[callback]
+        // #[serializer(borsh)]
+        // verification_success: bool,
+        new_owner_id: AccountId,
+        amount: u64,
+        proof: Proof,
     ) {
-        assert_self();
-        assert!(verification_success, "Failed to verify the proof");
+        log!("finish_deposit - Promise results: {:?}", env::promise_results_count());
+        log!("Amount: {:?}", amount);
+        //assert!(verification_success, "Failed to verify the proof");
         self.record_proof(&proof.get_key());
 
         // TODO: improve
