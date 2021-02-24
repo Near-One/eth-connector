@@ -166,7 +166,7 @@ impl FungibleTokenResolver for FungibleToken {
                 let refund_amount = std::cmp::min(receiver_balance, unused_amount);
                 self.accounts
                     .insert(&receiver_id, &(receiver_balance - refund_amount));
-                
+
                 if let Some(sender_balance) = self.accounts.get(&sender_id) {
                     self.accounts
                         .insert(&sender_id, &(sender_balance + refund_amount));

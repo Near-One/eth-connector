@@ -14,7 +14,7 @@ use near_sdk::collections::LookupMap;
 use near_sdk::json_types::U128;
 use near_sdk::{env, near_bindgen, AccountId, Balance, Promise, StorageUsage};
 
-//pub use crate::fungible_token::fungible_token_core::*;
+pub use crate::fungible_token::fungible_token_core::*;
 pub use crate::fungible_token::fungible_token_metadata::*;
 use crate::fungible_token::internal::*;
 pub use crate::fungible_token::storage_manager::*;

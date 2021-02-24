@@ -1,9 +1,11 @@
 use near_sdk_sim::{
-    call, deploy, init_simulator, to_yocto, ContractAccount, UserAccount, DEFAULT_GAS,
+    call, deploy, init_simulator, to_yocto, view, ContractAccount, UserAccount, DEFAULT_GAS,
 };
 
 extern crate eth_connector;
 use eth_connector::{EthConnectorContract, Proof};
+use near_sdk::json_types::{ValidAccountId, U128};
+use std::convert::TryFrom;
 
 near_sdk_sim::lazy_static! {
     static ref TOKEN_WASM_BYTES: &'static [u8] = include_bytes!("../res/eth_connector.wasm").as_ref();
@@ -64,8 +66,10 @@ fn test_sim_deposit() {
         gas = DEFAULT_GAS * 3
     );
 
-    let promise_outcomes = res.get_receipt_results();
-    println!("CALL: {:#?}", res);
-    println!("#1: {:#?}", promise_outcomes);
-    println!("#2: {:#?}", res.promise_results());
+    println!("#1: {:#?}", res.promise_results());
+
+    let acc_id = ValidAccountId::try_from("rcv1").unwrap();
+    let res = view!(contract.balance_of(acc_id));
+    let minted_balance = res.unwrap_json::<U128>();
+    assert_eq!(minted_balance, U128::from(10));
 }

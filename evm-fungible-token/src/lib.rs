@@ -1,14 +1,14 @@
 #![allow(dead_code, unused_imports, unused_variables)]
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LookupSet, UnorderedMap};
-use near_sdk::json_types::U128;
+use near_sdk::json_types::{ValidAccountId, U128};
 use near_sdk::serde_json::{self, json};
 use near_sdk::{
     env, log, near_bindgen, AccountId, Balance, Gas, PanicOnDefault, Promise, PromiseOrValue,
     PromiseResult,
 };
 
-use crate::fungible_token::{FungibleToken, FungibleTokenMetadataProvider};
+use crate::fungible_token::{FungibleToken, FungibleTokenCore, FungibleTokenMetadataProvider};
 use connector::deposit_event::EthDepositedEvent;
 pub use connector::prover::{validate_eth_address, EthAddress, Proof};
 use connector::withdraw_event::EthWithdrawEvent;
@@ -24,12 +24,6 @@ const STORAGE_PRICE_PER_BYTE: Balance = 100_000_000_000_000_000_000; // 1e20yN, 
 const NO_DEPOSIT: Balance = 0;
 const TRANSFER_FROM_GAS: Gas = 10_000_000_000_000;
 const TRANSFER_GAS: Gas = 10_000_000_000_000;
-
-#[derive(Debug, Eq, PartialEq, BorshSerialize, BorshDeserialize)]
-pub enum ResultType {
-    Deposit,
-    Withdraw,
-}
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
@@ -87,8 +81,8 @@ impl EthConnector {
             used_events: LookupSet::new(b"u".to_vec()),
             token: FungibleToken::fungible_token(
                 U128::from(1000),
-                "".into(),
-                "".into(),
+                "v1".into(),
+                "nETH".into(),
                 "nETH".into(),
                 "".into(),
                 0,
@@ -158,7 +152,6 @@ impl EthConnector {
 
     /// Finish depositing once the proof was successfully validated.
     /// Can only be called by the contract itself.
-    #[payable]
     #[private]
     pub fn finish_deposit(&mut self, new_owner_id: AccountId, amount: u64, proof: Proof) {
         log!(
@@ -190,6 +183,13 @@ impl EthConnector {
         } else {
             self.token.internal_deposit(&owner_id, amount);
         }
+    }
+
+    /// Burn token
+    #[private]
+    fn burn(&mut self, owner_id: AccountId, amount: Balance) {
+        log!("Burn {:?} tokens for: {:?}", amount, owner_id);
+        self.token.internal_withdraw(&owner_id, amount);
     }
 
     /*
@@ -270,6 +270,10 @@ impl EthConnector {
         let required_deposit =
             Balance::from(current_storage - initial_storage) * STORAGE_PRICE_PER_BYTE;
         attached_deposit - required_deposit
+    }
+
+    pub fn balance_of(&self, account_id: ValidAccountId) -> U128 {
+        self.token.ft_balance_of(account_id)
     }
 
     /// For tests only. Ir should be external Contract
