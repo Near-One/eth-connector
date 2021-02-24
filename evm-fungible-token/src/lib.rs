@@ -177,14 +177,19 @@ impl EthConnector {
         let md = self.token.ft_metadata();
         log!("Metadata: {:?}", md.symbol);
 
-        // TODO: improve
-        /*mint(
-            new_owner_id,
-            amount.into(),
-            &self.get_bridge_token_account_id(token),
-            NO_DEPOSIT,
-            env::prepaid_gas() / 2,
-        )*/
+        self.mint(new_owner_id, amount.into());
+    }
+
+    /// Mint Fungible Token
+    /// TODO: should be related to NEP-145
+    #[private]
+    fn mint(&mut self, owner_id: AccountId, amount: Balance) {
+        log!("Mint {:?} tokens for: {:?}", amount, owner_id);
+        if self.token.accounts.get(&owner_id).is_none() {
+            self.token.accounts.insert(&owner_id, &amount);
+        } else {
+            self.token.internal_deposit(&owner_id, amount);
+        }
     }
 
     /*
@@ -213,12 +218,6 @@ impl EthConnector {
                     token_address,
                     recipient_address,
                 )
-            }
-
-            pub fn get_bridge_token_account_id(&self, address: String) -> AccountId {
-                let address = address.to_lowercase();
-                let _ = validate_eth_address(address.clone());
-                format!("{}.{}", address, env::current_account_id())
             }
 
             #[payable]
@@ -273,6 +272,7 @@ impl EthConnector {
         attached_deposit - required_deposit
     }
 
+    /// For tests only. Ir should be external Contract
     pub fn verify_log_entry(
         &self,
         log_index: u64,
