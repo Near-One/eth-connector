@@ -96,14 +96,16 @@ impl EthConnector {
     pub fn deposit(&mut self, proof: Proof) {
         log!("Deposit started");
         //let event = EthDepositedEvent::from_log_entry_data(&proof.log_entry_data);
+        //================================
         // TODO: for testing only
         let event = EthDepositedEvent {
             eth_custodian_address: self.eth_custodian_address,
             sender: "sender1".into(),
-            amount: 100,
+            amount: U128::from(100),
             recipient: "rcv1".into(),
-            fee: 10,
+            fee: U128::from(2),
         };
+        //================================
 
         assert_eq!(
             event.eth_custodian_address,
@@ -139,7 +141,7 @@ impl EthConnector {
             b"finish_deposit",
             json!({
                 "new_owner_id": event.recipient,
-                "amount": 10,
+                "amount": event.amount,
                 "proof": proof_1,
             })
             .to_string()
@@ -153,7 +155,7 @@ impl EthConnector {
     /// Finish depositing once the proof was successfully validated.
     /// Can only be called by the contract itself.
     #[private]
-    pub fn finish_deposit(&mut self, new_owner_id: AccountId, amount: u64, proof: Proof) {
+    pub fn finish_deposit(&mut self, new_owner_id: AccountId, amount: U128, proof: Proof) {
         log!(
             "finish_deposit - Promise results: {:?}",
             env::promise_results_count()
@@ -173,7 +175,7 @@ impl EthConnector {
         self.mint(new_owner_id, amount.into());
     }
 
-    /// Mint Fungible Token
+    /// Mint Fungible Token for account
     /// TODO: should be related to NEP-145
     #[private]
     fn mint(&mut self, owner_id: AccountId, amount: Balance) {
@@ -185,76 +187,61 @@ impl EthConnector {
         }
     }
 
-    /// Burn token
+    /// Burn Fungible Token for account
     #[private]
     fn burn(&mut self, owner_id: AccountId, amount: Balance) {
         log!("Burn {:?} tokens for: {:?}", amount, owner_id);
         self.token.internal_withdraw(&owner_id, amount);
     }
 
-    /*
-            /// Burn given amount of tokens and unlock it on the Ethereum side for the recipient address.
-            /// We return the amount as u128 and the address of the beneficiary as `[u8; 20]` for ease of
-            /// processing on Solidity side.
-            /// Caller must be <token_address>.<current_account_id>, where <token_address> exists in the `tokens`.
-            #[result_serializer(borsh)]
-            pub fn finish_withdraw(
-                &mut self,
-                #[serializer(borsh)] amount: Balance,
-                #[serializer(borsh)] recipient: String,
-            ) -> (ResultType, u128, [u8; 20], [u8; 20]) {
-                let token = env::predecessor_account_id();
-                let parts: Vec<&str> = token.split(".").collect();
-                assert_eq!(
-                    token,
-                    format!("{}.{}", parts[0], env::current_account_id()),
-                    "Only sub accounts of EthConnector can call this method."
-                );
-                let token_address = validate_eth_address(parts[0].to_string());
-                let recipient_address = validate_eth_address(recipient);
-                (
-                    ResultType::Withdraw,
-                    amount.into(),
-                    token_address,
-                    recipient_address,
-                )
-            }
-
-            #[payable]
-            pub fn unlock(&mut self, #[serializer(borsh)] proof: Proof) -> Promise {
-                assert!(false, "Native NEP21 on Ethereum is disabled.");
-                let event = EthUnlockedEvent::from_log_entry_data(&proof.log_entry_data);
-                assert_eq!(
-                    event.locker_address,
-                    self.eth_custodian_address,
-                    "Event's address {} does not match custodian address of this token {}",
-                    hex::encode(&event.locker_address),
-                    hex::encode(&self.eth_custodian_address),
-                );
-                let proof_1 = proof.clone();
-                ext_prover::verify_log_entry(
-                    proof.log_index,
-                    proof.log_entry_data,
-                    proof.receipt_index,
-                    proof.receipt_data,
-                    proof.header_data,
-                    proof.proof,
-                    false, // Do not skip bridge call. This is only used for development and diagnostics.
-                    &self.prover_account,
-                    NO_DEPOSIT,
-                    env::prepaid_gas() / 4,
-                )
-                // .then(ext_self::finish_unlock(
-                //     event.token,
-                //     event.recipient,
-                //     event.amount,
-                //     proof_1,
-                //     &env::current_account_id(),
-                //     env::attached_deposit(),
-                //     env::prepaid_gas() / 2,
-                // ))
-            }
-    */
+    #[payable]
+    pub fn withdraw(&mut self, proof: Proof) {
+        log!("Start withdraw");
+        let event = EthWithdrawEvent::from_log_entry_data(&proof.log_entry_data);
+        assert_eq!(
+            event.eth_custodian_address,
+            self.eth_custodian_address,
+            "Event's address {} does not match custodian address of this token {}",
+            hex::encode(&event.eth_custodian_address),
+            hex::encode(&self.eth_custodian_address),
+        );
+        let proof_1 = proof.clone();
+        let account_id = env::current_account_id();
+        let prepaid_gas = env::prepaid_gas();
+        log!("Withdraw verify_log_entry");
+        let promise0 = env::promise_create(
+            account_id.clone(),
+            b"verify_log_entry",
+            json!({
+                "log_index": proof.log_index,
+                "log_entry_data": proof.log_entry_data,
+                "receipt_index": proof.receipt_index,
+                "receipt_data": proof.receipt_data,
+                "header_data": proof.header_data,
+                "proof": proof.proof,
+                "skip_bridge_call": false,
+            })
+            .to_string()
+            .as_bytes(),
+            NO_DEPOSIT,
+            prepaid_gas / 4,
+        );
+        let promise1 = env::promise_then(
+            promise0,
+            account_id,
+            b"finish_withdraw",
+            json!({
+                "owner_id": event.recipient,
+                "amount": event.amount,
+                "proof": proof_1,
+            })
+            .to_string()
+            .as_bytes(),
+            NO_DEPOSIT,
+            prepaid_gas / 4,
+        );
+        env::promise_return(promise0);
+    }
 
     /// Record proof to make sure it is not re-used later for anther deposit.
     #[private]

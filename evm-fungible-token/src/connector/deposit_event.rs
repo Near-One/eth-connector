@@ -1,16 +1,17 @@
 use super::prover::{EthAddress, EthEvent, EthEventParams};
 use ethabi::ParamType;
 use hex::ToHex;
+use near_sdk::json_types::U128;
 use near_sdk::{AccountId, Balance};
 
 /// Data that was emitted by the Ethereum Deposited event.
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct EthDepositedEvent {
     pub eth_custodian_address: EthAddress,
     pub sender: String,
-    pub amount: Balance,
+    pub amount: U128,
     pub recipient: AccountId,
-    pub fee: Balance,
+    pub fee: U128,
 }
 
 impl EthDepositedEvent {
@@ -33,19 +34,23 @@ impl EthDepositedEvent {
             EthEvent::from_log_entry_data("Deposited", EthDepositedEvent::event_params(), data);
         let sender = event.log.params[0].value.clone().to_address().unwrap().0;
         let sender = (&sender).encode_hex::<String>();
-        let amount = event.log.params[1]
-            .value
-            .clone()
-            .to_uint()
-            .unwrap()
-            .as_u128();
+        let amount = U128::from(
+            event.log.params[1]
+                .value
+                .clone()
+                .to_uint()
+                .unwrap()
+                .as_u128(),
+        );
         let recipient = event.log.params[2].value.clone().to_string().unwrap();
-        let fee = event.log.params[3]
-            .value
-            .clone()
-            .to_uint()
-            .unwrap()
-            .as_u128();
+        let fee = U128::from(
+            event.log.params[3]
+                .value
+                .clone()
+                .to_uint()
+                .unwrap()
+                .as_u128(),
+        );
         Self {
             eth_custodian_address: event.eth_custodian_address,
             sender,
@@ -61,7 +66,7 @@ impl std::fmt::Display for EthDepositedEvent {
         write!(
             f,
             "sender: {}; amount: {}; recipient: {}; fee: {}",
-            self.sender, self.amount, self.recipient, self.fee,
+            self.sender, self.amount.0, self.recipient, self.fee.0,
         )
     }
 }

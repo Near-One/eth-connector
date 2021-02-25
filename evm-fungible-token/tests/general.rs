@@ -71,5 +71,5 @@ fn test_sim_deposit() {
     let acc_id = ValidAccountId::try_from("rcv1").unwrap();
     let res = view!(contract.balance_of(acc_id));
     let minted_balance = res.unwrap_json::<U128>();
-    assert_eq!(minted_balance, U128::from(10));
+    assert_eq!(minted_balance, U128::from(100));
 }
