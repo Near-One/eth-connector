@@ -66,10 +66,46 @@ fn test_sim_deposit() {
         gas = DEFAULT_GAS * 3
     );
 
-    println!("#1: {:#?}", res.promise_results());
+    // println!("#1: {:#?}", res.promise_results());
 
     let acc_id = ValidAccountId::try_from("rcv1").unwrap();
     let res = view!(contract.balance_of(acc_id));
     let minted_balance = res.unwrap_json::<U128>();
     assert_eq!(minted_balance, U128::from(100));
+}
+
+#[test]
+fn test_sim_withdraw() {
+    let (master_account, contract, _alice) = init();
+    let proof = Proof {
+        log_index: 0,
+        log_entry_data: vec![],
+        receipt_index: 0,
+        receipt_data: vec![],
+        header_data: vec![],
+        proof: vec![],
+    };
+    call!(
+        master_account,
+        contract.deposit(proof.clone()),
+        gas = DEFAULT_GAS * 3
+    );
+    let acc_id = ValidAccountId::try_from("rcv1").unwrap();
+    let res = view!(contract.balance_of(acc_id.clone()));
+    let minted_balance = res.unwrap_json::<U128>();
+    assert_eq!(minted_balance, U128::from(100));
+
+    let mut proof1 = proof.clone();
+    proof1.log_index = 1;
+
+    let res = call!(
+        master_account,
+        contract.withdraw(proof1.clone()),
+        gas = DEFAULT_GAS * 3
+    );
+
+    // println!("#1: {:#?}", res.promise_results());
+    let res = view!(contract.balance_of(acc_id));
+    let minted_balance = res.unwrap_json::<U128>();
+    assert_eq!(minted_balance, U128::from(95));
 }

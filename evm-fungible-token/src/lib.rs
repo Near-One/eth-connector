@@ -197,7 +197,18 @@ impl EthConnector {
     #[payable]
     pub fn withdraw(&mut self, proof: Proof) {
         log!("Start withdraw");
-        let event = EthWithdrawEvent::from_log_entry_data(&proof.log_entry_data);
+        // let event = EthWithdrawEvent::from_log_entry_data(&proof.log_entry_data);
+        //================================
+        // TODO: for testing only
+        let event = EthWithdrawEvent {
+            eth_custodian_address: self.eth_custodian_address,
+            sender: "sender1".into(),
+            amount: U128::from(5),
+            recipient: "rcv1".into(),
+            fee: U128::from(2),
+        };
+        //================================
+
         assert_eq!(
             event.eth_custodian_address,
             self.eth_custodian_address,
@@ -243,13 +254,34 @@ impl EthConnector {
         env::promise_return(promise0);
     }
 
+    #[private]
+    pub fn finish_withdraw(&mut self, owner_id: AccountId, amount: U128, proof: Proof) {
+        log!(
+            "finish_withdraw - Promise results: {:?}",
+            env::promise_results_count()
+        );
+        log!("Amount: {:?}", amount);
+        assert_eq!(env::promise_results_count(), 1);
+        let data0: Vec<u8> = match env::promise_result(0) {
+            PromiseResult::Successful(x) => x,
+            _ => panic!("Promise with index 0 failed"),
+        };
+        let verification_success: bool = serde_json::from_slice(&data0).unwrap();
+        assert!(verification_success, "Failed to verify the proof");
+        self.record_proof(&proof.get_key());
+        let md = self.token.ft_metadata();
+        log!("Metadata: {:?}", md.symbol);
+
+        self.burn(owner_id, amount.into());
+    }
+
     /// Record proof to make sure it is not re-used later for anther deposit.
     #[private]
     fn record_proof(&mut self, key: &Vec<u8>) -> Balance {
         let initial_storage = env::storage_usage();
         assert!(
             !self.used_events.contains(&key),
-            "Event cannot be reused for depositing. Proof already exist."
+            "Proof event cannot be reused. Proof already exist."
         );
         self.used_events.insert(&key);
         let current_storage = env::storage_usage();
