@@ -25,6 +25,12 @@ const NO_DEPOSIT: Balance = 0;
 const TRANSFER_FROM_GAS: Gas = 10_000_000_000_000;
 const TRANSFER_GAS: Gas = 10_000_000_000_000;
 
+const FUNGIBLE_TOKEN_NAME: &'static str = "NEAR ETH Fungible Token";
+const FUNGIBLE_TOKEN_SYMBOL: &'static str = "nETH";
+const FUNGIBLE_TOKEN_VERSION: &'static str = "v1";
+const FUNGIBLE_TOKEN_TOTAL_SUPPLY: u128 = 0;
+const FUNGIBLE_TOKEN_DECIMALS: u8 = 0;
+
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct EthConnector {
@@ -32,8 +38,9 @@ pub struct EthConnector {
     pub prover_account: AccountId,
     /// Address of the Ethereum custodian contract.
     pub eth_custodian_address: EthAddress,
-    // Hashes of the events that were already used.
+    /// Hashes of the events that were already used.
     pub used_events: LookupSet<Vec<u8>>,
+    /// Fungible token specific data
     pub token: FungibleToken,
 }
 
@@ -55,7 +62,7 @@ pub fn is_promise_success() -> bool {
 
 #[near_bindgen]
 impl EthConnector {
-    /// Test solution for Eth verify log contract
+    /// TODO: Test solution only for Eth verify log contract
     pub fn deploy(&self, account_id: String, amount: U128) {
         let promise_idx = env::promise_batch_create(&account_id);
         env::promise_batch_action_create_account(promise_idx);
@@ -80,12 +87,12 @@ impl EthConnector {
             eth_custodian_address: validate_eth_address(eth_custodian_address),
             used_events: LookupSet::new(b"u".to_vec()),
             token: FungibleToken::fungible_token(
-                U128::from(1000),
-                "v1".into(),
+                U128::from(FUNGIBLE_TOKEN_TOTAL_SUPPLY),
+                FUNGIBLE_TOKEN_VERSION.into(),
+                FUNGIBLE_TOKEN_NAME.into(),
                 "nETH".into(),
-                "nETH".into(),
-                "".into(),
-                0,
+                FUNGIBLE_TOKEN_SYMBOL.into(),
+                FUNGIBLE_TOKEN_DECIMALS,
             ),
         }
     }
@@ -94,7 +101,6 @@ impl EthConnector {
     /// Must attach enough NEAR funds to cover for storage of the proof.
     #[payable]
     pub fn deposit(&mut self, proof: Proof) {
-        log!("Deposit started");
         //let event = EthDepositedEvent::from_log_entry_data(&proof.log_entry_data);
         //================================
         // TODO: for testing only
@@ -106,6 +112,7 @@ impl EthConnector {
             fee: U128::from(2),
         };
         //================================
+        log!("Deposit started: from {:?} ETH to {:?} NEAR with amount: {:?}", event.sender, event.recipient, event.amount);
 
         assert_eq!(
             event.eth_custodian_address,
@@ -117,9 +124,9 @@ impl EthConnector {
         let proof_1 = proof.clone();
         let account_id = env::current_account_id();
         let prepaid_gas = env::prepaid_gas();
-        log!("Deposit verify_log_entry");
+        log!("Deposit verify_log_entry for prover: {:?}", self.prover_account);
         let promise0 = env::promise_create(
-            account_id.clone(),
+            self.prover_account.clone(),
             b"verify_log_entry",
             json!({
                 "log_index": proof.log_index,
