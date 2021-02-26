@@ -1,8 +1,8 @@
-use super::prover::{EthAddress, EthEvent, EthEventParams};
+use crate::prover::{EthAddress, EthEvent, EthEventParams};
 use ethabi::ParamType;
 use hex::ToHex;
 use near_sdk::json_types::U128;
-use near_sdk::{AccountId, Balance};
+use near_sdk::AccountId;
 
 /// Data that was emitted by the Ethereum Withdraw event.
 #[derive(Debug, PartialEq)]

@@ -1,3 +1,8 @@
+use near_contract_standards::fungible_token::{
+    core::FungibleTokenCore, metadata::FungibleTokenMetadata, resolver::FungibleTokenResolver,
+    FungibleToken,
+};
+use near_contract_standards::storage_manager::{AccountStorageBalance, StorageManager};
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::LookupSet;
 use near_sdk::json_types::{ValidAccountId, U128};
@@ -6,18 +11,13 @@ use near_sdk::{
     env, log, near_bindgen, AccountId, Balance, PanicOnDefault, Promise, PromiseResult,
 };
 
-use near_contract_standards::fungible_token::{
-    core::FungibleTokenCore, metadata::FungibleTokenMetadata, resolver::FungibleTokenResolver,
-    FungibleToken,
-};
-use near_contract_standards::storage_manager::{AccountStorageBalance, StorageManager};
+use deposit_event::EthDepositedEvent;
+use prover::{validate_eth_address, EthAddress, Proof};
+use withdraw_event::EthWithdrawEvent;
 
-// use fungible_token::{FungibleToken, FungibleTokenCore, FungibleTokenMetadataProvider};
-use connector::deposit_event::EthDepositedEvent;
-pub use connector::prover::{validate_eth_address, EthAddress, Proof};
-use connector::withdraw_event::EthWithdrawEvent;
-
-mod connector;
+pub mod deposit_event;
+pub mod prover;
+pub mod withdraw_event;
 
 near_sdk::setup_alloc!();
 
