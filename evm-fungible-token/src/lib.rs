@@ -18,7 +18,6 @@ pub use connector::prover::{validate_eth_address, EthAddress, Proof};
 use connector::withdraw_event::EthWithdrawEvent;
 
 mod connector;
-// mod fungible_token;
 
 near_sdk::setup_alloc!();
 
@@ -32,6 +31,7 @@ const FUNGIBLE_TOKEN_SYMBOL: &'static str = "nETH";
 const FUNGIBLE_TOKEN_VERSION: &'static str = "v1";
 const FUNGIBLE_TOKEN_REFERENCE: &'static str = "ref";
 const FUNGIBLE_TOKEN_DECIMALS: u8 = 0;
+const FUNGIBLE_TOTAL_SUPPLY: u128 = 100_000_000;
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
@@ -54,11 +54,15 @@ impl EthConnector {
     #[init]
     pub fn new(prover_account: AccountId, eth_custodian_address: String) -> Self {
         assert!(!env::state_exists(), "Already initialized");
+        let mut ft = FungibleToken::new(b"a");
+        let owner_id = env::current_account_id();
+        ft.internal_register_account(&owner_id);
+        ft.internal_deposit(&owner_id, FUNGIBLE_TOTAL_SUPPLY.into());
         Self {
             prover_account,
             eth_custodian_address: validate_eth_address(eth_custodian_address),
             used_events: LookupSet::new(b"u".to_vec()),
-            token: FungibleToken::new(FUNGIBLE_TOKEN_SYMBOL.as_bytes()),
+            token: ft,
         }
     }
 
