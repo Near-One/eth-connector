@@ -19,7 +19,10 @@ panic = "abort"
 debug-assertions = false
 
 [dependencies]
-near-sdk = { git = "https://github.com/near/near-sdk-rs", rev = "1d3535bd131b68f97a216e643ad1cba19e16dddf"}
+# near-sdk = { git = "https://github.com/near/near-sdk-rs", rev = "1d3535bd131b68f97a216e643ad1cba19e16dddf"}
+near-sdk = { git = "https://github.com/near/near-sdk-rs", rev = "f99b1a32b93db21707192fbcc8c3a16aef5889d7"}
+near-contract-standards = { git = "https://github.com/near/near-sdk-rs", rev = "f99b1a32b93db21707192fbcc8c3a16aef5889d7"}
+
 eth-types =  { git = "https://github.com/near/rainbow-bridge" }
 rlp = "0.4.2"
 ethabi = "12.0.0"
@@ -27,4 +30,5 @@ hex = "0.4.2"
 funty = "=1.1.0"
 
 [dev-dependencies]
-near-sdk-sim = { git = "https://github.com/near/near-sdk-rs", rev = "1d3535bd131b68f97a216e643ad1cba19e16dddf"}
+# near-sdk-sim = { git = "https://github.com/near/near-sdk-rs", rev = "1d3535bd131b68f97a216e643ad1cba19e16dddf"}
+near-sdk-sim = { git = "https://github.com/near/near-sdk-rs", rev = "f99b1a32b93db21707192fbcc8c3a16aef5889d7"}

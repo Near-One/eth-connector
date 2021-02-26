@@ -1,20 +1,24 @@
-#![allow(dead_code, unused_imports, unused_variables)]
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::collections::{LookupSet, UnorderedMap};
+use near_sdk::collections::LookupSet;
 use near_sdk::json_types::{ValidAccountId, U128};
 use near_sdk::serde_json::{self, json};
 use near_sdk::{
-    env, log, near_bindgen, AccountId, Balance, Gas, PanicOnDefault, Promise, PromiseOrValue,
-    PromiseResult,
+    env, log, near_bindgen, AccountId, Balance, PanicOnDefault, Promise, PromiseResult,
 };
 
-use crate::fungible_token::{FungibleToken, FungibleTokenCore, FungibleTokenMetadataProvider};
+use near_contract_standards::fungible_token::{
+    core::FungibleTokenCore, metadata::FungibleTokenMetadata, resolver::FungibleTokenResolver,
+    FungibleToken,
+};
+use near_contract_standards::storage_manager::{AccountStorageBalance, StorageManager};
+
+// use fungible_token::{FungibleToken, FungibleTokenCore, FungibleTokenMetadataProvider};
 use connector::deposit_event::EthDepositedEvent;
 pub use connector::prover::{validate_eth_address, EthAddress, Proof};
 use connector::withdraw_event::EthWithdrawEvent;
 
 mod connector;
-mod fungible_token;
+// mod fungible_token;
 
 near_sdk::setup_alloc!();
 
@@ -22,13 +26,11 @@ near_sdk::setup_alloc!();
 const STORAGE_PRICE_PER_BYTE: Balance = 100_000_000_000_000_000_000; // 1e20yN, 0.0001N
 
 const NO_DEPOSIT: Balance = 0;
-const TRANSFER_FROM_GAS: Gas = 10_000_000_000_000;
-const TRANSFER_GAS: Gas = 10_000_000_000_000;
 
 const FUNGIBLE_TOKEN_NAME: &'static str = "NEAR ETH Fungible Token";
 const FUNGIBLE_TOKEN_SYMBOL: &'static str = "nETH";
 const FUNGIBLE_TOKEN_VERSION: &'static str = "v1";
-const FUNGIBLE_TOKEN_TOTAL_SUPPLY: u128 = 0;
+const FUNGIBLE_TOKEN_REFERENCE: &'static str = "ref";
 const FUNGIBLE_TOKEN_DECIMALS: u8 = 0;
 
 #[near_bindgen]
@@ -44,38 +46,8 @@ pub struct EthConnector {
     pub token: FungibleToken,
 }
 
-pub fn assert_self() {
-    assert_eq!(env::predecessor_account_id(), env::current_account_id());
-}
-
-pub fn is_promise_success() -> bool {
-    assert_eq!(
-        env::promise_results_count(),
-        1,
-        "Contract expected a result on the callback"
-    );
-    match env::promise_result(0) {
-        PromiseResult::Successful(_) => true,
-        _ => false,
-    }
-}
-
 #[near_bindgen]
 impl EthConnector {
-    /// TODO: Test solution only for Eth verify log contract
-    pub fn deploy(&self, account_id: String, amount: U128) {
-        let promise_idx = env::promise_batch_create(&account_id);
-        env::promise_batch_action_create_account(promise_idx);
-        env::promise_batch_action_transfer(promise_idx, amount.0);
-        env::promise_batch_action_add_key_with_full_access(
-            promise_idx,
-            &env::signer_account_pk(),
-            0,
-        );
-        let code: &[u8] = include_bytes!("../res/eth_prover.wasm");
-        env::promise_batch_action_deploy_contract(promise_idx, code);
-    }
-
     /// Initializes the contract.
     /// `prover_account`: NEAR account of the Near Prover contract;
     /// `eth_custodian_address`: Ethereum address of the custodian contract, in hex.
@@ -86,14 +58,7 @@ impl EthConnector {
             prover_account,
             eth_custodian_address: validate_eth_address(eth_custodian_address),
             used_events: LookupSet::new(b"u".to_vec()),
-            token: FungibleToken::fungible_token(
-                U128::from(FUNGIBLE_TOKEN_TOTAL_SUPPLY),
-                FUNGIBLE_TOKEN_VERSION.into(),
-                FUNGIBLE_TOKEN_NAME.into(),
-                "nETH".into(),
-                FUNGIBLE_TOKEN_SYMBOL.into(),
-                FUNGIBLE_TOKEN_DECIMALS,
-            ),
+            token: FungibleToken::new(FUNGIBLE_TOKEN_SYMBOL.as_bytes()),
         }
     }
 
@@ -112,7 +77,12 @@ impl EthConnector {
             fee: U128::from(2),
         };
         //================================
-        log!("Deposit started: from {:?} ETH to {:?} NEAR with amount: {:?}", event.sender, event.recipient, event.amount);
+        log!(
+            "Deposit started: from {:?} ETH to {:?} NEAR with amount: {:?}",
+            event.sender,
+            event.recipient,
+            event.amount
+        );
 
         assert_eq!(
             event.eth_custodian_address,
@@ -124,7 +94,10 @@ impl EthConnector {
         let proof_1 = proof.clone();
         let account_id = env::current_account_id();
         let prepaid_gas = env::prepaid_gas();
-        log!("Deposit verify_log_entry for prover: {:?}", self.prover_account);
+        log!(
+            "Deposit verify_log_entry for prover: {:?}",
+            self.prover_account,
+        );
         let promise0 = env::promise_create(
             self.prover_account.clone(),
             b"verify_log_entry",
@@ -156,7 +129,7 @@ impl EthConnector {
             NO_DEPOSIT,
             prepaid_gas / 4,
         );
-        env::promise_return(promise0);
+        env::promise_return(promise1);
     }
 
     /// Finish depositing once the proof was successfully validated.
@@ -176,8 +149,6 @@ impl EthConnector {
         let verification_success: bool = serde_json::from_slice(&data0).unwrap();
         assert!(verification_success, "Failed to verify the proof");
         self.record_proof(&proof.get_key());
-        let md = self.token.ft_metadata();
-        log!("Metadata: {:?}", md.symbol);
 
         self.mint(new_owner_id, amount.into());
     }
@@ -228,7 +199,7 @@ impl EthConnector {
         let prepaid_gas = env::prepaid_gas();
         log!("Withdraw verify_log_entry");
         let promise0 = env::promise_create(
-            account_id.clone(),
+            self.prover_account.clone(),
             b"verify_log_entry",
             json!({
                 "log_index": proof.log_index,
@@ -258,7 +229,7 @@ impl EthConnector {
             NO_DEPOSIT,
             prepaid_gas / 4,
         );
-        env::promise_return(promise0);
+        env::promise_return(promise1);
     }
 
     #[private]
@@ -276,8 +247,6 @@ impl EthConnector {
         let verification_success: bool = serde_json::from_slice(&data0).unwrap();
         assert!(verification_success, "Failed to verify the proof");
         self.record_proof(&proof.get_key());
-        let md = self.token.ft_metadata();
-        log!("Metadata: {:?}", md.symbol);
 
         self.burn(owner_id, amount.into());
     }
@@ -298,11 +267,8 @@ impl EthConnector {
         attached_deposit - required_deposit
     }
 
-    pub fn balance_of(&self, account_id: ValidAccountId) -> U128 {
-        self.token.ft_balance_of(account_id)
-    }
-
-    /// For tests only. Ir should be external Contract
+    /// TODO: For tests only. Ir should be external Contract
+    #[allow(unused_variables)]
     pub fn verify_log_entry(
         &self,
         log_index: u64,
@@ -314,5 +280,68 @@ impl EthConnector {
         skip_bridge_call: bool,
     ) -> bool {
         true
+    }
+
+    #[payable]
+    pub fn ft_transfer(&mut self, receiver_id: ValidAccountId, amount: U128, memo: Option<String>) {
+        self.token.ft_transfer(receiver_id, amount, memo)
+    }
+
+    #[payable]
+    pub fn ft_transfer_call(
+        &mut self,
+        receiver_id: ValidAccountId,
+        amount: U128,
+        memo: Option<String>,
+        msg: String,
+    ) -> Promise {
+        self.token.ft_transfer_call(receiver_id, amount, memo, msg)
+    }
+
+    pub fn ft_total_supply(&self) -> U128 {
+        self.token.ft_total_supply()
+    }
+
+    pub fn ft_balance_of(&self, account_id: ValidAccountId) -> U128 {
+        self.token.ft_balance_of(account_id)
+    }
+
+    #[private]
+    pub fn ft_resolve_transfer(
+        &mut self,
+        sender_id: ValidAccountId,
+        receiver_id: ValidAccountId,
+        amount: U128,
+    ) -> U128 {
+        self.token
+            .ft_resolve_transfer(sender_id, receiver_id, amount)
+    }
+
+    pub fn ft_metadata(&self) -> FungibleTokenMetadata {
+        FungibleTokenMetadata {
+            version: FUNGIBLE_TOKEN_VERSION.into(),
+            name: FUNGIBLE_TOKEN_NAME.into(),
+            symbol: FUNGIBLE_TOKEN_SYMBOL.into(),
+            reference: FUNGIBLE_TOKEN_REFERENCE.into(),
+            decimals: FUNGIBLE_TOKEN_DECIMALS,
+        }
+    }
+
+    #[payable]
+    pub fn storage_deposit(&mut self, account_id: Option<ValidAccountId>) -> AccountStorageBalance {
+        self.token.storage_deposit(account_id)
+    }
+
+    #[payable]
+    pub fn storage_withdraw(&mut self, amount: Option<U128>) -> AccountStorageBalance {
+        self.token.storage_withdraw(amount)
+    }
+
+    pub fn storage_minimum_balance(&self) -> U128 {
+        self.token.storage_minimum_balance()
+    }
+
+    pub fn storage_balance_of(&self, account_id: ValidAccountId) -> AccountStorageBalance {
+        self.token.storage_balance_of(account_id)
     }
 }

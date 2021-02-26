@@ -25,7 +25,7 @@ fn init() -> (
         contract_id: "contract",
         bytes: &TOKEN_WASM_BYTES,
         signer_account: master_account,
-        init_method: new(master_account.account_id(), eth_ecc.into())
+        init_method: new("contract".into(), eth_ecc.into())
     };
     let alice = master_account.create_user("alice".to_string(), initial_balance);
     (master_account, contract_account, alice)
@@ -38,7 +38,7 @@ fn init_test() {
 
 #[test]
 fn test_sim_deposit() {
-    let (master_account, contract, _alice) = init();
+    let (master_account, contract, _) = init();
     /*
         // Deploy Eth Verifier Contract
         let status_id = "acc1".to_string();
@@ -60,16 +60,16 @@ fn test_sim_deposit() {
         header_data: vec![],
         proof: vec![],
     };
-    let res = call!(
+    let _res = call!(
         master_account,
         contract.deposit(proof.clone()),
         gas = DEFAULT_GAS * 3
     );
 
-    // println!("#1: {:#?}", res.promise_results());
+    // println!("#1: {:#?}", _res.promise_results());
 
     let acc_id = ValidAccountId::try_from("rcv1").unwrap();
-    let res = view!(contract.balance_of(acc_id));
+    let res = view!(contract.ft_balance_of(acc_id));
     let minted_balance = res.unwrap_json::<U128>();
     assert_eq!(minted_balance, U128::from(100));
 }
@@ -91,21 +91,21 @@ fn test_sim_withdraw() {
         gas = DEFAULT_GAS * 3
     );
     let acc_id = ValidAccountId::try_from("rcv1").unwrap();
-    let res = view!(contract.balance_of(acc_id.clone()));
+    let res = view!(contract.ft_balance_of(acc_id.clone()));
     let minted_balance = res.unwrap_json::<U128>();
     assert_eq!(minted_balance, U128::from(100));
 
     let mut proof1 = proof.clone();
     proof1.log_index = 1;
 
-    let res = call!(
+    let _res = call!(
         master_account,
         contract.withdraw(proof1.clone()),
         gas = DEFAULT_GAS * 3
     );
 
-    // println!("#1: {:#?}", res.promise_results());
-    let res = view!(contract.balance_of(acc_id));
+    // println!("#1: {:#?}", _res.promise_results());
+    let res = view!(contract.ft_balance_of(acc_id));
     let minted_balance = res.unwrap_json::<U128>();
     assert_eq!(minted_balance, U128::from(95));
 }

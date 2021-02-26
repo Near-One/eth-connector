@@ -700,7 +700,8 @@ dependencies = [
  "ethabi",
  "funty",
  "hex",
- "near-sdk 3.0.0",
+ "near-contract-standards",
+ "near-sdk 3.0.0-pre.2",
  "near-sdk-sim",
  "rlp 0.4.6",
 ]
@@ -1279,6 +1280,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8452105ba047068f40ff7093dd1d9da90898e63dd61736462e9cdda6a90ad3c3"
 
 [[package]]
+name = "near-contract-standards"
+version = "0.1.0-pre.2"
+source = "git+https://github.com/near/near-sdk-rs?rev=f99b1a32b93db21707192fbcc8c3a16aef5889d7#f99b1a32b93db21707192fbcc8c3a16aef5889d7"
+dependencies = [
+ "near-sdk 3.0.0-pre.2",
+]
+
+[[package]]
 name = "near-crypto"
 version = "0.1.0"
 source = "git+https://github.com/near/nearcore.git?rev=1e88c6c699e3a2c49c6cbd09d284f69885982e80#1e88c6c699e3a2c49c6cbd09d284f69885982e80"
@@ -1486,14 +1495,14 @@ dependencies = [
 
 [[package]]
 name = "near-sdk"
-version = "3.0.0"
-source = "git+https://github.com/near/near-sdk-rs?rev=1d3535bd131b68f97a216e643ad1cba19e16dddf#1d3535bd131b68f97a216e643ad1cba19e16dddf"
+version = "3.0.0-pre.2"
+source = "git+https://github.com/near/near-sdk-rs?rev=f99b1a32b93db21707192fbcc8c3a16aef5889d7#f99b1a32b93db21707192fbcc8c3a16aef5889d7"
 dependencies = [
  "base64 0.13.0",
  "borsh 0.8.1",
  "bs58 0.4.0",
  "near-primitives-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "near-sdk-macros 3.0.0",
+ "near-sdk-macros 3.0.0-pre.2",
  "near-vm-logic 3.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde",
  "serde_json",
@@ -1514,8 +1523,8 @@ dependencies = [
 
 [[package]]
 name = "near-sdk-core"
-version = "3.0.0"
-source = "git+https://github.com/near/near-sdk-rs?rev=1d3535bd131b68f97a216e643ad1cba19e16dddf#1d3535bd131b68f97a216e643ad1cba19e16dddf"
+version = "3.0.0-pre.2"
+source = "git+https://github.com/near/near-sdk-rs?rev=f99b1a32b93db21707192fbcc8c3a16aef5889d7#f99b1a32b93db21707192fbcc8c3a16aef5889d7"
 dependencies = [
  "Inflector",
  "proc-macro2",
@@ -1537,10 +1546,10 @@ dependencies = [
 
 [[package]]
 name = "near-sdk-macros"
-version = "3.0.0"
-source = "git+https://github.com/near/near-sdk-rs?rev=1d3535bd131b68f97a216e643ad1cba19e16dddf#1d3535bd131b68f97a216e643ad1cba19e16dddf"
+version = "3.0.0-pre.2"
+source = "git+https://github.com/near/near-sdk-rs?rev=f99b1a32b93db21707192fbcc8c3a16aef5889d7#f99b1a32b93db21707192fbcc8c3a16aef5889d7"
 dependencies = [
- "near-sdk-core 3.0.0",
+ "near-sdk-core 3.0.0-pre.2",
  "proc-macro2",
  "quote",
  "syn",
@@ -1548,14 +1557,14 @@ dependencies = [
 
 [[package]]
 name = "near-sdk-sim"
-version = "3.0.0-pre-release"
-source = "git+https://github.com/near/near-sdk-rs?rev=1d3535bd131b68f97a216e643ad1cba19e16dddf#1d3535bd131b68f97a216e643ad1cba19e16dddf"
+version = "3.0.0-pre.2"
+source = "git+https://github.com/near/near-sdk-rs?rev=f99b1a32b93db21707192fbcc8c3a16aef5889d7#f99b1a32b93db21707192fbcc8c3a16aef5889d7"
 dependencies = [
  "lazy_static",
  "near-crypto",
  "near-pool",
  "near-primitives",
- "near-sdk 3.0.0",
+ "near-sdk 3.0.0-pre.2",
  "near-store",
  "near-vm-logic 3.0.0 (git+https://github.com/near/nearcore.git?rev=1e88c6c699e3a2c49c6cbd09d284f69885982e80)",
  "node-runtime",
