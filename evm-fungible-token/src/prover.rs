@@ -68,13 +68,18 @@ impl EthEvent {
             .iter()
             .map(|h| Hash::from(&((h.0).0)))
             .collect();
-
+        
         let raw_log = RawLog {
             topics,
             data: log_entry.data.clone(),
         };
-
+        // let s = raw_log.topics.get(0).unwrap();
+        // log!("topic(0): {:#?}", s);
+        // log!("signature: {:#?}", event.signature());
+        // log!("signature eq: {:#?}", (&event.signature() == s));
+        
         let log = event.parse_log(raw_log).expect("Failed to parse event log");
+
         Self {
             eth_custodian_address,
             log,

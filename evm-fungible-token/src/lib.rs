@@ -71,16 +71,7 @@ impl EthConnector {
     #[payable]
     pub fn deposit(&mut self, proof: Proof) {
         let event = EthDepositedEvent::from_log_entry_data(&proof.log_entry_data);
-        //================================
-        // TODO: for testing only
-        let event = EthDepositedEvent {
-            eth_custodian_address: self.eth_custodian_address,
-            sender: "sender1".into(),
-            amount: U128::from(100),
-            recipient: "rcv1".into(),
-            fee: U128::from(2),
-        };
-        //================================
+
         log!(
             "Deposit started: from {:?} ETH to {:?} NEAR with amount: {:?}",
             event.sender,
@@ -131,20 +122,15 @@ impl EthConnector {
     /// Can only be called by the contract itself.
     #[private]
     pub fn finish_deposit(&mut self, new_owner_id: AccountId, amount: U128, proof: Proof) {
-        log!(
-            "finish_deposit - Promise results: {:?}",
-            env::promise_results_count()
-        );
-        log!("Amount: {:?}", amount);
+        log!("Finish deposit amount: {:?}", amount);
         assert_eq!(env::promise_results_count(), 1);
         let data0: Vec<u8> = match env::promise_result(0) {
             PromiseResult::Successful(x) => x,
             _ => panic!("Promise with index 0 failed"),
         };
-        log!("start verification_success");
+        log!("Check verification_success");
         let verification_success: bool = bool::try_from_slice(&data0).unwrap();
         assert!(verification_success, "Failed to verify the proof");
-        log!("start record proof");
         self.record_proof(&proof.get_key());
 
         self.mint(new_owner_id, amount.into());
@@ -157,10 +143,11 @@ impl EthConnector {
         log!("Mint {:?} tokens for: {:?}", amount, owner_id);
         
         if self.token.accounts.get(&owner_id).is_none() {
-            self.token.accounts.insert(&owner_id, &amount);
-        } else {
-            self.token.internal_deposit(&owner_id, amount);
+            // TODO: NEP-145 Account Storage impelemtation nee
+            // It spent additonal account amount fot storage
+            self.token.accounts.insert(&owner_id, &0);
         }
+        self.token.internal_deposit(&owner_id, amount);
         log!("Mint success");
     }
 

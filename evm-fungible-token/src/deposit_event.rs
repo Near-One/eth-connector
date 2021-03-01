@@ -8,7 +8,7 @@ use near_sdk::AccountId;
 #[derive(Debug, PartialEq)]
 pub struct EthDepositedEvent {
     pub eth_custodian_address: EthAddress,
-    pub sender: String,
+    pub sender: EthAddress,
     pub amount: U128,
     pub recipient: AccountId,
     pub fee: U128,
@@ -18,12 +18,12 @@ impl EthDepositedEvent {
     fn event_params() -> EthEventParams {
         vec![
             ("sender".to_string(), ParamType::Address, true),
-            ("amount".to_string(), ParamType::Uint(256), false),
             (
-                "eth_recipient_on_near".to_string(),
-                ParamType::String,
-                false,
+                "ethRecipientOnNear".to_string(),
+                ParamType::Address,
+                true,
             ),
+            ("amount".to_string(), ParamType::Uint(256), false),
             ("fee".to_string(), ParamType::Uint(256), false),
         ]
     }
