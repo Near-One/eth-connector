@@ -1,5 +1,5 @@
 use near_sdk_sim::{
-    call, deploy, init_simulator, to_yocto, view, ContractAccount, UserAccount, DEFAULT_GAS,
+    call, deploy, init_simulator, view, ContractAccount, UserAccount, DEFAULT_GAS,
 };
 
 extern crate eth_connector;
@@ -11,14 +11,9 @@ near_sdk_sim::lazy_static! {
     static ref TOKEN_WASM_BYTES: &'static [u8] = include_bytes!("../res/eth_connector.wasm").as_ref();
 }
 
-fn init() -> (
-    UserAccount,
-    ContractAccount<EthConnectorContract>,
-    UserAccount,
-) {
+fn init() -> (UserAccount, ContractAccount<EthConnectorContract>) {
     let master_account = init_simulator(None);
     let eth_ecc = "79183fdbd80e2d8AeA1aCaA2f67bFb8a36d40A80";
-    let initial_balance = to_yocto("100000");
 
     let contract_account = deploy! {
         contract: EthConnectorContract,
@@ -27,31 +22,18 @@ fn init() -> (
         signer_account: master_account,
         init_method: new("contract".into(), eth_ecc.into())
     };
-    let alice = master_account.create_user("alice".to_string(), initial_balance);
-    (master_account, contract_account, alice)
+    (master_account, contract_account)
 }
 
 #[test]
 fn init_test() {
-    let (_master_account, _contract_account, _alice) = init();
+    let (_master_account, _contract_account) = init();
 }
 
 #[test]
 fn test_sim_deposit() {
-    let (master_account, contract, _) = init();
-    /*
-        // Deploy Eth Verifier Contract
-        let status_id = "acc1".to_string();
-        let status_amt = to_yocto("100");
-        let res = call!(
-            master_account,
-            contract.deploy(status_id.clone(), status_amt.into()),
-            STORAGE_AMOUNT * 1000,
-            DEFAULT_GAS
-        );
-        println!("CALL: {:#?}", res);
-        println!("#2: {:#?}", res.promise_results());
-    */
+    let (master_account, contract) = init();
+
     let proof = Proof {
         log_index: 0,
         log_entry_data: vec![],
@@ -59,6 +41,7 @@ fn test_sim_deposit() {
         receipt_data: vec![],
         header_data: vec![],
         proof: vec![],
+        skip_bridge_call: false,
     };
     let _res = call!(
         master_account,
@@ -66,7 +49,7 @@ fn test_sim_deposit() {
         gas = DEFAULT_GAS * 3
     );
 
-    // println!("#1: {:#?}", _res.promise_results());
+    println!("#1: {:#?}", _res.promise_results());
 
     let acc_id = ValidAccountId::try_from("rcv1").unwrap();
     let res = view!(contract.ft_balance_of(acc_id));
@@ -76,7 +59,7 @@ fn test_sim_deposit() {
 
 #[test]
 fn test_sim_withdraw() {
-    let (master_account, contract, _alice) = init();
+    let (master_account, contract) = init();
     let proof = Proof {
         log_index: 0,
         log_entry_data: vec![],
@@ -84,6 +67,7 @@ fn test_sim_withdraw() {
         receipt_data: vec![],
         header_data: vec![],
         proof: vec![],
+        skip_bridge_call: false,
     };
     call!(
         master_account,

@@ -12,7 +12,7 @@ use near_sdk::{
 };
 
 use deposit_event::EthDepositedEvent;
-use prover::{validate_eth_address, EthAddress, Proof};
+pub use prover::{validate_eth_address, EthAddress, Proof};
 use withdraw_event::EthWithdrawEvent;
 
 pub mod deposit_event;
@@ -98,6 +98,7 @@ impl EthConnector {
         let proof_1 = proof.clone();
         let account_id = env::current_account_id();
         let prepaid_gas = env::prepaid_gas();
+        let proof_2 = proof_1.try_to_vec().unwrap();
         log!(
             "Deposit verify_log_entry for prover: {:?}",
             self.prover_account,
@@ -105,17 +106,7 @@ impl EthConnector {
         let promise0 = env::promise_create(
             self.prover_account.clone(),
             b"verify_log_entry",
-            json!({
-                "log_index": proof.log_index,
-                "log_entry_data": proof.log_entry_data,
-                "receipt_index": proof.receipt_index,
-                "receipt_data": proof.receipt_data,
-                "header_data": proof.header_data,
-                "proof": proof.proof,
-                "skip_bridge_call": false,
-            })
-            .to_string()
-            .as_bytes(),
+            &proof_2[..],
             NO_DEPOSIT,
             prepaid_gas / 4,
         );
@@ -275,13 +266,13 @@ impl EthConnector {
     #[allow(unused_variables)]
     pub fn verify_log_entry(
         &self,
-        log_index: u64,
-        log_entry_data: Vec<u8>,
-        receipt_index: u64,
-        receipt_data: Vec<u8>,
-        header_data: Vec<u8>,
-        proof: Vec<Vec<u8>>,
-        skip_bridge_call: bool,
+        #[serializer(borsh)] log_index: u64,
+        #[serializer(borsh)] log_entry_data: Vec<u8>,
+        #[serializer(borsh)] receipt_index: u64,
+        #[serializer(borsh)] receipt_data: Vec<u8>,
+        #[serializer(borsh)] header_data: Vec<u8>,
+        #[serializer(borsh)] proof: Vec<Vec<u8>>,
+        #[serializer(borsh)] skip_bridge_call: bool,
     ) -> bool {
         true
     }
