@@ -70,7 +70,7 @@ impl EthConnector {
     /// Must attach enough NEAR funds to cover for storage of the proof.
     #[payable]
     pub fn deposit(&mut self, proof: Proof) {
-        //let event = EthDepositedEvent::from_log_entry_data(&proof.log_entry_data);
+        let event = EthDepositedEvent::from_log_entry_data(&proof.log_entry_data);
         //================================
         // TODO: for testing only
         let event = EthDepositedEvent {
@@ -141,8 +141,10 @@ impl EthConnector {
             PromiseResult::Successful(x) => x,
             _ => panic!("Promise with index 0 failed"),
         };
-        let verification_success: bool = serde_json::from_slice(&data0).unwrap();
+        log!("start verification_success");
+        let verification_success: bool = bool::try_from_slice(&data0).unwrap();
         assert!(verification_success, "Failed to verify the proof");
+        log!("start record proof");
         self.record_proof(&proof.get_key());
 
         self.mint(new_owner_id, amount.into());
@@ -153,11 +155,13 @@ impl EthConnector {
     #[private]
     fn mint(&mut self, owner_id: AccountId, amount: Balance) {
         log!("Mint {:?} tokens for: {:?}", amount, owner_id);
+        
         if self.token.accounts.get(&owner_id).is_none() {
             self.token.accounts.insert(&owner_id, &amount);
         } else {
             self.token.internal_deposit(&owner_id, amount);
         }
+        log!("Mint success");
     }
 
     /// Burn Fungible Token for account
