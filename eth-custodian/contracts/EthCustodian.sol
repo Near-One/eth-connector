@@ -6,9 +6,16 @@ import "rainbow-bridge/contracts/eth/nearbridge/contracts/Borsh.sol";
 import { INearProver, ProofKeeper } from "./ProofKeeper.sol";
 
 contract EthCustodian is ProofKeeper {
-    event Deposited (
+    event DepositedToEVM (
         address indexed sender,
         address indexed ethRecipientOnNear,
+        uint256 amount,
+        uint256 fee
+    );
+
+    event DepositedToNear (
+        address indexed sender,
+        string indexed nearRecipient,
         uint256 amount,
         uint256 fee
     );
@@ -34,14 +41,25 @@ contract EthCustodian is ProofKeeper {
     }
 
     /// Deposits the specified amount of provided ETH (except from the relayer's fee) into the smart contract.
-    /// `ethRecipientOnNear` - the ETH address of recipient in NEAR EVM
+    /// `ethRecipientOnNear` - the ETH address of the recipient in NEAR EVM
     /// `fee` - the amount of fee that will be paid to the near-relayer in nETH.
-    function deposit(address ethRecipientOnNear, uint256 fee)
+    function depositToEVM(address ethRecipientOnNear, uint256 fee)
         external
         payable
     {
         require(fee < msg.value, "The fee cannot be bigger than the transferred amount.");
-        emit Deposited(msg.sender, ethRecipientOnNear, msg.value, fee);
+        emit DepositedToEVM(msg.sender, ethRecipientOnNear, msg.value, fee);
+    }
+
+    /// Deposits the specified amount of provided ETH (except from the relayer's fee) into the smart contract.
+    /// `nearRecipientAccountId` - the AccountID of the recipient in NEAR
+    /// `fee` - the amount of fee that will be paid to the near-relayer in nETH.
+    function depositToNear(string memory nearRecipientAccountId, uint256 fee)
+        external
+        payable
+    {
+        require(fee < msg.value, "The fee cannot be bigger than the transferred amount.");
+        emit DepositedToNear(msg.sender, nearRecipientAccountId, msg.value, fee);
     }
 
     /// Withdraws the appropriate amount of ETH which is encoded in `proofData`

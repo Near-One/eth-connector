@@ -46,8 +46,8 @@ describe('EthCustodian contract', () => {
             minBlockAcceptanceHeight,
             adminAccount.address);
 
-        let hardhatTestMnemonic = 'test test test test test test test test test test test junk';
-        let derivationPathUser1 = 'm/44\'/60\'/0\'/0/5';
+        const hardhatTestMnemonic = 'test test test test test test test test test test test junk';
+        const derivationPathUser1 = 'm/44\'/60\'/0\'/0/5';
         walletUser1 = await ethers.Wallet.fromMnemonic(hardhatTestMnemonic, derivationPathUser1);
     });
 
@@ -89,17 +89,17 @@ describe('EthCustodian contract', () => {
 
     describe('Deposit', () => {
         it('Should revert when the provided fee is bigger than the transferred amount', async () => {
-            let fee = 100;  // wei
+            const fee = 100;  // wei
             let unsigned_tx = await ethCustodian
                 .connect(walletUser1)
                 .populateTransaction
-                .deposit(ethRecipientOnNear.address, fee);
+                .depositToEVM(ethRecipientOnNear.address, fee);
 
             unsigned_tx.nonce = await ethers.provider.getTransactionCount(walletUser1.address);
             // Set the value equal to fee. This should fail as the fee should be less than the transferred amount
             unsigned_tx.value = fee;
 
-            let signed_tx = await walletUser1.signTransaction(unsigned_tx);
+            const signed_tx = await walletUser1.signTransaction(unsigned_tx);
             await expect(
                 ethers.provider.sendTransaction(signed_tx)
             )
@@ -108,28 +108,59 @@ describe('EthCustodian contract', () => {
                 .revertedWith('The fee cannot be bigger than the transferred amount');
         });
 
-        it('Should change the balance of the custodian and emit the deposited event', async () => {
-            let fee = 100;  // wei
+        it('Should change the balance of the custodian and emit the DepositedToEVM event', async () => {
+            const fee = 100;  // wei
             let unsigned_tx = await ethCustodian
                 .connect(walletUser1)
                 .populateTransaction
-                .deposit(ethRecipientOnNear.address, fee);
+                .depositToEVM(ethRecipientOnNear.address, fee);
 
             unsigned_tx.nonce = await ethers.provider.getTransactionCount(walletUser1.address);
             unsigned_tx.value = 50000;
 
-            let balanceBefore = ethers.BigNumber.from(await ethers.provider.getBalance(ethCustodian.address));
+            const balanceBefore = ethers.BigNumber.from(await ethers.provider.getBalance(ethCustodian.address));
 
-            let signed_tx = await walletUser1.signTransaction(unsigned_tx);
+            const signed_tx = await walletUser1.signTransaction(unsigned_tx);
             await expect(
                 ethers.provider.sendTransaction(signed_tx)
             )
                 .to
-                .emit(ethCustodian, 'Deposited')
+                .emit(ethCustodian, 'DepositedToEVM')
                 .withArgs(walletUser1.address, ethRecipientOnNear.address, unsigned_tx.value, fee);
 
-            let balanceAfter = ethers.BigNumber.from(await ethers.provider.getBalance(ethCustodian.address));
-            let balanceDiff = balanceAfter.sub(balanceBefore);
+            const balanceAfter = ethers.BigNumber.from(await ethers.provider.getBalance(ethCustodian.address));
+            const balanceDiff = balanceAfter.sub(balanceBefore);
+            await expect(
+                balanceDiff
+            )
+                .to
+                .equal(unsigned_tx.value);
+        });
+
+        it('Should change the balance of the custodian and emit the DepositedToNear event', async () => {
+            const nearRecipientAccountId = 'recipient.near';
+
+            const fee = 100;  // wei
+            let unsigned_tx = await ethCustodian
+                .connect(walletUser1)
+                .populateTransaction
+                .depositToNear(nearRecipientAccountId, fee);
+
+            unsigned_tx.nonce = await ethers.provider.getTransactionCount(walletUser1.address);
+            unsigned_tx.value = 50000;
+
+            const balanceBefore = ethers.BigNumber.from(await ethers.provider.getBalance(ethCustodian.address));
+
+            const signed_tx = await walletUser1.signTransaction(unsigned_tx);
+            await expect(
+                ethers.provider.sendTransaction(signed_tx)
+            )
+                .to
+                .emit(ethCustodian, 'DepositedToNear')
+                .withArgs(walletUser1.address, nearRecipientAccountId, unsigned_tx.value, fee);
+
+            const balanceAfter = ethers.BigNumber.from(await ethers.provider.getBalance(ethCustodian.address));
+            const balanceDiff = balanceAfter.sub(balanceBefore);
             await expect(
                 balanceDiff
             )
@@ -143,16 +174,16 @@ describe('EthCustodian contract', () => {
         const proofExecutorId = proof.outcome_proof.outcome.executor_id;
 
         beforeEach(async () => {
-            let fee = 100;  // wei
+            const fee = 100;  // wei
             let unsigned_tx = await ethCustodian
                 .connect(walletUser1)
                 .populateTransaction
-                .deposit(ethRecipientOnNear.address, fee);
+                .depositToEVM(ethRecipientOnNear.address, fee);
 
             unsigned_tx.nonce = await ethers.provider.getTransactionCount(walletUser1.address);
             unsigned_tx.value = 123000;
 
-            let signed_tx = await walletUser1.signTransaction(unsigned_tx);
+            const signed_tx = await walletUser1.signTransaction(unsigned_tx);
             await ethers.provider.sendTransaction(signed_tx)
 
             // Manually set the executor id to the original one before each call
@@ -160,7 +191,7 @@ describe('EthCustodian contract', () => {
         });
 
         it('Should revert when the proof producer (nearEvmAccount) differs from the linked one', async () => {
-            let amount = 5000;
+            const amount = 5000;
             proof.outcome_proof.outcome.status.SuccessValue = serialize(SCHEMA, 'Withdrawn', {
                 recipient: ethers.utils.arrayify(user2.address),
                 amount: amount,
@@ -177,13 +208,13 @@ describe('EthCustodian contract', () => {
         });
 
         it('Should successfully withdraw and emit the withdrawn event', async () => {
-            let amount = 5000;
+            const amount = 5000;
             proof.outcome_proof.outcome.status.SuccessValue = serialize(SCHEMA, 'Withdrawn', {
                 recipient: ethers.utils.arrayify(user2.address),
                 amount: amount,
             }).toString('base64');
 
-            let balanceBefore = ethers.BigNumber.from(await ethers.provider.getBalance(user2.address));
+            const balanceBefore = ethers.BigNumber.from(await ethers.provider.getBalance(user2.address));
 
             await expect(
                 ethCustodian.withdraw(borshifyOutcomeProof(proof), 1099)
@@ -192,8 +223,8 @@ describe('EthCustodian contract', () => {
                 .emit(ethCustodian, 'Withdrawn')
                 .withArgs(user2.address, amount);
 
-            let balanceAfter = ethers.BigNumber.from(await ethers.provider.getBalance(user2.address));
-            let balanceDiff = balanceAfter.sub(balanceBefore);
+            const balanceAfter = ethers.BigNumber.from(await ethers.provider.getBalance(user2.address));
+            const balanceDiff = balanceAfter.sub(balanceBefore);
 
             await expect(
                 balanceDiff
@@ -203,7 +234,7 @@ describe('EthCustodian contract', () => {
         });
 
         it('Should revert when trying to use the same proof twice', async () => {
-            let amount = 5000;
+            const amount = 5000;
             proof.outcome_proof.outcome.status.SuccessValue = serialize(SCHEMA, 'Withdrawn', {
                 recipient: ethers.utils.arrayify(user2.address),
                 amount: amount,
@@ -222,13 +253,13 @@ describe('EthCustodian contract', () => {
         });
 
         it('Should revert when the proof is coming from the ancient block', async () => {
-            let amount = 5000;
+            const amount = 5000;
             proof.outcome_proof.outcome.status.SuccessValue = serialize(SCHEMA, 'Withdrawn', {
                 recipient: ethers.utils.arrayify(user2.address),
                 amount: amount,
             }).toString('base64');
 
-            let proofBlockHeight = minBlockAcceptanceHeight - 1;
+            const proofBlockHeight = minBlockAcceptanceHeight - 1;
 
             await expect(
                 ethCustodian.withdraw(borshifyOutcomeProof(proof), proofBlockHeight)

@@ -1,0 +1,10 @@
+{
+    "proverAddress": "An address of the prover contract",
+    "ethConnectorAddress": "An address of the ETH connector (EthCustodian) contract",
+
+    "nearRecipient": "An address of the recipient account on NEAR",
+    "ethRecipientOnNear": "An ETH address of the recipient on NEAR EVM",
+
+    "amountToTransfer": "The amount that will be deposited. Fill the value here without quotes",
+    "fee": "The fee that will be paid to the relayer. Fill the value here without quotes"
+}
