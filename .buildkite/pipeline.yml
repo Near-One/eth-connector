@@ -1,6 +1,7 @@
 steps:
   - label: test buildkite
     command: |
+      source ~/.nvm/nvm.sh
       source ~/.yarn/yarn.sh
       cd eth-custodian
       yarn
