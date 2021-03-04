@@ -6,18 +6,17 @@ use near_contract_standards::storage_manager::{AccountStorageBalance, StorageMan
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::LookupSet;
 use near_sdk::json_types::{ValidAccountId, U128};
-use near_sdk::serde_json::{self, json};
+use near_sdk::serde_json::json;
 use near_sdk::{
     env, log, near_bindgen, AccountId, Balance, PanicOnDefault, Promise, PromiseResult,
 };
 
 use deposit_event::EthDepositedEvent;
 pub use prover::{validate_eth_address, EthAddress, Proof};
-use withdraw_event::EthWithdrawEvent;
 
 pub mod deposit_event;
 pub mod prover;
-pub mod withdraw_event;
+//pub mod withdraw_event;
 
 near_sdk::setup_alloc!();
 
@@ -31,7 +30,7 @@ const FUNGIBLE_TOKEN_SYMBOL: &'static str = "nETH";
 const FUNGIBLE_TOKEN_VERSION: &'static str = "v1";
 const FUNGIBLE_TOKEN_REFERENCE: &'static str = "ref";
 const FUNGIBLE_TOKEN_DECIMALS: u8 = 0;
-const FUNGIBLE_TOTAL_SUPPLY: u128 = 100_000_000;
+const FUNGIBLE_TOTAL_SUPPLY: u128 = 0;
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
@@ -73,10 +72,11 @@ impl EthConnector {
         let event = EthDepositedEvent::from_log_entry_data(&proof.log_entry_data);
 
         log!(
-            "Deposit started: from {:?} ETH to {:?} NEAR with amount: {:?}",
+            "Deposit started: from {:?} ETH to {:?} NEAR with amount: {:?} and fee {:?}",
             event.sender,
             event.recipient,
-            event.amount
+            event.amount,
+            event.fee
         );
 
         assert_eq!(
@@ -86,9 +86,14 @@ impl EthConnector {
             hex::encode(&event.eth_custodian_address),
             hex::encode(&self.eth_custodian_address),
         );
+        let amount: Balance = event.amount.into();
+        let fee: Balance = event.fee.into();
+        assert!((amount - fee) > 0, "Not enough balance for deposit fee");
+
         let proof_1 = proof.clone();
         let account_id = env::current_account_id();
         let prepaid_gas = env::prepaid_gas();
+        // Serialize with Borsh
         let proof_2 = proof_1.try_to_vec().unwrap();
         log!(
             "Deposit verify_log_entry for prover: {:?}",
@@ -108,6 +113,7 @@ impl EthConnector {
             json!({
                 "new_owner_id": event.recipient,
                 "amount": event.amount,
+                "fee": event.fee,
                 "proof": proof_1,
             })
             .to_string()
@@ -121,7 +127,13 @@ impl EthConnector {
     /// Finish depositing once the proof was successfully validated.
     /// Can only be called by the contract itself.
     #[private]
-    pub fn finish_deposit(&mut self, new_owner_id: AccountId, amount: U128, proof: Proof) {
+    pub fn finish_deposit(
+        &mut self,
+        new_owner_id: AccountId,
+        amount: U128,
+        fee: U128,
+        proof: Proof,
+    ) {
         log!("Finish deposit amount: {:?}", amount);
         assert_eq!(env::promise_results_count(), 1);
         let data0: Vec<u8> = match env::promise_result(0) {
@@ -133,7 +145,13 @@ impl EthConnector {
         assert!(verification_success, "Failed to verify the proof");
         self.record_proof(&proof.get_key());
 
-        self.mint(new_owner_id, amount.into());
+        let amount: Balance = amount.into();
+        let fee: Balance = fee.into();
+
+        // Mint tokens to recipient minus fee
+        self.mint(new_owner_id, amount - fee);
+        // Mint fee for Predecessor
+        self.mint(env::predecessor_account_id(), fee);
     }
 
     /// Mint Fungible Token for account
@@ -159,82 +177,17 @@ impl EthConnector {
     }
 
     #[payable]
-    pub fn withdraw(&mut self, proof: Proof) {
+    pub fn withdraw(&mut self, recipient_id: AccountId, amount: U128, fee: U128) -> (AccountId, u128) {
         log!("Start withdraw");
-        // let event = EthWithdrawEvent::from_log_entry_data(&proof.log_entry_data);
-        //================================
-        // TODO: for testing only
-        let event = EthWithdrawEvent {
-            eth_custodian_address: self.eth_custodian_address,
-            sender: "sender1".into(),
-            amount: U128::from(5),
-            recipient: "rcv1".into(),
-            fee: U128::from(2),
-        };
-        //================================
-
-        assert_eq!(
-            event.eth_custodian_address,
-            self.eth_custodian_address,
-            "Event's address {} does not match custodian address of this token {}",
-            hex::encode(&event.eth_custodian_address),
-            hex::encode(&self.eth_custodian_address),
-        );
-        let proof_1 = proof.clone();
-        let account_id = env::current_account_id();
-        let prepaid_gas = env::prepaid_gas();
-        log!("Withdraw verify_log_entry");
-        let promise0 = env::promise_create(
-            self.prover_account.clone(),
-            b"verify_log_entry",
-            json!({
-                "log_index": proof.log_index,
-                "log_entry_data": proof.log_entry_data,
-                "receipt_index": proof.receipt_index,
-                "receipt_data": proof.receipt_data,
-                "header_data": proof.header_data,
-                "proof": proof.proof,
-                "skip_bridge_call": false,
-            })
-            .to_string()
-            .as_bytes(),
-            NO_DEPOSIT,
-            prepaid_gas / 4,
-        );
-        let promise1 = env::promise_then(
-            promise0,
-            account_id,
-            b"finish_withdraw",
-            json!({
-                "owner_id": event.recipient,
-                "amount": event.amount,
-                "proof": proof_1,
-            })
-            .to_string()
-            .as_bytes(),
-            NO_DEPOSIT,
-            prepaid_gas / 4,
-        );
-        env::promise_return(promise1);
-    }
-
-    #[private]
-    pub fn finish_withdraw(&mut self, owner_id: AccountId, amount: U128, proof: Proof) {
-        log!(
-            "finish_withdraw - Promise results: {:?}",
-            env::promise_results_count()
-        );
-        log!("Amount: {:?}", amount);
-        assert_eq!(env::promise_results_count(), 1);
-        let data0: Vec<u8> = match env::promise_result(0) {
-            PromiseResult::Successful(x) => x,
-            _ => panic!("Promise with index 0 failed"),
-        };
-        let verification_success: bool = serde_json::from_slice(&data0).unwrap();
-        assert!(verification_success, "Failed to verify the proof");
-        self.record_proof(&proof.get_key());
-
-        self.burn(owner_id, amount.into());
+        let amount: Balance = amount.into();
+        let fee: Balance = fee.into();
+        assert!((amount - fee) > 0, "Not enough balance for withdraw fee");
+        // Burn tokens to recipient minus fee
+        self.burn(recipient_id.clone(), amount - fee);
+        // Mint fee for Predecessor
+        // TODO: verify recipient for mint fee
+        self.mint(env::predecessor_account_id(), fee);
+        (recipient_id, amount.into())
     }
 
     /// Record proof to make sure it is not re-used later for anther deposit.
