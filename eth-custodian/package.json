@@ -39,9 +39,9 @@
         "truffle-flattener": "^1.4.4"
     },
     "scripts": {
-        "compile": "npx hardhat compile",
-        "coverage": "npx hardhat coverage",
-        "test": "npx hardhat test",
+        "compile": "yarn hardhat compile",
+        "coverage": "yarn hardhat coverage",
+        "test": "yarn hardhat test",
         "testrpc": "ganache-cli --port 9545 --deterministic --gasLimit 10000000",
         "lint:js": "eslint .",
         "lint:js:fix": "eslint . --fix",
