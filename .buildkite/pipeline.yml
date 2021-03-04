@@ -1,7 +1,8 @@
 steps:
-    - label: test buildkite
-      command: |
-          cd eth-custodian
-          yarn
-          make test
-      timeout: 5
+  - label: test buildkite
+    command: |
+      source ~/.yarn/yarn.sh
+      cd eth-custodian
+      yarn
+      make test
+    timeout: 5
