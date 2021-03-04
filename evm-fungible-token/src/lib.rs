@@ -141,7 +141,7 @@ impl EthConnector {
     #[private]
     fn mint(&mut self, owner_id: AccountId, amount: Balance) {
         log!("Mint {:?} tokens for: {:?}", amount, owner_id);
-        
+
         if self.token.accounts.get(&owner_id).is_none() {
             // TODO: NEP-145 Account Storage impelemtation nee
             // It spent additonal account amount fot storage
@@ -255,6 +255,7 @@ impl EthConnector {
 
     /// TODO: For tests only. Ir should be external Contract
     #[allow(unused_variables)]
+    #[result_serializer(borsh)]
     pub fn verify_log_entry(
         &self,
         #[serializer(borsh)] log_index: u64,
