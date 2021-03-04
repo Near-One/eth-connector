@@ -1,7 +1,7 @@
 .PHONY: compile test
 
 compile:
-	npx hardhat compile
+	yarn hardhat compile
 
 test:
-	npx hardhat test
+	yarn hardhat test
