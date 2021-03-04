@@ -1,5 +1,6 @@
 steps:
     - label: test buildkite
       command: |
-          echo EPIC
+          cd eth-custodian
+          make test
       timeout: 5
