@@ -126,7 +126,7 @@ describe('EthCustodian contract', () => {
             )
                 .to
                 .emit(ethCustodian, 'Deposited')
-                .withArgs(walletUser1.address, ethRecipientOnNear.address, unsigned_tx.value, 100);
+                .withArgs(walletUser1.address, ethRecipientOnNear.address, unsigned_tx.value, fee);
 
             let balanceAfter = ethers.BigNumber.from(await ethers.provider.getBalance(ethCustodian.address));
             let balanceDiff = balanceAfter.sub(balanceBefore);
