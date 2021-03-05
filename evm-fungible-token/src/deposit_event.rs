@@ -26,8 +26,11 @@ impl EthDepositedEvent {
 
     /// Parse raw log Etherium proof entry data.
     pub fn from_log_entry_data(data: &[u8]) -> Self {
-        let event =
-            EthEvent::from_log_entry_data("DepositedToNear", EthDepositedEvent::event_params(), data);
+        let event = EthEvent::fetch_log_entry_data(
+            "DepositedToNear",
+            EthDepositedEvent::event_params(),
+            data,
+        );
         let sender = event.log.params[0].value.clone().to_address().unwrap().0;
         let sender = (&sender).encode_hex::<String>();
         let recipient = event.log.params[1].value.clone().to_address().unwrap().0;

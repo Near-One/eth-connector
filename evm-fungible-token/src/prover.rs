@@ -47,8 +47,8 @@ pub struct EthEvent {
 }
 
 impl EthEvent {
-    /// Get Etherium event from proof `log_entry_data`
-    pub fn from_log_entry_data(name: &str, params: EthEventParams, data: &[u8]) -> Self {
+    /// Get Etherium event from `log_entry_data`
+    pub fn fetch_log_entry_data(name: &str, params: EthEventParams, data: &[u8]) -> Self {
         let event = Event {
             name: name.to_string(),
             inputs: params

@@ -177,7 +177,12 @@ impl EthConnector {
     }
 
     #[payable]
-    pub fn withdraw(&mut self, recipient_id: AccountId, amount: U128, fee: U128) -> (AccountId, u128) {
+    pub fn withdraw(
+        &mut self,
+        recipient_id: AccountId,
+        amount: U128,
+        fee: U128,
+    ) -> (AccountId, u128) {
         log!("Start withdraw");
         let amount: Balance = amount.into();
         let fee: Balance = fee.into();
