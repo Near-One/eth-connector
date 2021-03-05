@@ -15,7 +15,7 @@ contract EthCustodian is ProofKeeper {
 
     event DepositedToNear (
         address indexed sender,
-        string indexed nearRecipient,
+        string nearRecipient,
         uint256 amount,
         uint256 fee
     );

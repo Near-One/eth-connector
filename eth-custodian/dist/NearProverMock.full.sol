@@ -1,11 +1,11 @@
-// Sources flattened with hardhat v2.1.0 https://hardhat.org
+// Sources flattened with hardhat v2.0.10 https://hardhat.org
 
 // File rainbow-bridge/contracts/eth/nearprover/contracts/INearProver.sol@v1.0.0
 
 pragma solidity ^0.6;
 
 interface INearProver {
-    function proveOutcome(bytes calldata proofData, uint64 blockHeight) external view returns (bool);
+    function proveOutcome(bytes calldata proofData, uint64 blockHeight) external view returns(bool);
 }
 
 
