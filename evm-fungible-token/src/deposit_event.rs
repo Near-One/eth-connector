@@ -18,7 +18,7 @@ impl EthDepositedEvent {
     fn event_params() -> EthEventParams {
         vec![
             ("sender".to_string(), ParamType::Address, true),
-            ("ethRecipientOnNear".to_string(), ParamType::Address, true),
+            ("nearRecipient".to_string(), ParamType::String, true),
             ("amount".to_string(), ParamType::Uint(256), false),
             ("fee".to_string(), ParamType::Uint(256), false),
         ]
@@ -26,6 +26,7 @@ impl EthDepositedEvent {
 
     /// Parse raw log Etherium proof entry data.
     pub fn from_log_entry_data(data: &[u8]) -> Self {
+        use near_sdk::{env, log};
         let event = EthEvent::fetch_log_entry_data(
             "DepositedToNear",
             EthDepositedEvent::event_params(),
@@ -33,8 +34,8 @@ impl EthDepositedEvent {
         );
         let sender = event.log.params[0].value.clone().to_address().unwrap().0;
         let sender = (&sender).encode_hex::<String>();
-        let recipient = event.log.params[1].value.clone().to_address().unwrap().0;
-        let recipient = (&recipient).encode_hex::<String>();
+        log!("recipient: {:?}", event.log.params[1].value.clone());
+        let recipient = event.log.params[1].value.clone().to_string().unwrap();
         let amount = U128::from(
             event.log.params[2]
                 .value
