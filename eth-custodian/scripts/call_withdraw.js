@@ -3,12 +3,14 @@ require('dotenv').config();
 const hre = require('hardhat');
 
 const ethereumConfig = require('./json/ethereum-config.json');
+const Path = require('path');
+const fs = require('fs').promises;
 
 
 async function main() {
     [deployerAccount] = await hre.ethers.getSigners();
 
-    console.log(`Call deposit with the account: ${deployerAccount.address}`);
+    console.log(`Call withdraw from the account: ${deployerAccount.address}`);
 
     const accountBalanceBefore = await deployerAccount.getBalance();
     console.log(`Account balance before: ${accountBalanceBefore} wei`);
@@ -19,18 +21,19 @@ async function main() {
 
     console.log(`EthCustodian address: ${ethCustodian.address}`);
 
+    const proof = await fs.readFile('borshProof.data');
+    const clientHeight = 38985931;
+
     const deployerWallet = new hre.ethers.Wallet(process.env.ROPSTEN_PRIVATE_KEY, hre.ethers.getDefaultProvider());
     let unsignedTx = await ethCustodian
         .connect(deployerWallet)
         .populateTransaction
-        .depositToNear(ethereumConfig.nearRecipient, ethereumConfig.fee);
+        .withdraw(proof, clientHeight);
 
     unsignedTx.nonce = await hre.ethers.provider.getTransactionCount(deployerWallet.address);
     unsignedTx.value = ethereumConfig.amountToTransfer;
     unsignedTx.gasPrice = 100000000000;
-    unsignedTx.gasLimit = 70000;
-
-    console.log(`Amount to transfer: ${ethereumConfig.amountToTransfer}; fee: ${ethereumConfig.fee}`);
+    unsignedTx.gasLimit = 800000;
 
     // Sign and send tx
     const signedTx = await deployerWallet.signTransaction(unsignedTx);
@@ -40,7 +43,14 @@ async function main() {
     await hre.ethers.provider.waitForTransaction(tx.hash).then(function(receipt) {
         console.log(`Transaction mined: ${tx.hash}`);
         console.log(receipt);
-    });
+    }, (error) => {
+        // This is entered if the status of the receipt is failure
+        return error.checkCall().then((error) => {
+            console.log("Error", error);
+            return false;
+        });
+    }
+    );
 
     const accountBalanceAfter = await deployerAccount.getBalance();
     console.log(`Account balance after: ${accountBalanceAfter} wei`);
@@ -52,4 +62,4 @@ main()
     .catch(error => {
         console.error(error);
         process.exit(1);
-    });
+    })
