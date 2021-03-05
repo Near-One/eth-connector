@@ -8,7 +8,7 @@ use near_sdk::AccountId;
 #[derive(Debug, PartialEq)]
 pub struct EthDepositedEvent {
     pub eth_custodian_address: EthAddress,
-    pub sender: String,
+    pub sender: AccountId,
     pub recipient: AccountId,
     pub amount: U128,
     pub fee: U128,
@@ -27,7 +27,7 @@ impl EthDepositedEvent {
     /// Parse raw log Etherium proof entry data.
     pub fn from_log_entry_data(data: &[u8]) -> Self {
         let event =
-            EthEvent::from_log_entry_data("Deposited", EthDepositedEvent::event_params(), data);
+            EthEvent::from_log_entry_data("DepositedToNear", EthDepositedEvent::event_params(), data);
         let sender = event.log.params[0].value.clone().to_address().unwrap().0;
         let sender = (&sender).encode_hex::<String>();
         let recipient = event.log.params[1].value.clone().to_address().unwrap().0;
