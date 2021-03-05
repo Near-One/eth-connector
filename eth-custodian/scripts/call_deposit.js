@@ -24,7 +24,7 @@ async function main() {
     let unsignedTx = await ethCustodian
         .connect(deployerWallet)
         .populateTransaction
-        .deposit(ethereumConfig.ethRecipientOnNear, ethereumConfig.fee);
+        .depositToNear(ethereumConfig.nearRecipient, ethereumConfig.fee);
 
     unsignedTx.nonce = await hre.ethers.provider.getTransactionCount(deployerWallet.address);
     unsignedTx.value = ethereumConfig.amountToTransfer;

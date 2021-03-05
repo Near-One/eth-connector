@@ -1,5 +1,6 @@
 {
     "proverAddress": "An address of the prover contract",
+    "nearEvmAccount": "An address of the NEAR evm account (e.g. 'near.evm.testnet')",
     "ethConnectorAddress": "An address of the ETH connector (EthCustodian) contract",
 
     "nearRecipient": "An address of the recipient account on NEAR",

@@ -20,7 +20,7 @@ async function main() {
     //const nearProverMockContractFactory = await hre.ethers.getContractFactory('NearProverMock')
     //const nearProver = await nearProverMockContractFactory.deploy();
 
-    const nearEvmAccount = Buffer.from('evm.near');
+    const nearEvmAccount = Buffer.from(ethereumConfig.nearEvmAccount);
     console.log(`Near EVM account: ${nearEvmAccount.toString()}`);
 
     // Proofs coming from blocks below this value should be rejected
