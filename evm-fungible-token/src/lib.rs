@@ -183,7 +183,10 @@ impl EthConnector {
         self.token.internal_withdraw(&owner_id, amount);
     }
 
+    /// Withdraw from current NEAR account and burn fungible tokens/
+    /// Return recipient, amount and custodian address
     #[payable]
+    #[result_serializer(borsh)]
     pub fn withdraw(
         &mut self,
         recipient_id: AccountId,
