@@ -1,4 +1,4 @@
-use near_sdk_sim::{call, deploy, init_simulator, view, ContractAccount, UserAccount, DEFAULT_GAS};
+mak	use near_sdk_sim::{call, deploy, init_simulator, view, ContractAccount, UserAccount, DEFAULT_GAS};
 
 extern crate eth_connector;
 use eth_connector::{EthConnectorContract, Proof};
@@ -17,6 +17,7 @@ const DEPOSITED_RECIPIENT: &'static str = "testlocal.testnet";
 const CUSTODIAN_ADDRESS: &'static str = "b9f7219e434EAA7021Ae5f9Ecd0CaBc2405447A3";
 const PROVER_ACCOUNT: &'static str = "eth_connector.root";
 const CONTRACT_ACC: &'static str = "eth_connector.root";
+const RECIPIENT_ETH_ADDRESS: &'static str = "891b2749238b27ff58e951088e55b04de71dc374";
 
 fn init() -> (UserAccount, ContractAccount<EthConnectorContract>) {
     let master_account = init_simulator(None);
@@ -57,30 +58,20 @@ fn test_sim_withdraw() {
     call_deposit(&master_account, &contract);
 
     let withdraw_amount = 100;
-    let withdraw_fee = 5;
     let _res = call!(
         master_account,
-        contract.withdraw(
-            DEPOSITED_RECIPIENT.into(),
-            U128::from(withdraw_amount),
-            U128::from(withdraw_fee)
-        ),
+        contract.withdraw(RECIPIENT_ETH_ADDRESS.into(), U128::from(withdraw_amount)),
         gas = DEFAULT_GAS * 3
     );
 
-    // println!("#1: {:#?}", _res.promise_results());
+    println!("#1: {:#?}", _res.promise_results());
 
-    let acc_id = ValidAccountId::try_from(DEPOSITED_RECIPIENT).unwrap();
+    let acc_id = ValidAccountId::try_from(CONTRACT_ACC).unwrap();
     let burned_balance = view!(contract.ft_balance_of(acc_id)).unwrap_json::<U128>();
     assert_eq!(
         burned_balance,
-        U128::from(DEPOSITED_AMOUNT - DEPOSITED_FEE - withdraw_amount + withdraw_fee)
+        U128::from(withdraw_amount)
     );
-
-    // Check minted fee
-    let acc_id = ValidAccountId::try_from(master_account.account_id).unwrap();
-    let minted_balance = view!(contract.ft_balance_of(acc_id)).unwrap_json::<U128>();
-    assert_eq!(minted_balance, U128::from(withdraw_fee));
 }
 
 fn call_deposit(master_account: &UserAccount, contract: &ContractAccount<EthConnectorContract>) {
@@ -92,5 +83,5 @@ fn call_deposit(master_account: &UserAccount, contract: &ContractAccount<EthConn
         gas = DEFAULT_GAS * 3
     );
 
-    // println!("#1: {:#?}", _res.promise_results());
+    println!("#1: {:#?}", _res.promise_results());
 }

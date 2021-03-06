@@ -6,6 +6,7 @@ use near_contract_standards::storage_manager::{AccountStorageBalance, StorageMan
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::LookupSet;
 use near_sdk::json_types::{ValidAccountId, U128};
+use near_sdk::serde::Serialize;
 use near_sdk::serde_json::json;
 use near_sdk::{
     env, log, near_bindgen, AccountId, Balance, PanicOnDefault, Promise, PromiseResult,
@@ -43,6 +44,12 @@ pub struct EthConnector {
     pub used_events: LookupSet<Vec<u8>>,
     /// Fungible token specific data
     pub token: FungibleToken,
+}
+
+#[derive(Debug, Eq, PartialEq, BorshSerialize, BorshDeserialize, Serialize)]
+#[serde(crate = "near_sdk::serde")]
+pub enum ResultType {
+    Withdraw,
 }
 
 #[near_bindgen]
@@ -181,18 +188,18 @@ impl EthConnector {
         &mut self,
         recipient_id: AccountId,
         amount: U128,
-        fee: U128,
-    ) -> (AccountId, u128) {
+    ) -> (ResultType, u128, [u8; 20], [u8; 20]) {
         log!("Start withdraw");
+        let recipient_address = validate_eth_address(recipient_id);
         let amount: Balance = amount.into();
-        let fee: Balance = fee.into();
-        assert!((amount - fee) > 0, "Not enough balance for withdraw fee");
-        // Burn tokens to recipient minus fee
-        self.burn(recipient_id.clone(), amount - fee);
-        // Mint fee for Predecessor
-        // TODO: verify recipient for mint fee
-        self.mint(env::predecessor_account_id(), fee);
-        (recipient_id, amount.into())
+        // Burn tokens to recipient
+        self.burn(env::predecessor_account_id(), amount);
+        (
+            ResultType::Withdraw,
+            amount,
+            self.eth_custodian_address,
+            recipient_address,
+        )
     }
 
     /// Record proof to make sure it is not re-used later for anther deposit.
