@@ -1,4 +1,4 @@
-pragma solidity ^0.6;
+pragma solidity ^0.6.12;
 
 import "rainbow-bridge/contracts/eth/nearprover/contracts/ProofDecoder.sol";
 import "rainbow-bridge/contracts/eth/nearbridge/contracts/Borsh.sol";
@@ -26,11 +26,11 @@ contract EthCustodian is ProofKeeper {
 
     /// EthCustodian is linked to the EVM on NEAR side.
     /// It also links to the prover that it uses to withdraw the tokens.
-    constructor(bytes memory nearEvm, INearProver prover, address admin)
-        ProofKeeper(nearEvm, prover)
+    constructor(bytes memory nearEvm, INearProver prover, uint64 minBlockAcceptanceHeight, address _admin)
+        ProofKeeper(nearEvm, prover, minBlockAcceptanceHeight)
         public
     {
-        admin_ = admin;
+        admin = _admin;
     }
 
     /// Deposits the specified amount of provided ETH (except from the relayer's fee) into the smart contract.
@@ -59,15 +59,15 @@ contract EthCustodian is ProofKeeper {
         returns (BurnResult memory result)
     {
         Borsh.Data memory borshData = Borsh.from(data);
-        result.amount = borshData.decodeU128();
         bytes20 recipient = borshData.decodeBytes20();
+        result.amount = borshData.decodeU128();
         result.recipient = address(uint160(recipient));
     }
 
-    address public admin_;
+    address public admin;
 
     modifier onlyAdmin {
-        require(msg.sender == admin_);
+        require(msg.sender == admin);
         _;
     }
 
