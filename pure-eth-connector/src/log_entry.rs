@@ -1,4 +1,5 @@
 use primitive_types::{H160, H256};
+use alloc::vec::Vec;
 
 pub type Address = H160;
 

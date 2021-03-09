@@ -19,6 +19,7 @@ panic = "abort"
 debug-assertions = false
 
 [dependencies]
+wee_alloc = { version = "0.4.5", default-features = false }
 rlp = { version = "0.5", default-features = false }
 primitive-types = { version = "0.8.0", default-features = false, features = ["rlp"] }
 # ethabi = "12.0.0"
