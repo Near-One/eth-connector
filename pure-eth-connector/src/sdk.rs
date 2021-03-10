@@ -442,3 +442,12 @@ pub fn storage_byte_cost() -> Balance {
 pub fn promise_batch_create(account_id: AccountId) -> u64 {
     unsafe { exports::promise_batch_create(account_id.len() as _, account_id.as_ptr() as _) }
 }
+
+pub fn sha256(value: &[u8]) -> Vec<u8> {
+    unsafe {
+        exports::sha256(value.len() as _, value.as_ptr() as _, 0);
+        let bytes: Vec<u8> = vec![0u8; exports::register_len(0) as usize];
+        exports::read_register(0, bytes.as_ptr() as *const u64 as u64);
+        bytes
+    }
+}

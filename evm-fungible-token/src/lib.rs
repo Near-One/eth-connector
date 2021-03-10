@@ -286,21 +286,13 @@ impl EthConnector {
     pub fn storage_deposit(&mut self, account_id: Option<ValidAccountId>) -> AccountStorageBalance {
         self.token.storage_deposit(account_id)
     }
-    
+
     #[payable]
     pub fn storage_withdraw(&mut self, amount: Option<U128>) -> AccountStorageBalance {
         self.token.storage_withdraw(amount)
     }
 
-    pub fn storage_minimum_balance(&self) -> U128 {
-        self.token.storage_minimum_balance()
-    }
-
     pub fn storage_balance_of(&self, account_id: ValidAccountId) -> AccountStorageBalance {
         self.token.storage_balance_of(account_id)
-    }
-
-    pub fn storage_minimum_balance(&self) -> U128 {
-        (Balance::from(self.account_storage_usage) * env::storage_byte_cost()).into()
     }
 }

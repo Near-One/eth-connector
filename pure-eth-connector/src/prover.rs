@@ -29,8 +29,7 @@ impl Proof {
         let mut data = self.log_index.try_to_vec().unwrap();
         data.extend(self.receipt_index.try_to_vec().unwrap());
         data.extend(self.header_data.clone());
-        //env::sha256(&data)
-        vec![]
+        sdk::sha256(&data[..])
     }
 }
 

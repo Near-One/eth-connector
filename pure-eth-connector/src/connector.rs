@@ -38,6 +38,7 @@ impl EthConnectorContract {
         let proof: Proof = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
         let event = EthDepositedEvent::from_log_entry_data(&proof.log_entry_data);
 
+        #[cfg(feature = "log")]
         sdk::log(format!(
             "Deposit started: from {:?} ETH to {:?} NEAR with amount: {:?} and fee {:?}",
             event.sender,
