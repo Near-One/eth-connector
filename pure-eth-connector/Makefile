@@ -1,8 +1,8 @@
-check:
-	@cargo check
-
 build:
 	@./build.sh
+
+check:
+	@cargo build
 
 fmt:
 	@cargo fmt

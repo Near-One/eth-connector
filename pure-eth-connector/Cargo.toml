@@ -21,9 +21,15 @@ debug-assertions = false
 [dependencies]
 wee_alloc = { version = "0.4.5", default-features = false }
 rlp = { version = "0.5", default-features = false }
+borsh = { version = "0.8", default-features = false }
 primitive-types = { version = "0.8.0", default-features = false, features = ["rlp"] }
-# ethabi = "12.0.0"
-# hex = "0.4.2"
+# hex = { version = "0.4.2", default-features = false }
+# ethabi = { package = "ethabi", git = "https://github.com/darwinia-network/ethabi.git",  brandh="with_no_std", default-features = false }
+# ====
+rustc-hex = { version = "2.0", default-features = false }
+tiny-keccak = { version = "1.4", features = ["keccak"]}
+ethereum-types = { git = "https://github.com/darwinia-network/parity-common.git", default-features = false }
+rstd = { package = "sp-std", git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop", default-features = false }
 
 [dev-dependencies]
-# near-sdk-sim = { git = "https://github.com/near/near-sdk-rs", rev = "f99b1a32b93db21707192fbcc8c3a16aef5889d7"}
+near-sdk-sim = { git = "https://github.com/near/near-sdk-rs", rev = "f99b1a32b93db21707192fbcc8c3a16aef5889d7"}
