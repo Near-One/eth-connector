@@ -1,11 +1,8 @@
 //! ABI encoder.
-
 use super::util::pad_u32;
 use super::{Bytes, Token, Word};
 use rstd::prelude::*;
 use rstd::vec::Vec;
-
-use alloc::string::String;
 
 fn pad_bytes(bytes: &[u8]) -> Vec<Word> {
     let mut result = vec![pad_u32(bytes.len() as u32)];

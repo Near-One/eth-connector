@@ -4,7 +4,6 @@ use super::Tokenizer;
 
 use alloc::string::String;
 use rstd::borrow::ToOwned;
-use rstd::prelude::*;
 use rstd::vec::Vec;
 use rustc_hex::FromHex;
 

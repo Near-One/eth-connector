@@ -1,14 +1,10 @@
 use super::super::{Error, ErrorKind, ParamType};
+use alloc::string::String;
+use rstd::borrow::ToOwned;
+use rstd::boxed::Box;
 
 /// Used to convert param type represented as a string to rust structure.
 pub struct Reader;
-
-use alloc::string::String;
-use rstd::boxed::Box;
-use rstd::prelude::*;
-use rstd::vec::Vec;
-
-use rstd::borrow::ToOwned;
 
 impl Reader {
     /// Converts string to param type.

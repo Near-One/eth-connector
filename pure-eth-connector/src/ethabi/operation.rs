@@ -3,6 +3,7 @@ use super::{Constructor, Event, Function};
 
 /// Operation type.
 #[derive(Clone, Debug, PartialEq)]
+#[allow(dead_code)]
 pub enum Operation {
     /// Contract constructor.
     Constructor(Constructor),

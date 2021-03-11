@@ -1,11 +1,7 @@
 //! Function and event param types.
-
 use super::Writer;
-use rstd::fmt;
-
 use rstd::boxed::Box;
-
-use rstd::borrow::ToOwned;
+use rstd::fmt;
 
 /// Function and event param types.
 #[derive(Debug, Clone, PartialEq)]

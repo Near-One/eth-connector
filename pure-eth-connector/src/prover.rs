@@ -68,7 +68,7 @@ impl EthEvent {
             anonymous: false,
         };
         let log_entry: LogEntry = rlp::decode(data).expect("Invalid RLP");
-        let eth_custodian_address = (log_entry.address.clone().0);
+        let eth_custodian_address = log_entry.address.clone().0;
         let topics = log_entry.topics.iter().map(|h| Hash::from(h.0)).collect();
 
         let raw_log = RawLog {

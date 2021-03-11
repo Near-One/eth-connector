@@ -1,6 +1,5 @@
 //! Function and event param types.
 
-mod deserialize;
 mod param_type;
 mod reader;
 mod writer;

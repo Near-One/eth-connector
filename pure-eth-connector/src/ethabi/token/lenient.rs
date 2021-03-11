@@ -3,7 +3,6 @@ use super::super::util::{pad_i32, pad_u32};
 use super::{StrictTokenizer, Tokenizer};
 
 use alloc::string::String;
-use rstd::prelude::*;
 use rstd::vec::Vec;
 
 /// Tries to parse string as a token. Does not require string to clearly represent the value.

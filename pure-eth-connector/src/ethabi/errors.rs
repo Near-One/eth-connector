@@ -25,7 +25,7 @@ impl From<&str> for ErrorKind {
 }
 
 impl ErrorKind {
-    pub(crate) fn as_str(&self) -> &'static str {
+    pub fn as_str(&self) -> &'static str {
         match *self {
             ErrorKind::InvalidName(_) => "Invalid name",
             ErrorKind::InvalidData => "Invalid data",
@@ -106,7 +106,7 @@ pub trait ResultExt<T> {
 }
 
 impl<T> ResultExt<T> for rstd::result::Result<T, Error> {
-    fn chain_err<F, EK>(self, callback: F) -> rstd::result::Result<T, Error>
+    fn chain_err<F, EK>(self, _callback: F) -> rstd::result::Result<T, Error>
     where
         F: FnOnce() -> EK,
         EK: Into<ErrorKind>,

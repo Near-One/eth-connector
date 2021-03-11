@@ -1,12 +1,8 @@
+use super::{Constructor, Event, Function};
+use alloc::string::String;
 use rstd::collections::btree_map::BTreeMap;
 use rstd::collections::btree_map::Values;
-use rstd::fmt;
 use rstd::iter::Flatten;
-
-use super::operation::Operation;
-use super::{errors, Constructor, ErrorKind, Event, Function};
-
-use alloc::string::String;
 use rstd::prelude::*;
 use rstd::vec::Vec;
 

@@ -1,7 +1,5 @@
 //! Contract constructor call builder.
 use super::{encode, Bytes, ErrorKind, Param, ParamType, Result, Token};
-
-use alloc::string::String;
 use rstd::prelude::*;
 use rstd::vec::Vec;
 
