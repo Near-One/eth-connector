@@ -1,5 +1,6 @@
-use alloc::collections::BTreeMap;
-use alloc::{string::String, vec, vec::Vec};
+use crate::fungible_token::FungibleToken;
+use crate::prover::EthAddress;
+use alloc::{collections::BTreeSet, string::String, vec, vec::Vec};
 use borsh::{BorshDeserialize, BorshSerialize};
 use primitive_types::{H160, H256, U256};
 use sha3::{Digest, Keccak256};
@@ -25,10 +26,11 @@ pub struct InitCallArgs {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct FungibleToken {
-    pub accounts: BTreeMap<AccountId, Balance>,
-    pub total_supply: Balance,
-    pub account_storage_usage: StorageUsage,
+pub struct EthConnector {
+    pub prover_account: AccountId,
+    pub eth_custodian_address: EthAddress,
+    pub used_events: BTreeSet<Vec<u8>>,
+    pub token: FungibleToken,
 }
 
 #[derive(BorshSerialize, BorshDeserialize)]

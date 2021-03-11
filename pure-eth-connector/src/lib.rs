@@ -11,6 +11,7 @@ extern crate rustc_hex as hex;
 extern crate tiny_keccak;
 
 pub mod ethabi;
+pub mod fungible_token;
 pub mod log_entry;
 pub mod prover;
 pub mod sdk;

@@ -24,7 +24,7 @@ mod exports {
         pub(crate) fn block_index() -> u64;
         pub(crate) fn block_timestamp() -> u64;
         fn epoch_height() -> u64;
-        fn storage_usage() -> u64;
+        pub fn storage_usage() -> u64;
         // #################
         // # Economics API #
         // #################
@@ -267,4 +267,8 @@ pub fn state_exists() -> bool {
             false
         }
     }
+}
+
+pub fn storage_usage() -> u64 {
+    unsafe { exports::storage_usage() }
 }
