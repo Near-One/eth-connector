@@ -11,8 +11,10 @@ extern crate rustc_hex as hex;
 extern crate tiny_keccak;
 
 pub mod ethabi;
-mod log_entry;
+pub mod log_entry;
 pub mod prover;
+pub mod sdk;
+pub mod types;
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
@@ -20,11 +22,11 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 #[panic_handler]
 #[no_mangle]
 pub unsafe fn on_panic(_info: &::core::panic::PanicInfo) -> ! {
-    ::core::intrinsics::abort();
+    core::intrinsics::abort();
 }
 
 #[alloc_error_handler]
 #[no_mangle]
 pub unsafe fn on_alloc_error(_: core::alloc::Layout) -> ! {
-    ::core::intrinsics::abort();
+    core::intrinsics::abort();
 }
