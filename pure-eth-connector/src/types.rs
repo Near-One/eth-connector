@@ -1,3 +1,4 @@
+use alloc::collections::BTreeMap;
 use alloc::{string::String, vec, vec::Vec};
 use borsh::{BorshDeserialize, BorshSerialize};
 use primitive_types::{H160, H256, U256};
@@ -6,12 +7,28 @@ use sha3::{Digest, Keccak256};
 pub type RawAddress = [u8; 20];
 pub type RawU256 = [u8; 32];
 pub type RawH256 = [u8; 32];
+pub type AccountId = String;
+pub type Balance = u128;
+pub type StorageUsage = u64;
 
 #[derive(Clone)]
 pub struct Log {
     pub address: H160,
     pub topics: Vec<H256>,
     pub data: Vec<u8>,
+}
+
+#[derive(BorshSerialize, BorshDeserialize)]
+pub struct InitCallArgs {
+    pub prover_account: AccountId,
+    pub eth_custodian_address: AccountId,
+}
+
+#[derive(BorshDeserialize, BorshSerialize)]
+pub struct FungibleToken {
+    pub accounts: BTreeMap<AccountId, Balance>,
+    pub total_supply: Balance,
+    pub account_storage_usage: StorageUsage,
 }
 
 #[derive(BorshSerialize, BorshDeserialize)]

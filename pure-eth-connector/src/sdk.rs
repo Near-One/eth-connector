@@ -1,6 +1,9 @@
 use alloc::{vec, vec::Vec};
 use primitive_types::H256;
 
+/// Key used to store the state of the contract.
+const STATE_KEY: &[u8] = b"STATE";
+
 mod exports {
     #[allow(unused)]
     extern "C" {
@@ -137,7 +140,7 @@ mod exports {
         ) -> u64;
         pub(crate) fn storage_read(key_len: u64, key_ptr: u64, register_id: u64) -> u64;
         pub(crate) fn storage_remove(key_len: u64, key_ptr: u64, register_id: u64) -> u64;
-        fn storage_has_key(key_len: u64, key_ptr: u64) -> u64;
+        pub fn storage_has_key(key_len: u64, key_ptr: u64) -> u64;
         fn storage_iter_prefix(prefix_len: u64, prefix_ptr: u64) -> u64;
         fn storage_iter_range(start_len: u64, start_ptr: u64, end_len: u64, end_ptr: u64) -> u64;
         fn storage_iter_next(iterator_id: u64, key_register_id: u64, value_register_id: u64)
@@ -254,4 +257,14 @@ pub fn panic_hex(data: &[u8]) -> ! {
     let message = crate::types::bytes_to_hex(data).into_bytes();
     unsafe { exports::panic_utf8(message.len() as _, message.as_ptr() as _) }
     unreachable!()
+}
+
+pub fn state_exists() -> bool {
+    unsafe {
+        if exports::storage_has_key(STATE_KEY.len() as u64, STATE_KEY.as_ptr() as u64) == 1 {
+            true
+        } else {
+            false
+        }
+    }
 }
