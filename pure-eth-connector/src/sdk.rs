@@ -31,7 +31,7 @@ mod exports {
         // #################
         fn account_balance(balance_ptr: u64);
         fn attached_deposit(balance_ptr: u64);
-        fn prepaid_gas() -> u64;
+        pub fn prepaid_gas() -> u64;
         fn used_gas() -> u64;
         // ############
         // # Math API #
@@ -281,4 +281,8 @@ pub fn current_account_id() -> AccountId {
         exports::read_register(1, bytes.as_ptr() as *const u64 as u64);
         String::from_utf8(bytes).unwrap()
     }
+}
+
+pub fn prepaid_gas() -> u64 {
+    unsafe { exports::prepaid_gas() }
 }
