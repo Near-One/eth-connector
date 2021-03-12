@@ -47,7 +47,7 @@ contract ProofKeeper {
 
         require(keccak256(fullOutcomeProof.outcome_proof.outcome_with_id.outcome.executor_id)
                 == keccak256(nearProofProducerAccount_),
-                "Can only unlock tokens from the linked proof producer on Near blockchain");
+                "Can only withdraw coins from the linked proof producer on Near blockchain");
 
         result = fullOutcomeProof.outcome_proof.outcome_with_id.outcome.status;
         require(!result.failed, "Cannot use failed execution outcome for unlocking the tokens");

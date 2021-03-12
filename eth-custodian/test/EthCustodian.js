@@ -7,8 +7,9 @@ const { borshifyOutcomeProof } = require('rainbow-bridge-lib/rainbow/borshify-pr
 const SCHEMA = {
   'Withdrawn': {
     kind: 'struct', fields: [
-      ['recipient', [20]],
       ['amount', 'u128'],
+      ['recipient', [20]],
+      ['ethCustodian', [20]],
     ]
   }
 };
@@ -25,7 +26,7 @@ describe('EthCustodian contract', () => {
     let ethRecipientOnNear;
     let minBlockAcceptanceHeight;
 
-    const nearEvmAccount = Buffer.from('evm.near');
+    const nearEvmAccount = Buffer.from('v1.eth-connector.testnet');
 
     beforeEach(async () => {
         [deployerAccount, ethRecipientOnNear, user2] = await ethers.getSigners();
@@ -170,7 +171,7 @@ describe('EthCustodian contract', () => {
     });
 
     describe('Withdraw', () => {
-        let proof = require('./proof_template.json');
+        let proof = require('./proof_template_from_testnet.json');
         const proofExecutorId = proof.outcome_proof.outcome.executor_id;
 
         beforeEach(async () => {
@@ -193,8 +194,9 @@ describe('EthCustodian contract', () => {
         it('Should revert when the proof producer (nearEvmAccount) differs from the linked one', async () => {
             const amount = 5000;
             proof.outcome_proof.outcome.status.SuccessValue = serialize(SCHEMA, 'Withdrawn', {
-                recipient: ethers.utils.arrayify(user2.address),
                 amount: amount,
+                recipient: ethers.utils.arrayify(user2.address),
+                ethCustodian: ethers.utils.arrayify(ethCustodian.address),
             }).toString('base64');
             // Manually set the incorrect proof producer
             proof.outcome_proof.outcome.executor_id = 'evm2.near';
@@ -204,16 +206,35 @@ describe('EthCustodian contract', () => {
             )
                 .to
                 .be
-                .revertedWith('Can only unlock tokens from the linked proof producer on Near blockchain');
+                .revertedWith('Can only withdraw coins from the linked proof producer on Near blockchain');
+        });
+
+        it('Should revert when the proof\'s ethCustodian address differs from the current contract', async () => {
+            const amount = 5000;
+            proof.outcome_proof.outcome.status.SuccessValue = serialize(SCHEMA, 'Withdrawn', {
+                amount: amount,
+                recipient: ethers.utils.arrayify(user2.address),
+                // Manually setting the incorrect eth custodian address
+                ethCustodian: ethers.utils.arrayify("0xabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"),
+            }).toString('base64');
+
+            await expect(
+                ethCustodian.withdraw(borshifyOutcomeProof(proof), 1099)
+            )
+                .to
+                .be
+                .revertedWith('Can only withdraw coins that were expected for the current contract');
         });
 
         it('Should successfully withdraw and emit the withdrawn event', async () => {
             const amount = 5000;
             proof.outcome_proof.outcome.status.SuccessValue = serialize(SCHEMA, 'Withdrawn', {
-                recipient: ethers.utils.arrayify(user2.address),
                 amount: amount,
+                recipient: ethers.utils.arrayify(user2.address),
+                ethCustodian: ethers.utils.arrayify(ethCustodian.address),
             }).toString('base64');
 
+            console.log(`User2 address: ${user2.address}`);
             const balanceBefore = ethers.BigNumber.from(await ethers.provider.getBalance(user2.address));
 
             await expect(
@@ -236,8 +257,9 @@ describe('EthCustodian contract', () => {
         it('Should revert when trying to use the same proof twice', async () => {
             const amount = 5000;
             proof.outcome_proof.outcome.status.SuccessValue = serialize(SCHEMA, 'Withdrawn', {
-                recipient: ethers.utils.arrayify(user2.address),
                 amount: amount,
+                recipient: ethers.utils.arrayify(user2.address),
+                ethCustodian: ethers.utils.arrayify(ethCustodian.address),
             }).toString('base64');
 
             // Withdraw for the first time
@@ -255,8 +277,9 @@ describe('EthCustodian contract', () => {
         it('Should revert when the proof is coming from the ancient block', async () => {
             const amount = 5000;
             proof.outcome_proof.outcome.status.SuccessValue = serialize(SCHEMA, 'Withdrawn', {
-                recipient: ethers.utils.arrayify(user2.address),
                 amount: amount,
+                recipient: ethers.utils.arrayify(user2.address),
+                ethCustodian: ethers.utils.arrayify(ethCustodian.address),
             }).toString('base64');
 
             const proofBlockHeight = minBlockAcceptanceHeight - 1;
