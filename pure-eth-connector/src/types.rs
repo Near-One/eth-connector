@@ -1,5 +1,5 @@
 use crate::fungible_token::FungibleToken;
-use crate::prover::EthAddress;
+use crate::prover::{EthAddress, Proof};
 use alloc::{collections::BTreeSet, string::String, vec, vec::Vec};
 use borsh::{BorshDeserialize, BorshSerialize};
 use primitive_types::{H160, H256, U256};
@@ -32,6 +32,20 @@ pub struct EthConnector {
     pub eth_custodian_address: EthAddress,
     pub used_events: BTreeSet<Vec<u8>>,
     pub token: FungibleToken,
+}
+
+#[derive(BorshSerialize, BorshDeserialize)]
+pub struct FinishDepositCallArgs {
+    pub new_owner_id: AccountId,
+    pub amount: u128,
+    pub fee: u128,
+    pub proof: Proof,
+}
+
+pub enum PromiseResult {
+    NotReady,
+    Successful(Vec<u8>),
+    Failed,
 }
 
 #[derive(BorshSerialize, BorshDeserialize)]

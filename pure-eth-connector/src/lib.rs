@@ -21,7 +21,7 @@ pub mod types;
 use crate::deposit_event::EthDepositedEvent;
 use crate::fungible_token::FungibleToken;
 use crate::prover::{validate_eth_address, Proof};
-use crate::types::{EthConnector, InitCallArgs};
+use crate::types::{EthConnector, FinishDepositCallArgs, InitCallArgs, PromiseResult};
 use alloc::collections::BTreeSet;
 use alloc::string::String;
 use borsh::{BorshDeserialize, BorshSerialize};
@@ -96,13 +96,49 @@ pub extern "C" fn deposit() {
         sdk::NO_DEPOSIT,
         prepaid_gas / 4,
     );
+    let data = FinishDepositCallArgs {
+        new_owner_id: event.recipient,
+        amount: event.amount.as_u128(),
+        fee: event.fee.as_u128(),
+        proof,
+    }
+    .try_to_vec()
+    .unwrap();
     let promise1 = sdk::promise_then(
         promise0,
         account_id,
         b"finish_deposit",
-        &proof_1[..],
+        &data[..],
         sdk::NO_DEPOSIT,
         prepaid_gas / 4,
     );
     sdk::promise_return(promise1);
+}
+
+#[no_mangle]
+pub extern "C" fn finish_deposit() {
+    use alloc::vec::Vec;
+
+    sdk::assert_private_call();
+    let data: FinishDepositCallArgs =
+        FinishDepositCallArgs::try_from_slice(&sdk::read_input()).unwrap();
+    sdk::log(format!("Finish deposit amount: {:?}", data.amount));
+    assert_eq!(sdk::promise_results_count(), 1);
+    let data0: Vec<u8> = match sdk::promise_result(0) {
+        PromiseResult::Successful(x) => x,
+        _ => panic!("Promise with index 0 failed"),
+    };
+    sdk::log("Check verification_success".into());
+    let verification_success: bool = bool::try_from_slice(&data0).unwrap();
+    assert!(verification_success, "Failed to verify the proof");
+    /*self.record_proof(&proof.get_key());
+
+    let amount: Balance = amount.into();
+    let fee: Balance = fee.into();
+
+    // Mint tokens to recipient minus fee
+    self.mint(new_owner_id, amount - fee);
+    // Mint fee for Predecessor
+    self.mint(env::predecessor_account_id(), fee);
+    */
 }

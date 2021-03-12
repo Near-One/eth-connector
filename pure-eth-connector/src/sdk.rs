@@ -1,4 +1,4 @@
-use crate::types::{AccountId, Balance, Gas};
+use crate::types::{AccountId, Balance, Gas, PromiseResult};
 use alloc::{string::String, vec, vec::Vec};
 use borsh::BorshDeserialize;
 use primitive_types::H256;
@@ -6,6 +6,7 @@ use primitive_types::H256;
 /// Key used to store the state of the contract.
 pub const STATE_KEY: &[u8] = b"STATE";
 pub const NO_DEPOSIT: Balance = 0;
+pub const RETURN_CODE_ERR: &str = "Unexpected return code.";
 
 mod exports {
     #[allow(unused)]
@@ -128,8 +129,8 @@ mod exports {
         // #######################
         // # Promise API results #
         // #######################
-        fn promise_results_count() -> u64;
-        fn promise_result(result_idx: u64, register_id: u64) -> u64;
+        pub fn promise_results_count() -> u64;
+        pub fn promise_result(result_idx: u64, register_id: u64) -> u64;
         pub fn promise_return(promise_id: u64);
         // ###############
         // # Storage API #
@@ -249,12 +250,12 @@ pub fn log(data: String) {
     log_utf8(data.as_bytes())
 }
 
-pub fn predecessor_account_id() -> Vec<u8> {
+pub fn predecessor_account_id() -> AccountId {
     unsafe {
         exports::predecessor_account_id(1);
         let bytes: Vec<u8> = vec![0u8; exports::register_len(1) as usize];
         exports::read_register(1, bytes.as_ptr() as *const u64 as u64);
-        bytes
+        String::from_utf8(bytes).unwrap()
     }
 }
 
@@ -352,4 +353,31 @@ pub fn promise_return(promise_idx: u64) {
     unsafe {
         exports::promise_return(promise_idx);
     }
+}
+
+pub fn promise_results_count() -> u64 {
+    unsafe { exports::promise_results_count() }
+}
+
+pub fn promise_result(result_idx: u64) -> PromiseResult {
+    unsafe {
+        match exports::promise_result(result_idx, 0) {
+            0 => PromiseResult::NotReady,
+            1 => {
+                let bytes: Vec<u8> = vec![0; exports::register_len(0) as usize];
+                exports::read_register(0, bytes.as_ptr() as *const u64 as u64);
+                PromiseResult::Successful(bytes)
+            }
+            2 => PromiseResult::Failed,
+            _ => panic!(RETURN_CODE_ERR),
+        }
+    }
+}
+
+pub fn assert_private_call() {
+    assert_eq!(
+        predecessor_account_id(),
+        current_account_id(),
+        "Function is private"
+    );
 }
