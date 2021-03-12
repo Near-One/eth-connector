@@ -1,8 +1,9 @@
-use alloc::{vec, vec::Vec};
+use crate::types::AccountId;
+use alloc::{string::String, vec, vec::Vec};
 use primitive_types::H256;
 
 /// Key used to store the state of the contract.
-const STATE_KEY: &[u8] = b"STATE";
+pub const STATE_KEY: &[u8] = b"STATE";
 
 mod exports {
     #[allow(unused)]
@@ -15,7 +16,7 @@ mod exports {
         // ###############
         // # Context API #
         // ###############
-        fn current_account_id(register_id: u64);
+        pub fn current_account_id(register_id: u64);
         fn signer_account_id(register_id: u64);
         fn signer_account_pk(register_id: u64);
         pub(crate) fn predecessor_account_id(register_id: u64);
@@ -271,4 +272,13 @@ pub fn state_exists() -> bool {
 
 pub fn storage_usage() -> u64 {
     unsafe { exports::storage_usage() }
+}
+
+pub fn current_account_id() -> AccountId {
+    unsafe {
+        exports::current_account_id(1);
+        let bytes: Vec<u8> = vec![];
+        exports::read_register(1, bytes.as_ptr() as *const u64 as u64);
+        String::from_utf8(bytes).unwrap()
+    }
 }
