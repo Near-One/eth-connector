@@ -1,9 +1,11 @@
-use crate::types::AccountId;
+use crate::types::{AccountId, Balance, Gas};
 use alloc::{string::String, vec, vec::Vec};
+use borsh::BorshDeserialize;
 use primitive_types::H256;
 
 /// Key used to store the state of the contract.
 pub const STATE_KEY: &[u8] = b"STATE";
+pub const NO_DEPOSIT: Balance = 0;
 
 mod exports {
     #[allow(unused)]
@@ -51,7 +53,7 @@ mod exports {
         // ################
         // # Promises API #
         // ################
-        fn promise_create(
+        pub fn promise_create(
             account_id_len: u64,
             account_id_ptr: u64,
             method_name_len: u64,
@@ -61,7 +63,7 @@ mod exports {
             amount_ptr: u64,
             gas: u64,
         ) -> u64;
-        fn promise_then(
+        pub fn promise_then(
             promise_index: u64,
             account_id_len: u64,
             account_id_ptr: u64,
@@ -128,7 +130,7 @@ mod exports {
         // #######################
         fn promise_results_count() -> u64;
         fn promise_result(result_idx: u64, register_id: u64) -> u64;
-        fn promise_return(promise_id: u64);
+        pub fn promise_return(promise_id: u64);
         // ###############
         // # Storage API #
         // ###############
@@ -190,6 +192,15 @@ pub fn read_storage(key: &[u8]) -> Option<Vec<u8>> {
     }
 }
 
+pub fn init_contract(data: &Vec<u8>) {
+    write_storage(STATE_KEY, &data[..]);
+}
+
+pub fn get_contract_data<T: BorshDeserialize>() -> T {
+    let data = read_storage(STATE_KEY).expect("Failed read storage");
+    T::try_from_slice(&data).unwrap()
+}
+
 pub fn write_storage(key: &[u8], value: &[u8]) {
     unsafe {
         exports::storage_write(
@@ -232,6 +243,10 @@ pub fn log_utf8(bytes: &[u8]) {
     unsafe {
         exports::log_utf8(bytes.len() as u64, bytes.as_ptr() as u64);
     }
+}
+
+pub fn log(data: String) {
+    log_utf8(data.as_bytes())
 }
 
 pub fn predecessor_account_id() -> Vec<u8> {
@@ -285,4 +300,56 @@ pub fn current_account_id() -> AccountId {
 
 pub fn prepaid_gas() -> u64 {
     unsafe { exports::prepaid_gas() }
+}
+
+pub fn promise_create(
+    account_id: AccountId,
+    method_name: &[u8],
+    arguments: &[u8],
+    amount: Balance,
+    gas: Gas,
+) -> u64 {
+    let account_id = account_id.as_bytes();
+    unsafe {
+        exports::promise_create(
+            account_id.len() as _,
+            account_id.as_ptr() as _,
+            method_name.len() as _,
+            method_name.as_ptr() as _,
+            arguments.len() as _,
+            arguments.as_ptr() as _,
+            &amount as *const Balance as _,
+            gas,
+        )
+    }
+}
+
+pub fn promise_then(
+    promise_idx: u64,
+    account_id: AccountId,
+    method_name: &[u8],
+    arguments: &[u8],
+    amount: Balance,
+    gas: Gas,
+) -> u64 {
+    let account_id = account_id.as_bytes();
+    unsafe {
+        exports::promise_then(
+            promise_idx,
+            account_id.len() as _,
+            account_id.as_ptr() as _,
+            method_name.len() as _,
+            method_name.as_ptr() as _,
+            arguments.len() as _,
+            arguments.as_ptr() as _,
+            &amount as *const Balance as _,
+            gas,
+        )
+    }
+}
+
+pub fn promise_return(promise_idx: u64) {
+    unsafe {
+        exports::promise_return(promise_idx);
+    }
 }

@@ -10,6 +10,7 @@ pub type RawU256 = [u8; 32];
 pub type RawH256 = [u8; 32];
 pub type AccountId = String;
 pub type Balance = u128;
+pub type Gas = u64;
 pub type StorageUsage = u64;
 
 #[derive(Clone)]

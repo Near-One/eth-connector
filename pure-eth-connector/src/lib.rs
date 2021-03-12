@@ -43,8 +43,7 @@ pub unsafe fn on_alloc_error(_: core::alloc::Layout) -> ! {
 
 #[no_mangle]
 pub extern "C" fn init() {
-    let input = sdk::read_input();
-    let args: InitCallArgs = InitCallArgs::try_from_slice(&input).unwrap();
+    let args: InitCallArgs = InitCallArgs::try_from_slice(&sdk::read_input()).unwrap();
     let ft = FungibleToken::new();
     let contract_data = EthConnector {
         prover_account: args.prover_account,
@@ -52,8 +51,7 @@ pub extern "C" fn init() {
         used_events: BTreeSet::new(),
         token: ft,
     };
-    let data = contract_data.try_to_vec().unwrap();
-    sdk::write_storage(sdk::STATE_KEY, &data[..]);
+    sdk::init_contract(&contract_data.try_to_vec().unwrap());
 }
 
 #[no_mangle]
@@ -61,22 +59,17 @@ pub extern "C" fn deposit() {
     use core::ops::Sub;
     use hex::ToHex;
 
-    let input = sdk::read_input();
-    let proof = Proof::try_from_slice(&input).unwrap();
+    let proof = Proof::try_from_slice(&sdk::read_input()).unwrap();
     let event = EthDepositedEvent::from_log_entry_data(&proof.log_entry_data);
-    let data = sdk::read_storage(sdk::STATE_KEY).expect("Failed read storage");
-    let contract = EthConnector::try_from_slice(&data).unwrap();
+    let contract: EthConnector = sdk::get_contract_data();
 
-    sdk::log_utf8(
-        format!(
-            "Deposit started: from {:?} ETH to {:?} NEAR with amount: {:?} and fee {:?}",
-            event.sender,
-            event.recipient,
-            event.amount.as_u128(),
-            event.fee.as_u128()
-        )
-        .as_bytes(),
-    );
+    sdk::log(format!(
+        "Deposit started: from {:?} ETH to {:?} NEAR with amount: {:?} and fee {:?}",
+        event.sender,
+        event.recipient,
+        event.amount.as_u128(),
+        event.fee.as_u128()
+    ));
 
     assert_eq!(
         event.eth_custodian_address,
@@ -89,14 +82,27 @@ pub extern "C" fn deposit() {
         event.amount.sub(event.fee).as_u128() > 0,
         "Not enough balance for deposit fee"
     );
-    let _account_id = sdk::current_account_id();
-    let _prepaid_gas = sdk::prepaid_gas();
-    let _proof_1 = proof.try_to_vec().unwrap();
-    sdk::log_utf8(
-        format!(
-            "Deposit verify_log_entry for prover: {:?}",
-            contract.prover_account,
-        )
-        .as_bytes(),
+    let account_id = sdk::current_account_id();
+    let prepaid_gas = sdk::prepaid_gas();
+    let proof_1 = proof.try_to_vec().unwrap();
+    sdk::log(format!(
+        "Deposit verify_log_entry for prover: {:?}",
+        contract.prover_account,
+    ));
+    let promise0 = sdk::promise_create(
+        contract.prover_account.clone(),
+        b"verify_log_entry",
+        &proof_1[..],
+        sdk::NO_DEPOSIT,
+        prepaid_gas / 4,
     );
+    let promise1 = sdk::promise_then(
+        promise0,
+        account_id,
+        b"finish_deposit",
+        &proof_1[..],
+        sdk::NO_DEPOSIT,
+        prepaid_gas / 4,
+    );
+    sdk::promise_return(promise1);
 }
