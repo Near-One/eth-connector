@@ -1,12 +1,14 @@
 use crate::types::{AccountId, Balance, Gas, PromiseResult};
 use alloc::{string::String, vec, vec::Vec};
-use borsh::BorshDeserialize;
+use borsh::{BorshDeserialize, BorshSerialize};
+use core::mem::size_of;
 use primitive_types::H256;
 
 /// Key used to store the state of the contract.
 pub const STATE_KEY: &[u8] = b"STATE";
 pub const NO_DEPOSIT: Balance = 0;
 pub const RETURN_CODE_ERR: &str = "Unexpected return code.";
+pub const STORAGE_PRICE_PER_BYTE: Balance = 100_000_000_000_000_000_000; // 1e20yN, 0.0001N
 
 mod exports {
     #[allow(unused)]
@@ -33,14 +35,14 @@ mod exports {
         // # Economics API #
         // #################
         fn account_balance(balance_ptr: u64);
-        fn attached_deposit(balance_ptr: u64);
+        pub fn attached_deposit(balance_ptr: u64);
         pub fn prepaid_gas() -> u64;
         fn used_gas() -> u64;
         // ############
         // # Math API #
         // ############
         fn random_seed(register_id: u64);
-        fn sha256(value_len: u64, value_ptr: u64, register_id: u64);
+        pub fn sha256(value_len: u64, value_ptr: u64, register_id: u64);
         pub(crate) fn keccak256(value_len: u64, value_ptr: u64, register_id: u64);
         // #####################
         // # Miscellaneous API #
@@ -193,8 +195,8 @@ pub fn read_storage(key: &[u8]) -> Option<Vec<u8>> {
     }
 }
 
-pub fn init_contract(data: &Vec<u8>) {
-    write_storage(STATE_KEY, &data[..]);
+pub fn save_contract<T: BorshSerialize>(data: &T) {
+    write_storage(STATE_KEY, &data.try_to_vec().unwrap()[..]);
 }
 
 pub fn get_contract_data<T: BorshDeserialize>() -> T {
@@ -380,4 +382,12 @@ pub fn assert_private_call() {
         current_account_id(),
         "Function is private"
     );
+}
+
+pub fn attached_deposit() -> Balance {
+    unsafe {
+        let data = [0u8; size_of::<Balance>()];
+        exports::attached_deposit(data.as_ptr() as u64);
+        Balance::from_le_bytes(data)
+    }
 }

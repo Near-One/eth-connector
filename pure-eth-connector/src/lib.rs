@@ -25,7 +25,7 @@ use crate::types::{
     AccountId, Balance, EthConnector, FinishDepositCallArgs, InitCallArgs, PromiseResult,
 };
 use alloc::collections::BTreeSet;
-use alloc::string::String;
+use alloc::{string::String, vec::Vec};
 use borsh::{BorshDeserialize, BorshSerialize};
 
 #[global_allocator]
@@ -53,7 +53,7 @@ pub extern "C" fn init() {
         used_events: BTreeSet::new(),
         token: ft,
     };
-    sdk::init_contract(&contract_data.try_to_vec().unwrap());
+    sdk::save_contract(&contract_data);
 }
 
 #[no_mangle]
@@ -119,8 +119,6 @@ pub extern "C" fn deposit() {
 
 #[no_mangle]
 pub extern "C" fn finish_deposit() {
-    use alloc::vec::Vec;
-
     sdk::assert_private_call();
     let data: FinishDepositCallArgs =
         FinishDepositCallArgs::try_from_slice(&sdk::read_input()).unwrap();
@@ -133,12 +131,34 @@ pub extern "C" fn finish_deposit() {
     sdk::log("Check verification_success".into());
     let verification_success: bool = bool::try_from_slice(&data0).unwrap();
     assert!(verification_success, "Failed to verify the proof");
-    //self.record_proof(&proof.get_key());
+    record_proof(data.proof.get_key());
 
     // Mint tokens to recipient minus fee
     mint(data.new_owner_id, data.amount - data.fee);
     // Mint fee for Predecessor
     mint(sdk::predecessor_account_id(), data.fee);
+}
+
+fn record_proof(key: Vec<u8>) -> Balance {
+    let mut contract: EthConnector = sdk::get_contract_data();
+    let initial_storage = sdk::storage_usage();
+
+    assert!(
+        !contract.used_events.contains(&key[..]),
+        "Proof event cannot be reused. Proof already exist."
+    );
+    contract.used_events.insert(key);
+    let current_storage = sdk::storage_usage();
+    let attached_deposit = sdk::attached_deposit();
+    let required_deposit =
+        Balance::from(current_storage - initial_storage) * sdk::STORAGE_PRICE_PER_BYTE;
+    sdk::save_contract(&contract);
+    attached_deposit - required_deposit
+}
+
+#[no_mangle]
+pub extern "C" fn verify_log_entry() -> bool {
+    true
 }
 
 fn mint(owner_id: AccountId, amount: Balance) {
