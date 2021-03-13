@@ -21,7 +21,9 @@ pub mod types;
 use crate::deposit_event::EthDepositedEvent;
 use crate::fungible_token::FungibleToken;
 use crate::prover::{validate_eth_address, Proof};
-use crate::types::{EthConnector, FinishDepositCallArgs, InitCallArgs, PromiseResult};
+use crate::types::{
+    AccountId, Balance, EthConnector, FinishDepositCallArgs, InitCallArgs, PromiseResult,
+};
 use alloc::collections::BTreeSet;
 use alloc::string::String;
 use borsh::{BorshDeserialize, BorshSerialize};
@@ -131,14 +133,22 @@ pub extern "C" fn finish_deposit() {
     sdk::log("Check verification_success".into());
     let verification_success: bool = bool::try_from_slice(&data0).unwrap();
     assert!(verification_success, "Failed to verify the proof");
-    /*self.record_proof(&proof.get_key());
-
-    let amount: Balance = amount.into();
-    let fee: Balance = fee.into();
+    //self.record_proof(&proof.get_key());
 
     // Mint tokens to recipient minus fee
-    self.mint(new_owner_id, amount - fee);
+    mint(data.new_owner_id, data.amount - data.fee);
     // Mint fee for Predecessor
-    self.mint(env::predecessor_account_id(), fee);
-    */
+    mint(sdk::predecessor_account_id(), data.fee);
+}
+
+fn mint(owner_id: AccountId, amount: Balance) {
+    sdk::log(format!("Mint {:?} tokens for: {:?}", amount, owner_id));
+
+    // if self.token.accounts.get(&owner_id).is_none() {
+    //     // TODO: NEP-145 Account Storage impelemtation nee
+    //     // It spent additonal account amount fot storage
+    //     self.token.accounts.insert(&owner_id, &0);
+    // }
+    // self.token.internal_deposit(&owner_id, amount);
+    sdk::log("Mint success".into());
 }
