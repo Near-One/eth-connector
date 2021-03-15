@@ -231,15 +231,17 @@ pub fn block_index() -> u64 {
 }
 
 #[allow(dead_code)]
-pub fn panic() {
+pub fn panic() -> ! {
     unsafe { exports::panic() }
+    unreachable!()
 }
 
 #[allow(dead_code)]
-pub fn panic_utf8(bytes: &[u8]) {
+pub fn panic_utf8(bytes: &[u8]) -> ! {
     unsafe {
         exports::panic_utf8(bytes.len() as u64, bytes.as_ptr() as u64);
     }
+    unreachable!()
 }
 
 pub fn log_utf8(bytes: &[u8]) {
