@@ -46,7 +46,10 @@ pub unsafe fn on_alloc_error(_: core::alloc::Layout) -> ! {
 #[no_mangle]
 pub extern "C" fn init() {
     let args: InitCallArgs = InitCallArgs::try_from_slice(&sdk::read_input()).unwrap();
-    let ft = FungibleToken::new();
+    let owner_id = sdk::current_account_id();
+    let mut ft = FungibleToken::new();
+    ft.internal_register_account(&owner_id);
+    ft.internal_deposit(&owner_id, 0);
     let contract_data = EthConnector {
         prover_account: args.prover_account,
         eth_custodian_address: validate_eth_address(args.eth_custodian_address),
