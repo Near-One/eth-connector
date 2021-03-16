@@ -810,7 +810,7 @@ contract ProofKeeper {
 
         require(keccak256(fullOutcomeProof.outcome_proof.outcome_with_id.outcome.executor_id)
                 == keccak256(nearProofProducerAccount_),
-                "Can only unlock tokens from the linked proof producer on Near blockchain");
+                "Can only withdraw coins from the linked proof producer on Near blockchain");
 
         result = fullOutcomeProof.outcome_proof.outcome_with_id.outcome.status;
         require(!result.failed, "Cannot use failed execution outcome for unlocking the tokens");
@@ -848,6 +848,7 @@ contract EthCustodian is ProofKeeper {
     struct BurnResult {
         uint128 amount;
         address recipient;
+        address ethCustodian;
     }
 
     /// EthCustodian is linked to the EVM on NEAR side.
@@ -886,6 +887,8 @@ contract EthCustodian is ProofKeeper {
     {
         ProofDecoder.ExecutionStatus memory status = _parseAndConsumeProof(proofData, proofBlockHeight);
         BurnResult memory result = _decodeBurnResult(status.successValue);
+        require(result.ethCustodian == address(this),
+                "Can only withdraw coins that were expected for the current contract");
         payable(result.recipient).transfer(result.amount);
         emit Withdrawn(result.recipient, result.amount);
     }
@@ -896,9 +899,11 @@ contract EthCustodian is ProofKeeper {
         returns (BurnResult memory result)
     {
         Borsh.Data memory borshData = Borsh.from(data);
-        bytes20 recipient = borshData.decodeBytes20();
         result.amount = borshData.decodeU128();
+        bytes20 recipient = borshData.decodeBytes20();
         result.recipient = address(uint160(recipient));
+        bytes20 ethCustodian = borshData.decodeBytes20();
+        result.ethCustodian = address(uint160(ethCustodian));
     }
 
     address public admin;
