@@ -66,6 +66,7 @@ pub extern "C" fn new() {
     let mut ft = FungibleToken::new();
     ft.internal_register_account(&owner_id);
     ft.internal_deposit(&owner_id, 0);
+    sdk::log(format!("{:#?}", args));
     let contract_data = EthConnector {
         prover_account: args.prover_account,
         eth_custodian_address: validate_eth_address(args.eth_custodian_address),
@@ -84,19 +85,17 @@ pub extern "C" fn deposit() {
     use hex::ToHex;
 
     let proof: Proof = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
-    sdk::log("[#1]".into());
-    //let event = EthDepositedEvent::from_log_entry_data(&proof.log_entry_data);
-    sdk::log("[#2]".into());
+    let event = EthDepositedEvent::from_log_entry_data(&proof.log_entry_data);
+    sdk::log(format!("Event: {:#?}", event));
     let mut contract: EthConnector = sdk::get_contract_data();
-    let event = EthDepositedEvent {
+    /*let event = EthDepositedEvent {
         eth_custodian_address: contract.eth_custodian_address,
         sender: "sender".into(),
         recipient: "rcv".into(),
         amount: U128::from(100),
         fee: U128::from(3),
-    };
+    };*/
     contract.prover_account = sdk::current_account_id();
-    sdk::log(format!("{:#?}", contract));
 
     sdk::log(format!(
         "Deposit started: from {:?} ETH to {:?} NEAR with amount: {:?} and fee {:?}",
@@ -118,14 +117,13 @@ pub extern "C" fn deposit() {
         "Not enough balance for deposit fee"
     );
     let account_id = sdk::current_account_id();
-    sdk::log("[#3]".into());
     let prepaid_gas = sdk::prepaid_gas();
-    sdk::log("[#4]".into());
     let proof_1 = proof.try_to_vec().unwrap();
     sdk::log(format!(
         "Deposit verify_log_entry for prover: {:?}",
         contract.prover_account,
     ));
+    sdk::log(contract.prover_account.clone());
     let promise0 = sdk::promise_create(
         contract.prover_account.clone(),
         b"verify_log_entry",
@@ -133,7 +131,7 @@ pub extern "C" fn deposit() {
         sdk::NO_DEPOSIT,
         prepaid_gas / 4,
     );
-    sdk::log("[#6]".into());
+    /*sdk::log("[#6]".into());
     let data = FinishDepositCallArgs {
         new_owner_id: event.recipient,
         amount: event.amount.as_u128(),
@@ -143,15 +141,15 @@ pub extern "C" fn deposit() {
     .try_to_vec()
     .unwrap();
     sdk::log("[#7]".into());
-    let promise1 = sdk::promise_then(
+    let pro77mise1 = sdk::promise_then(
         promise0,
         account_id,
         b"finish_deposit",
         &data[..],
         sdk::NO_DEPOSIT,
         prepaid_gas / 4,
-    );
-    sdk::promise_return(promise1);
+    );*/
+    sdk::promise_return(promise0);
     sdk::log("[#10]".into());
 }
 
@@ -196,6 +194,7 @@ fn record_proof(key: Vec<u8>) -> Balance {
 
 #[no_mangle]
 pub extern "C" fn verify_log_entry() -> bool {
+    sdk::log("Call from verify_log_entry".into());
     true
 }
 

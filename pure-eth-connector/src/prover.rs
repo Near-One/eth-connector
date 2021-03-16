@@ -1,6 +1,5 @@
 use crate::ethabi::{Event, EventParam, Hash, Log, ParamType, RawLog};
 use crate::log_entry::LogEntry;
-use crate::sdk;
 use alloc::{
     str,
     string::{String, ToString},
