@@ -6,13 +6,11 @@
 extern crate alloc;
 extern crate core;
 
-extern crate ethereum_types;
-extern crate rstd;
-extern crate rustc_hex as hex;
-extern crate tiny_keccak;
+// extern crate rstd;
+// extern crate rustc_hex as hex;
+// extern crate ethabi;
 
 pub mod deposit_event;
-pub mod ethabi;
 pub mod fungible_token;
 pub mod log_entry;
 pub mod prover;
@@ -193,9 +191,8 @@ fn record_proof(key: Vec<u8>) -> Balance {
 }
 
 #[no_mangle]
-pub extern "C" fn verify_log_entry() -> bool {
+pub extern "C" fn verify_log_entry() {
     sdk::log("Call from verify_log_entry".into());
-    true
 }
 
 fn mint(owner_id: AccountId, amount: Balance) {
