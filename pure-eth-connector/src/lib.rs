@@ -1,6 +1,7 @@
 #![no_std]
 #![feature(core_intrinsics)]
 #![feature(alloc_error_handler)]
+#![feature(panic_info_message)]
 #[macro_use]
 extern crate alloc;
 extern crate core;
@@ -33,7 +34,17 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[panic_handler]
 #[no_mangle]
-pub unsafe fn on_panic(_info: &::core::panic::PanicInfo) -> ! {
+pub unsafe fn on_panic(info: &::core::panic::PanicInfo) -> ! {
+    if let Some(msg) = info.message() {
+        let msg = if let Some(log) = info.location() {
+            format!("{}\n{:?}", msg, log)
+        } else {
+            format!("{}", msg)
+        };
+        sdk::log(format!("panic: {}", msg));
+    } else if let Some(log) = info.location() {
+        sdk::log(format!("{:?}", log));
+    }
     core::intrinsics::abort();
 }
 
@@ -44,8 +55,11 @@ pub unsafe fn on_alloc_error(_: core::alloc::Layout) -> ! {
 }
 
 #[no_mangle]
-pub extern "C" fn init() {
-    let args: InitCallArgs = InitCallArgs::try_from_slice(&sdk::read_input()).unwrap();
+pub extern "C" fn new() {
+    assert!(!sdk::state_exists(), "Contract already initialized");
+    sdk::log("[init contract]".into());
+    let args: InitCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
+    sdk::log(format!(" # v2 {:#?}", args));
     let owner_id = sdk::current_account_id();
     let mut ft = FungibleToken::new();
     ft.internal_register_account(&owner_id);

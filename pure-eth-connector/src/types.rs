@@ -3,6 +3,7 @@ use crate::prover::{EthAddress, Proof};
 use alloc::{collections::BTreeSet, string::String, vec, vec::Vec};
 use borsh::{BorshDeserialize, BorshSerialize};
 use primitive_types::{H160, H256, U256};
+use serde::Deserialize;
 use sha3::{Digest, Keccak256};
 
 pub type RawAddress = [u8; 20];
@@ -20,7 +21,7 @@ pub struct Log {
     pub data: Vec<u8>,
 }
 
-#[derive(BorshSerialize, BorshDeserialize)]
+#[derive(Debug, Deserialize)]
 pub struct InitCallArgs {
     pub prover_account: AccountId,
     pub eth_custodian_address: AccountId,

@@ -5,6 +5,7 @@ authors = ["Near Inc <hello@near.org>"]
 edition = "2018"
 license = "Apache2"
 publish = false
+resolver = "2"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -28,6 +29,10 @@ tiny-keccak = { version = "1.4", features = ["keccak"]}
 ethereum-types = { git = "https://github.com/darwinia-network/parity-common.git", default-features = false }
 rstd = { package = "sp-std", git = "https://github.com/darwinia-network/substrate.git", branch = "darwinia-develop", default-features = false }
 sha3 = { version = "0.8", default-features = false }
+serde = { version = "1.0", default-features = false, features=["derive", "alloc"] }
+serde_json = { version = "1.0", default-features = false, features=["alloc"] }
 
 [dev-dependencies]
-near-sdk-sim = { git = "https://github.com/near/near-sdk-rs", rev = "f99b1a32b93db21707192fbcc8c3a16aef5889d7"}
+near-sdk = { git = "https://github.com/near/near-sdk-rs", tag = "3.0.0" }
+near-sdk-sim = { git = "https://github.com/near/near-sdk-rs", tag = "3.0.0" }
+funty = "=1.1.0" # temp pin of funty as 1.2.0 is API breaking

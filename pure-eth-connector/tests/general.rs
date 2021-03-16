@@ -1,8 +1,8 @@
 mod contract;
 
-use near_sdk_sim::{call, deploy, init_simulator, view, ContractAccount, UserAccount, DEFAULT_GAS};
 use near_sdk::json_types::{ValidAccountId, U128};
 use near_sdk::serde_json;
+use near_sdk_sim::{call, deploy, init_simulator, view, ContractAccount, UserAccount, DEFAULT_GAS};
 use std::convert::TryFrom;
 
 near_sdk_sim::lazy_static! {
