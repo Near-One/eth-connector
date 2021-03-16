@@ -1,11 +1,13 @@
 use crate::ethabi::{Event, EventParam, Hash, Log, ParamType, RawLog};
 use crate::log_entry::LogEntry;
+use crate::sdk;
 use alloc::{
     str,
     string::{String, ToString},
     vec::Vec,
 };
 use borsh::{BorshDeserialize, BorshSerialize};
+use serde::Deserialize;
 
 pub type EthAddress = [u8; 20];
 
@@ -22,7 +24,7 @@ pub fn validate_eth_address(address: String) -> EthAddress {
     result
 }
 
-#[derive(Default, BorshDeserialize, BorshSerialize, Clone)]
+#[derive(Default, Deserialize, BorshDeserialize, BorshSerialize, Clone)]
 pub struct Proof {
     pub log_index: u64,
     pub log_entry_data: Vec<u8>,

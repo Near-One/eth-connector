@@ -27,7 +27,7 @@ pub struct InitCallArgs {
     pub eth_custodian_address: AccountId,
 }
 
-#[derive(BorshDeserialize, BorshSerialize)]
+#[derive(Debug, BorshDeserialize, BorshSerialize)]
 pub struct EthConnector {
     pub prover_account: AccountId,
     pub eth_custodian_address: EthAddress,

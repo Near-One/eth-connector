@@ -3,7 +3,7 @@ use crate::types::*;
 use alloc::{collections::BTreeMap, string::String};
 use borsh::{BorshDeserialize, BorshSerialize};
 
-#[derive(BorshDeserialize, BorshSerialize)]
+#[derive(Debug, BorshDeserialize, BorshSerialize)]
 pub struct FungibleToken {
     /// AccountID -> Account balance.
     pub accounts: BTreeMap<AccountId, Balance>,

@@ -36,3 +36,7 @@ serde_json = { version = "1.0", default-features = false, features=["alloc"] }
 near-sdk = { git = "https://github.com/near/near-sdk-rs", tag = "3.0.0" }
 near-sdk-sim = { git = "https://github.com/near/near-sdk-rs", tag = "3.0.0" }
 funty = "=1.1.0" # temp pin of funty as 1.2.0 is API breaking
+
+[features]
+default = ["log"]
+log = []

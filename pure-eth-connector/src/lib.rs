@@ -28,6 +28,7 @@ use crate::types::{
 use alloc::collections::BTreeSet;
 use alloc::{string::String, vec::Vec};
 use borsh::{BorshDeserialize, BorshSerialize};
+use primitive_types::U128;
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
@@ -35,6 +36,7 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 #[panic_handler]
 #[no_mangle]
 pub unsafe fn on_panic(info: &::core::panic::PanicInfo) -> ! {
+    #[cfg(feature = "log")]
     if let Some(msg) = info.message() {
         let msg = if let Some(log) = info.location() {
             format!("{}\n{:?}", msg, log)
@@ -56,10 +58,10 @@ pub unsafe fn on_alloc_error(_: core::alloc::Layout) -> ! {
 
 #[no_mangle]
 pub extern "C" fn new() {
-    assert!(!sdk::state_exists(), "Contract already initialized");
+    //assert!(!sdk::state_exists(), "Contract already initialized");
+    #[cfg(feature = "log")]
     sdk::log("[init contract]".into());
     let args: InitCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
-    sdk::log(format!(" # v2 {:#?}", args));
     let owner_id = sdk::current_account_id();
     let mut ft = FungibleToken::new();
     ft.internal_register_account(&owner_id);
@@ -71,16 +73,30 @@ pub extern "C" fn new() {
         token: ft,
     };
     sdk::save_contract(&contract_data);
+    sdk::log("[Contract initialized successfully]".into());
 }
 
 #[no_mangle]
 pub extern "C" fn deposit() {
+    #[cfg(feature = "log")]
+    sdk::log("[Deposit tokens]".into());
     use core::ops::Sub;
     use hex::ToHex;
 
-    let proof = Proof::try_from_slice(&sdk::read_input()).unwrap();
-    let event = EthDepositedEvent::from_log_entry_data(&proof.log_entry_data);
-    let contract: EthConnector = sdk::get_contract_data();
+    let proof: Proof = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
+    sdk::log("[#1]".into());
+    //let event = EthDepositedEvent::from_log_entry_data(&proof.log_entry_data);
+    sdk::log("[#2]".into());
+    let mut contract: EthConnector = sdk::get_contract_data();
+    let event = EthDepositedEvent {
+        eth_custodian_address: contract.eth_custodian_address,
+        sender: "sender".into(),
+        recipient: "rcv".into(),
+        amount: U128::from(100),
+        fee: U128::from(3),
+    };
+    contract.prover_account = sdk::current_account_id();
+    sdk::log(format!("{:#?}", contract));
 
     sdk::log(format!(
         "Deposit started: from {:?} ETH to {:?} NEAR with amount: {:?} and fee {:?}",
@@ -102,7 +118,9 @@ pub extern "C" fn deposit() {
         "Not enough balance for deposit fee"
     );
     let account_id = sdk::current_account_id();
+    sdk::log("[#3]".into());
     let prepaid_gas = sdk::prepaid_gas();
+    sdk::log("[#4]".into());
     let proof_1 = proof.try_to_vec().unwrap();
     sdk::log(format!(
         "Deposit verify_log_entry for prover: {:?}",
@@ -115,6 +133,7 @@ pub extern "C" fn deposit() {
         sdk::NO_DEPOSIT,
         prepaid_gas / 4,
     );
+    sdk::log("[#6]".into());
     let data = FinishDepositCallArgs {
         new_owner_id: event.recipient,
         amount: event.amount.as_u128(),
@@ -123,6 +142,7 @@ pub extern "C" fn deposit() {
     }
     .try_to_vec()
     .unwrap();
+    sdk::log("[#7]".into());
     let promise1 = sdk::promise_then(
         promise0,
         account_id,
@@ -132,6 +152,7 @@ pub extern "C" fn deposit() {
         prepaid_gas / 4,
     );
     sdk::promise_return(promise1);
+    sdk::log("[#10]".into());
 }
 
 #[no_mangle]
