@@ -1,4 +1,3 @@
-use crate::ethabi::{Event, EventParam, Hash, Log, ParamType, RawLog};
 use crate::log_entry::LogEntry;
 use alloc::{
     str,
@@ -6,17 +5,14 @@ use alloc::{
     vec::Vec,
 };
 use borsh::{BorshDeserialize, BorshSerialize};
+use ethabi::{Event, EventParam, Hash, Log, ParamType, RawLog};
 use serde::Deserialize;
 
 pub type EthAddress = [u8; 20];
 
 /// Validate Etherium address from string and return EthAddress
 pub fn validate_eth_address(address: String) -> EthAddress {
-    use hex::FromHex;
-
-    let data = address
-        .from_hex::<Vec<u8>>()
-        .expect("ETH address should be a valid hex string.");
+    let data = hex::decode(address).expect("ETH address should be a valid hex string.");
     assert_eq!(data.len(), 20, "ETH address should be 20 bytes long");
     let mut result = [0u8; 20];
     result.copy_from_slice(&data);

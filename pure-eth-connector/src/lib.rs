@@ -24,9 +24,8 @@ use crate::types::{
     AccountId, Balance, EthConnector, FinishDepositCallArgs, InitCallArgs, PromiseResult,
 };
 use alloc::collections::BTreeSet;
-use alloc::{string::String, vec::Vec};
+use alloc::vec::Vec;
 use borsh::{BorshDeserialize, BorshSerialize};
-use primitive_types::U128;
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
@@ -80,19 +79,11 @@ pub extern "C" fn deposit() {
     #[cfg(feature = "log")]
     sdk::log("[Deposit tokens]".into());
     use core::ops::Sub;
-    use hex::ToHex;
 
     let proof: Proof = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
     let event = EthDepositedEvent::from_log_entry_data(&proof.log_entry_data);
     sdk::log(format!("Event: {:#?}", event));
     let mut contract: EthConnector = sdk::get_contract_data();
-    /*let event = EthDepositedEvent {
-        eth_custodian_address: contract.eth_custodian_address,
-        sender: "sender".into(),
-        recipient: "rcv".into(),
-        amount: U128::from(100),
-        fee: U128::from(3),
-    };*/
     contract.prover_account = sdk::current_account_id();
 
     sdk::log(format!(
@@ -107,8 +98,8 @@ pub extern "C" fn deposit() {
         event.eth_custodian_address,
         contract.eth_custodian_address,
         "Event's address {} does not match custodian address {}",
-        &event.eth_custodian_address.to_hex::<String>(),
-        &contract.eth_custodian_address.to_hex::<String>(),
+        hex::encode(&event.eth_custodian_address),
+        hex::encode(&contract.eth_custodian_address),
     );
     assert!(
         event.amount.sub(event.fee).as_u128() > 0,

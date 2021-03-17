@@ -1,8 +1,7 @@
-use ethabi::ParamType;
 use crate::prover::{EthAddress, EthEvent, EthEventParams};
 use crate::types::AccountId;
-use alloc::string::{String, ToString};
-use hex::ToHex;
+use alloc::string::ToString;
+use ethabi::ParamType;
 use primitive_types::U128;
 
 /// Data that was emitted by the Ethereum Deposited event.
@@ -33,7 +32,7 @@ impl EthDepositedEvent {
             data,
         );
         let sender = event.log.params[0].value.clone().to_address().unwrap().0;
-        let sender = sender.to_hex::<String>();
+        let sender = hex::encode(sender);
 
         let recipient = event.log.params[1].value.clone().to_string().unwrap();
         let amount = U128::from(
