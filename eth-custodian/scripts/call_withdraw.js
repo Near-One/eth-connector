@@ -6,6 +6,7 @@ const ethereumConfig = require('./json/ethereum-config.json');
 const Path = require('path');
 const fs = require('fs').promises;
 
+const { borshifyOutcomeProof } = require('rainbow-bridge-lib/rainbow/borshify-proof.js');
 
 async function main() {
     [deployerAccount] = await hre.ethers.getSigners();
@@ -21,8 +22,11 @@ async function main() {
 
     console.log(`EthCustodian address: ${ethCustodian.address}`);
 
-    const proof = await fs.readFile('borshProof.data');
-    const clientHeight = 38985931;
+    const proofJson = require('../test/proof_template_from_testnet.json');
+    const clientHeight = 1099;
+    console.log(`Client height: ${clientHeight}`);
+
+    const proof = borshifyOutcomeProof(proofJson);
 
     const deployerWallet = new hre.ethers.Wallet(process.env.ROPSTEN_PRIVATE_KEY, hre.ethers.getDefaultProvider());
     let unsignedTx = await ethCustodian
@@ -31,7 +35,7 @@ async function main() {
         .withdraw(proof, clientHeight);
 
     unsignedTx.nonce = await hre.ethers.provider.getTransactionCount(deployerWallet.address);
-    unsignedTx.value = ethereumConfig.amountToTransfer;
+    unsignedTx.value = 0;
     unsignedTx.gasPrice = 100000000000;
     unsignedTx.gasLimit = 800000;
 

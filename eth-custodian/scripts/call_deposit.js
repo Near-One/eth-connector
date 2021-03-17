@@ -27,8 +27,6 @@ async function main() {
 
     unsignedTx.nonce = await hre.ethers.provider.getTransactionCount(deployerWallet.address);
     unsignedTx.value = ethereumConfig.amountToTransfer;
-    unsignedTx.gasPrice = 100000000000;
-    unsignedTx.gasLimit = 70000;
 
     console.log(`Amount to transfer: ${ethereumConfig.amountToTransfer}; fee: ${ethereumConfig.fee}`);
 

@@ -1,10 +1,14 @@
 .PHONY: compile test
 
 NETWORK=ropsten
-NEAR_EVM_ACCOUNT=v1.eth-connector.testnet
-NEAR_ACCOUNT=testlocal.testnet
-ETH_RECIPIENT=891B2749238B27fF58e951088e55b04de71Dc374
-AMOUNT_TO_TRANSFER=400
+VERSION=v2
+PROOF=
+NEAR_EVM_ACCOUNT=${VERSION}.eth-connector.testnet
+NEAR_ACCOUNT=
+RPC_ENDPOINT=https://rpc.testnet.near.org
+ETH_RECIPIENT=
+AMOUNT_TO_TRANSFER=100
+TX_HASH=
 
 compile:
 	yarn hardhat compile
@@ -25,8 +29,16 @@ eth-call-withdraw:
 	yarn hardhat run --network ${NETWORK} scripts/call_withdraw.js
 
 near-get-balance-of:
-	near call ${NEAR_EVM_ACCOUNT} ft_balance_of --account-id ${NEAR_ACCOUNT} '{ "account_id": "${NEAR_ACCOUNT}" }'
+	near view ${NEAR_EVM_ACCOUNT} ft_balance_of --account-id ${NEAR_ACCOUNT} '{ "account_id": "${NEAR_ACCOUNT}" }'
 
 near-withdraw-from:
 	near call ${NEAR_EVM_ACCOUNT} withdraw --account-id ${NEAR_ACCOUNT} \
 		'{ "recipient_id": "${ETH_RECIPIENT}", "amount": "${AMOUNT_TO_TRANSFER}" }'
+
+near-get-tx-status:
+	/usr/bin/http post ${RPC_ENDPOINT} jsonrpc=2.0 method=EXPERIMENTAL_tx_status \
+		params:='["${TX_HASH}", "${NEAR_ACCOUNT}"]' id=dontcare
+
+near-deposit:
+	near call ${NEAR_EVM_ACCOUNT} deposit --account-id ${NEAR_ACCOUNT} --gas 300000000000000 '{"proof": ${PROOF}}'
+
