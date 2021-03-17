@@ -6,26 +6,21 @@
 extern crate alloc;
 extern crate core;
 
-// extern crate rstd;
-// extern crate rustc_hex as hex;
-// extern crate ethabi;
-
-pub mod deposit_event;
-pub mod fungible_token;
-pub mod log_entry;
-pub mod prover;
-pub mod sdk;
-pub mod types;
+mod deposit_event;
+mod fungible_token;
+mod log_entry;
+mod prover;
+mod sdk;
+mod types;
 
 use crate::deposit_event::EthDepositedEvent;
 use crate::fungible_token::FungibleToken;
 use crate::prover::{validate_eth_address, Proof};
-use crate::types::{
-    AccountId, Balance, EthConnector, FinishDepositCallArgs, InitCallArgs, PromiseResult,
+pub use crate::types::{
+    AccountId, Balance, EthConnector, FinishDepositCallArgs, InitCallArgs, PromiseResult, StorageUsage,
 };
-use alloc::collections::BTreeSet;
-use alloc::vec::Vec;
-use borsh::{BorshDeserialize, BorshSerialize};
+pub use alloc::{collections::{BTreeMap, BTreeSet}, string::String, vec::Vec};
+pub use borsh::{BorshDeserialize, BorshSerialize};
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
@@ -181,7 +176,7 @@ pub extern "C" fn verify_log_entry() {
     #[cfg(feature = "log")]
     sdk::log("Call from verify_log_entry".into());
     let data = true.try_to_vec().unwrap();
-    sdk::return_output(&data[..]);
+    sdk::value_return(&data[..]);
 }
 
 fn mint(owner_id: AccountId, amount: Balance) {

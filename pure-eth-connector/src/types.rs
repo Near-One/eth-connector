@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use crate::fungible_token::FungibleToken;
 use crate::prover::{EthAddress, Proof};
 use alloc::{collections::BTreeSet, string::String, vec, vec::Vec};
