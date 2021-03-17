@@ -1,10 +1,4 @@
-use crate::log_entry::LogEntry;
-use alloc::{
-    str,
-    string::{String, ToString},
-    vec::Vec,
-};
-use borsh::{BorshDeserialize, BorshSerialize};
+use super::*;
 use ethabi::{Event, EventParam, Hash, Log, ParamType, RawLog};
 use serde::Deserialize;
 

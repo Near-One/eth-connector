@@ -1,6 +1,4 @@
-use crate::prover::{EthAddress, EthEvent, EthEventParams};
-use crate::types::AccountId;
-use alloc::string::ToString;
+use super::*;
 use ethabi::ParamType;
 use primitive_types::U128;
 
