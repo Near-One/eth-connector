@@ -63,7 +63,6 @@ pub extern "C" fn new() {
     let mut ft = FungibleToken::new();
     ft.internal_register_account(&owner_id);
     ft.internal_deposit(&owner_id, 0);
-    sdk::log(format!("{:#?}", args));
     let contract_data = EthConnector {
         prover_account: args.prover_account,
         eth_custodian_address: validate_eth_address(args.eth_custodian_address),
@@ -71,7 +70,6 @@ pub extern "C" fn new() {
         token: ft,
     };
     sdk::save_contract(&contract_data);
-    sdk::log("[Contract initialized successfully]".into());
 }
 
 #[no_mangle]
@@ -82,7 +80,6 @@ pub extern "C" fn deposit() {
 
     let proof: Proof = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
     let event = EthDepositedEvent::from_log_entry_data(&proof.log_entry_data);
-    sdk::log(format!("Event: {:#?}", event));
     let mut contract: EthConnector = sdk::get_contract_data();
     contract.prover_account = sdk::current_account_id();
 
@@ -108,19 +105,18 @@ pub extern "C" fn deposit() {
     let account_id = sdk::current_account_id();
     let prepaid_gas = sdk::prepaid_gas();
     let proof_1 = proof.try_to_vec().unwrap();
+    #[cfg(feature = "log")]
     sdk::log(format!(
         "Deposit verify_log_entry for prover: {:?}",
         contract.prover_account,
     ));
-    sdk::log(contract.prover_account.clone());
     let promise0 = sdk::promise_create(
         contract.prover_account.clone(),
         b"verify_log_entry",
         &proof_1[..],
         sdk::NO_DEPOSIT,
-        prepaid_gas / 4,
+        prepaid_gas / 3,
     );
-    /*sdk::log("[#6]".into());
     let data = FinishDepositCallArgs {
         new_owner_id: event.recipient,
         amount: event.amount.as_u128(),
@@ -129,17 +125,16 @@ pub extern "C" fn deposit() {
     }
     .try_to_vec()
     .unwrap();
-    sdk::log("[#7]".into());
-    let pro77mise1 = sdk::promise_then(
+
+    let promise1 = sdk::promise_then(
         promise0,
         account_id,
         b"finish_deposit",
         &data[..],
         sdk::NO_DEPOSIT,
         prepaid_gas / 4,
-    );*/
-    sdk::promise_return(promise0);
-    sdk::log("[#10]".into());
+    );
+    sdk::promise_return(promise1);
 }
 
 #[no_mangle]
@@ -183,10 +178,14 @@ fn record_proof(key: Vec<u8>) -> Balance {
 
 #[no_mangle]
 pub extern "C" fn verify_log_entry() {
+    #[cfg(feature = "log")]
     sdk::log("Call from verify_log_entry".into());
+    let data = true.try_to_vec().unwrap();
+    sdk::return_output(&data[..]);
 }
 
 fn mint(owner_id: AccountId, amount: Balance) {
+    #[cfg(feature = "log")]
     sdk::log(format!("Mint {:?} tokens for: {:?}", amount, owner_id));
 
     // if self.token.accounts.get(&owner_id).is_none() {
@@ -195,5 +194,6 @@ fn mint(owner_id: AccountId, amount: Balance) {
     //     self.token.accounts.insert(&owner_id, &0);
     // }
     // self.token.internal_deposit(&owner_id, amount);
+    #[cfg(feature = "log")]
     sdk::log("Mint success".into());
 }
