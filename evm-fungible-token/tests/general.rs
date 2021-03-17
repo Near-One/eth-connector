@@ -36,7 +36,7 @@ fn init() -> (UserAccount, ContractAccount<EthConnectorContract>) {
 fn init_test() {
     let (_master_account, _contract_account) = init();
 }
-
+/*
 #[test]
 fn test_sim_deposit() {
     let (master_account, contract) = init();
@@ -85,3 +85,4 @@ fn call_deposit(master_account: &UserAccount, contract: &ContractAccount<EthConn
 
     // println!("#1: {:#?}", _res.promise_results());
 }
+*/
