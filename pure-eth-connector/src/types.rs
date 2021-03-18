@@ -30,6 +30,13 @@ pub struct BalanceOfCallArgs {
     pub account_id: AccountId,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct TransferCallArgs {
+    pub receiver_id: AccountId,
+    pub amount: Balance,
+    pub memo: Option<String>,
+}
+
 #[derive(Debug, BorshDeserialize, BorshSerialize)]
 pub struct EthConnector {
     pub prover_account: AccountId,

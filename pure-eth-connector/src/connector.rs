@@ -1,87 +1,106 @@
 use super::*;
 
+struct EthConnectorContract {
+    contract: EthConnector,
+}
+
+impl EthConnectorContract {
+    fn new() -> Self {
+        Self {
+            contract: sdk::get_contract_data(),
+        }
+    }
+
+    fn init_contract() {
+        //assert!(!sdk::state_exists(), "Contract already initialized");
+        #[cfg(feature = "log")]
+        sdk::log("[init contract]".into());
+        let args: InitCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
+        let owner_id = sdk::current_account_id();
+        let mut ft = FungibleToken::new();
+        ft.internal_register_account(&owner_id);
+        ft.internal_deposit(&owner_id, 0);
+        let contract_data = EthConnector {
+            prover_account: args.prover_account,
+            eth_custodian_address: validate_eth_address(args.eth_custodian_address),
+            used_events: BTreeSet::new(),
+            token: ft,
+        };
+        sdk::save_contract(&contract_data);
+    }
+
+    fn deposit(&self) {
+        sdk::assert_one_yocto();
+        #[cfg(feature = "log")]
+        sdk::log("[Deposit tokens]".into());
+        use core::ops::Sub;
+
+        let proof: Proof = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
+        let event = EthDepositedEvent::from_log_entry_data(&proof.log_entry_data);
+
+        sdk::log(format!(
+            "Deposit started: from {:?} ETH to {:?} NEAR with amount: {:?} and fee {:?}",
+            event.sender,
+            event.recipient,
+            event.amount.as_u128(),
+            event.fee.as_u128()
+        ));
+
+        assert_eq!(
+            event.eth_custodian_address,
+            self.contract.eth_custodian_address,
+            "Event's address {} does not match custodian address {}",
+            hex::encode(&event.eth_custodian_address),
+            hex::encode(&self.contract.eth_custodian_address),
+        );
+        assert!(
+            event.amount.sub(event.fee).as_u128() > 0,
+            "Not enough balance for deposit fee"
+        );
+        let account_id = sdk::current_account_id();
+        let prepaid_gas = sdk::prepaid_gas();
+        let proof_1 = proof.try_to_vec().unwrap();
+        #[cfg(feature = "log")]
+        sdk::log(format!(
+            "Deposit verify_log_entry for prover: {:?}",
+            self.contract.prover_account,
+        ));
+        let promise0 = sdk::promise_create(
+            self.contract.prover_account.clone(),
+            b"verify_log_entry",
+            &proof_1[..],
+            sdk::NO_DEPOSIT,
+            prepaid_gas / 3,
+        );
+        let data = FinishDepositCallArgs {
+            new_owner_id: event.recipient,
+            amount: event.amount.as_u128(),
+            fee: event.fee.as_u128(),
+            proof,
+        }
+        .try_to_vec()
+        .unwrap();
+
+        let promise1 = sdk::promise_then(
+            promise0,
+            account_id,
+            b"finish_deposit",
+            &data[..],
+            sdk::NO_DEPOSIT,
+            prepaid_gas / 3,
+        );
+        sdk::promise_return(promise1);
+    }
+}
+
 #[no_mangle]
 pub extern "C" fn new() {
-    //assert!(!sdk::state_exists(), "Contract already initialized");
-    #[cfg(feature = "log")]
-    sdk::log("[init contract]".into());
-    let args: InitCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
-    let owner_id = sdk::current_account_id();
-    let mut ft = FungibleToken::new();
-    ft.internal_register_account(&owner_id);
-    ft.internal_deposit(&owner_id, 0);
-    let contract_data = EthConnector {
-        prover_account: args.prover_account,
-        eth_custodian_address: validate_eth_address(args.eth_custodian_address),
-        used_events: BTreeSet::new(),
-        token: ft,
-    };
-    sdk::save_contract(&contract_data);
+    EthConnectorContract::init_contract()
 }
 
 #[no_mangle]
 pub extern "C" fn deposit() {
-    #[cfg(feature = "log")]
-    sdk::log("[Deposit tokens]".into());
-    use core::ops::Sub;
-
-    let proof: Proof = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
-    let event = EthDepositedEvent::from_log_entry_data(&proof.log_entry_data);
-    let mut contract: EthConnector = sdk::get_contract_data();
-    contract.prover_account = sdk::current_account_id();
-
-    sdk::log(format!(
-        "Deposit started: from {:?} ETH to {:?} NEAR with amount: {:?} and fee {:?}",
-        event.sender,
-        event.recipient,
-        event.amount.as_u128(),
-        event.fee.as_u128()
-    ));
-
-    assert_eq!(
-        event.eth_custodian_address,
-        contract.eth_custodian_address,
-        "Event's address {} does not match custodian address {}",
-        hex::encode(&event.eth_custodian_address),
-        hex::encode(&contract.eth_custodian_address),
-    );
-    assert!(
-        event.amount.sub(event.fee).as_u128() > 0,
-        "Not enough balance for deposit fee"
-    );
-    let account_id = sdk::current_account_id();
-    let prepaid_gas = sdk::prepaid_gas();
-    let proof_1 = proof.try_to_vec().unwrap();
-    #[cfg(feature = "log")]
-    sdk::log(format!(
-        "Deposit verify_log_entry for prover: {:?}",
-        contract.prover_account,
-    ));
-    let promise0 = sdk::promise_create(
-        contract.prover_account.clone(),
-        b"verify_log_entry",
-        &proof_1[..],
-        sdk::NO_DEPOSIT,
-        prepaid_gas / 3,
-    );
-    let data = FinishDepositCallArgs {
-        new_owner_id: event.recipient,
-        amount: event.amount.as_u128(),
-        fee: event.fee.as_u128(),
-        proof,
-    }
-    .try_to_vec()
-    .unwrap();
-
-    let promise1 = sdk::promise_then(
-        promise0,
-        account_id,
-        b"finish_deposit",
-        &data[..],
-        sdk::NO_DEPOSIT,
-        prepaid_gas / 3,
-    );
-    sdk::promise_return(promise1);
+    EthConnectorContract::new().deposit()
 }
 
 #[no_mangle]
@@ -171,6 +190,16 @@ pub extern "C" fn ft_balance_of() {
 
 #[no_mangle]
 pub extern "C" fn ft_transfer() {
-    //receiver_id: ValidAccountId, amount: U128, memo: Option<String>
-    //self.token.ft_transfer(receiver_id, amount, memo)
+    let args: TransferCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
+
+    let mut contract: EthConnector = sdk::get_contract_data();
+    contract
+        .token
+        .ft_transfer(args.receiver_id.clone(), args.amount, args.memo.clone());
+    sdk::save_contract(&contract);
+    #[cfg(feature = "log")]
+    sdk::log(format!(
+        "Transfer to {} amount {} with memo {:?} success",
+        args.receiver_id, args.amount, args.memo
+    ));
 }
