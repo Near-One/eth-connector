@@ -100,7 +100,7 @@ pub extern "C" fn finish_deposit() {
     sdk::log("Check verification_success".into());
     let verification_success: bool = bool::try_from_slice(&data0).unwrap();
     assert!(verification_success, "Failed to verify the proof");
-    record_proof(data.proof.get_key());
+    //record_proof(data.proof.get_key());
 
     // Mint tokens to recipient minus fee
     mint(data.new_owner_id, data.amount - data.fee);
@@ -136,15 +136,41 @@ pub extern "C" fn verify_log_entry() {
 fn mint(owner_id: AccountId, amount: Balance) {
     #[cfg(feature = "log")]
     sdk::log(format!("Mint {:?} tokens for: {:?}", amount, owner_id));
-    let _contract: EthConnector = sdk::get_contract_data();
-    //contract.token.ac()
+    let mut contract: EthConnector = sdk::get_contract_data();
 
-    // if self.token.accounts.get(&owner_id).is_none() {
-    //     // TODO: NEP-145 Account Storage impelemtation nee
-    //     // It spent additonal account amount fot storage
-    //     self.token.accounts.insert(&owner_id, &0);
-    // }
-    // self.token.internal_deposit(&owner_id, amount);
+    let owner_id_key: &str = owner_id.as_ref();
+    if contract.token.accounts.get(owner_id_key).is_none() {
+        // TODO: NEP-145 Account Storage implementation fee
+        // It spent additional account amount for storage
+        contract.token.accounts.insert(owner_id.clone(), 0);
+    }
+    contract.token.internal_deposit(&owner_id, amount);
+    sdk::save_contract(&contract);
     #[cfg(feature = "log")]
     sdk::log("Mint success".into());
+}
+
+#[no_mangle]
+pub extern "C" fn ft_total_supply() {
+    let contract: EthConnector = sdk::get_contract_data();
+    let total_supply = contract.token.ft_total_supply();
+    sdk::value_return(&total_supply.to_be_bytes());
+    #[cfg(feature = "log")]
+    sdk::log(format!("Total supply: {}", total_supply));
+}
+
+#[no_mangle]
+pub extern "C" fn ft_balance_of() {
+    let args: BalanceOfCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
+    let contract: EthConnector = sdk::get_contract_data();
+    let balance = contract.token.ft_balance_of(args.account_id.clone());
+    sdk::value_return(&balance.to_be_bytes());
+    #[cfg(feature = "log")]
+    sdk::log(format!("Balance [{}]: {}", args.account_id, balance));
+}
+
+#[no_mangle]
+pub extern "C" fn ft_transfer() {
+    //receiver_id: ValidAccountId, amount: U128, memo: Option<String>
+    //self.token.ft_transfer(receiver_id, amount, memo)
 }

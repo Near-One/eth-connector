@@ -1,8 +1,5 @@
 #![allow(dead_code)]
-use crate::fungible_token::FungibleToken;
-use crate::prover::{EthAddress, Proof};
-use alloc::{collections::BTreeSet, string::String, vec, vec::Vec};
-use borsh::{BorshDeserialize, BorshSerialize};
+use super::*;
 use primitive_types::{H160, H256, U256};
 use serde::Deserialize;
 use sha3::{Digest, Keccak256};
@@ -26,6 +23,11 @@ pub struct Log {
 pub struct InitCallArgs {
     pub prover_account: AccountId,
     pub eth_custodian_address: AccountId,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct BalanceOfCallArgs {
+    pub account_id: AccountId,
 }
 
 #[derive(Debug, BorshDeserialize, BorshSerialize)]

@@ -95,4 +95,19 @@ impl FungibleToken {
             sdk::panic_utf8("The account is already registered".as_bytes());
         }
     }
+
+    pub fn ft_transfer(&mut self, receiver_id: AccountId, amount: Balance, memo: Option<String>) {
+        sdk::assert_one_yocto();
+        let sender_id = sdk::predecessor_account_id();
+        self.internal_transfer(&sender_id, &receiver_id, amount, memo);
+    }
+
+    pub fn ft_total_supply(&self) -> u128 {
+        self.total_supply
+    }
+
+    pub fn ft_balance_of(&self, account_id: AccountId) -> u128 {
+        let key: &str = account_id.as_ref();
+        *self.accounts.get(key).unwrap_or(&0)
+    }
 }

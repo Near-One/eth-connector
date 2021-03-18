@@ -422,3 +422,11 @@ pub fn account_balance() -> Balance {
         Balance::from_le_bytes(data)
     }
 }
+
+pub fn assert_one_yocto() {
+    assert_eq!(
+        attached_deposit(),
+        1,
+        "Requires attached deposit of exactly 1 yoctoNEAR"
+    )
+}
