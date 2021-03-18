@@ -64,6 +64,12 @@ pub extern "C" fn deposit() {
 }
 
 #[no_mangle]
+pub extern "C" fn withdraw() {
+    EthConnectorContract::new().withdraw()
+}
+
+
+#[no_mangle]
 pub extern "C" fn finish_deposit() {
     EthConnectorContract::new().finish_deposit();
 }

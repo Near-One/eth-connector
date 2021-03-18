@@ -53,6 +53,19 @@ pub struct FinishDepositCallArgs {
     pub proof: Proof,
 }
 
+#[derive(Deserialize)]
+pub struct WithdrawCallArgs {
+    pub recipient_id: AccountId,
+    pub amount: u128,
+}
+
+#[derive(BorshSerialize)]
+pub struct WithdrawResulr {
+    pub amount: u128,
+    pub recipient_id: RawAddress,
+    pub eth_custodian_address: RawAddress,
+}
+
 pub enum PromiseResult {
     NotReady,
     Successful(Vec<u8>),

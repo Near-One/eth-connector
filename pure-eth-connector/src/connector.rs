@@ -30,7 +30,7 @@ impl EthConnectorContract {
     }
 
     pub fn deposit(&self) {
-        sdk::assert_one_yocto();
+        //sdk::assert_one_yocto();
         #[cfg(feature = "log")]
         sdk::log("[Deposit tokens]".into());
         use core::ops::Sub;
@@ -107,7 +107,7 @@ impl EthConnectorContract {
         sdk::log("Check verification_success".into());
         let verification_success: bool = bool::try_from_slice(&data0).unwrap();
         assert!(verification_success, "Failed to verify the proof");
-        self.record_proof(data.proof.get_key());
+        //self.record_proof(data.proof.get_key());
 
         // Mint tokens to recipient minus fee
         self.mint(data.new_owner_id, data.amount - data.fee);
@@ -145,6 +145,29 @@ impl EthConnectorContract {
         self.save_contract();
         #[cfg(feature = "log")]
         sdk::log("Mint success".into());
+    }
+
+    fn burn(&mut self, owner_id: AccountId, amount: Balance) {
+        #[cfg(feature = "log")]
+        sdk::log(format!("Burn {:?} tokens for: {:?}", amount, owner_id));
+        self.contract.token.internal_withdraw(&owner_id, amount);
+    }
+
+    pub fn withdraw(&mut self) {
+        #[cfg(feature = "log")]
+        sdk::log("Start withdraw".into());
+        let args: WithdrawCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
+        let recipient_address = validate_eth_address(args.recipient_id);
+        // Burn tokens to recipient
+        self.burn(sdk::predecessor_account_id(), args.amount);
+        let res = WithdrawResulr {
+            recipient_id: recipient_address,
+            amount: args.amount,
+            eth_custodian_address: self.contract.eth_custodian_address,
+        }
+        .try_to_vec()
+        .unwrap();
+        sdk::value_return(&res[..]);
     }
 
     pub fn ft_total_supply(&self) {
