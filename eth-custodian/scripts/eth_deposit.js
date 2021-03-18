@@ -4,6 +4,7 @@ const hre = require('hardhat');
 
 const ethereumConfig = require('./json/ethereum-config.json');
 
+const ROPSTEN_NETWORK = true;
 
 async function main() {
     [deployerAccount] = await hre.ethers.getSigners();
@@ -11,8 +12,8 @@ async function main() {
     console.log(`Call deposit with the account: ${deployerAccount.address}`);
 
     const accountBalanceBefore = await deployerAccount.getBalance();
-    console.log(`Account balance before: ${accountBalanceBefore} wei`);
-    console.log(`Account balance before: ${hre.ethers.utils.formatEther(accountBalanceBefore)} ETH`);
+    console.log(`Account balance before: ${hre.ethers.utils.formatEther(accountBalanceBefore)} ETH`
+                + ` (${accountBalanceBefore} wei)`);
 
     const ethCustodianContractFactory = await hre.ethers.getContractFactory('EthCustodian');
     const ethCustodian = await ethCustodianContractFactory.attach(ethereumConfig.ethConnectorAddress);
@@ -28,7 +29,24 @@ async function main() {
     unsignedTx.nonce = await hre.ethers.provider.getTransactionCount(deployerWallet.address);
     unsignedTx.value = ethereumConfig.amountToTransfer;
 
-    console.log(`Amount to transfer: ${ethereumConfig.amountToTransfer}; fee: ${ethereumConfig.fee}`);
+    await ethCustodian
+        .connect(deployerWallet)
+        .estimateGas
+        .depositToNear(ethereumConfig.nearRecipient, ethereumConfig.fee)
+        .then(function(estimatedGas) {
+            unsignedTx.gasLimit = estimatedGas;
+    });
+    console.log(`Estimated gas: ${unsignedTx.gasLimit}`);
+
+    if (ROPSTEN_NETWORK) {
+        unsignedTx.gasLimit = 80000;
+        unsignedTx.gasPrice = 100000000000;
+        console.log(`We are on the Ropsten network, use custom ` +
+                    `gasLimit=${unsignedTx.gasLimit}; gasPrice=${unsignedTx.gasPrice}`);
+    }
+
+    console.log(`Amount to transfer: ${hre.ethers.utils.formatEther(ethereumConfig.amountToTransfer)} ETH`
+                + ` (${ethereumConfig.amountToTransfer} wei); fee: ${ethereumConfig.fee} wei`);
 
     // Sign and send tx
     const signedTx = await deployerWallet.signTransaction(unsignedTx);
@@ -41,8 +59,10 @@ async function main() {
     });
 
     const accountBalanceAfter = await deployerAccount.getBalance();
-    console.log(`Account balance after: ${accountBalanceAfter} wei`);
-    console.log(`Account balance after: ${hre.ethers.utils.formatEther(accountBalanceAfter)} ETH`);
+    console.log(`Account balance after: ${hre.ethers.utils.formatEther(accountBalanceAfter)} ETH`
+                + ` (${accountBalanceAfter} wei)`);
+
+    console.log(`Use the following TX hash for the following steps:\nTX hash: ${tx.hash}`);
 }
 
 main()

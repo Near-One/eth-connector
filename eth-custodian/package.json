@@ -10,6 +10,7 @@
         "@openzeppelin/cli": "^2.8.1",
         "@openzeppelin/contracts": "^3.4.0",
         "dotenv": "^8.2.0",
+        "eth-object": "https://github.com/near/eth-object",
         "hardhat": "^2.0.8",
         "hardhat-gas-reporter": "^1.0.4",
         "rainbow-bridge": "https://github.com/near/rainbow-bridge",

@@ -1,14 +1,13 @@
 .PHONY: compile test
 
 NETWORK=ropsten
-VERSION=v2
-PROOF=
-NEAR_EVM_ACCOUNT=${VERSION}.eth-connector.testnet
+VERSION=v01
+NEAR_EVM_ACCOUNT=${VERSION}.kconnector.testnet
 NEAR_ACCOUNT=
 RPC_ENDPOINT=https://rpc.testnet.near.org
 ETH_RECIPIENT=
-AMOUNT_TO_TRANSFER=100
-TX_HASH=
+AMOUNT_TO_TRANSFER=5000
+PROOF=
 
 compile:
 	yarn hardhat compile
@@ -17,16 +16,19 @@ test:
 	yarn hardhat test
 
 eth-get-prover-address:
-	yarn hardhat run --network ${NETWORK} scripts/get_prover_address.js
+	yarn hardhat run --network ${NETWORK} scripts/eth_get_prover_address.js
 
 eth-deploy-contracts:
-	yarn hardhat run --network ${NETWORK} scripts/deploy_contracts.js
+	yarn hardhat run --network ${NETWORK} scripts/eth_deploy_contracts.js
 
-eth-call-deposit:
-	yarn hardhat run --network ${NETWORK} scripts/call_deposit.js
+eth-deposit:
+	yarn hardhat run --network ${NETWORK} scripts/eth_deposit.js
 
-eth-call-withdraw:
-	yarn hardhat run --network ${NETWORK} scripts/call_withdraw.js
+eth-withdraw:
+	yarn hardhat run --network ${NETWORK} scripts/eth_withdraw.js
+
+eth-generate-deposit-proof:
+	mkdir -p build/proofs && yarn hardhat --network ${NETWORK} eth-generate-deposit-proof --tx-hash ${TX_HASH}
 
 near-get-balance-of:
 	near view ${NEAR_EVM_ACCOUNT} ft_balance_of --account-id ${NEAR_ACCOUNT} '{ "account_id": "${NEAR_ACCOUNT}" }'

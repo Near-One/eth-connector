@@ -8,6 +8,13 @@ require('hardhat-gas-reporter');
 const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY;
 const ROPSTEN_PRIVATE_KEY = process.env.ROPSTEN_PRIVATE_KEY;
 
+task("eth-generate-deposit-proof", "Generates deposit proof for the given TX hash")
+    .addParam("txHash", "transaction hash")
+    .setAction(async taskArgs => {
+        const Proof = require('./scripts/eth_generate_proof');
+        await Proof.findProof(taskArgs.txHash);
+    });
+
 module.exports = {
   paths: {
     sources: "./contracts",
