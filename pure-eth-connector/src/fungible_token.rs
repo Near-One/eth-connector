@@ -84,11 +84,13 @@ impl FungibleToken {
         assert!(amount > 0, "The amount should be a positive number");
         self.internal_withdraw(sender_id, amount);
         self.internal_deposit(receiver_id, amount);
+        #[cfg(feature = "log")]
         sdk::log(format!(
             "Transfer {} from {} to {}",
             amount, sender_id, receiver_id
         ));
         if let Some(memo) = memo {
+            #[cfg(feature = "log")]
             sdk::log(format!("Memo: {}", memo));
         }
     }
@@ -155,5 +157,57 @@ impl FungibleToken {
             GAS_FOR_RESOLVE_TRANSFER,
         );
         sdk::promise_return(promise1);
+    }
+
+    pub fn internal_storage_unregister(
+        &mut self,
+        force: Option<bool>,
+    ) -> Option<(AccountId, Balance)> {
+        sdk::assert_one_yocto();
+        let account_id = sdk::predecessor_account_id();
+        let force = force.unwrap_or(false);
+        if let Some(balance) = self.accounts.get(account_id.as_str()).cloned() {
+            if balance == 0 || force {
+                self.accounts.remove(&account_id);
+                self.total_supply -= balance;
+                let amount = self.storage_balance_bounds().min + 1;
+                let promise0 = sdk::promise_batch_create(account_id.clone());
+                sdk::promise_batch_action_transfer(promise0, amount);
+                Some((account_id, balance))
+            } else {
+                sdk::panic_utf8(
+                    "Can't unregister the account with the positive balance without force"
+                        .as_bytes(),
+                )
+            }
+        } else {
+            #[cfg(feature = "log")]
+            sdk::log(format!("The account {} is not registered", &account_id));
+            None
+        }
+    }
+
+    pub fn storage_balance_bounds(&self) -> StorageBalanceBounds {
+        let required_storage_balance =
+            Balance::from(self.account_storage_usage) * sdk::storage_byte_cost();
+        StorageBalanceBounds {
+            min: required_storage_balance.into(),
+            max: Some(required_storage_balance.into()),
+        }
+    }
+
+    pub fn internal_storage_balance_of(&self, account_id: &AccountId) -> Option<StorageBalance> {
+        if self.accounts.contains_key(account_id.as_str()) {
+            Some(StorageBalance {
+                total: self.storage_balance_bounds().min,
+                available: 0,
+            })
+        } else {
+            None
+        }
+    }
+
+    pub fn storage_balance_of(&self, account_id: AccountId) -> Option<StorageBalance> {
+        self.internal_storage_balance_of(&account_id)
     }
 }

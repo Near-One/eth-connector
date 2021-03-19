@@ -428,3 +428,17 @@ pub fn assert_one_yocto() {
         "Requires attached deposit of exactly 1 yoctoNEAR"
     )
 }
+
+pub fn promise_batch_action_transfer(promise_index: u64, amount: Balance) {
+    unsafe {
+        exports::promise_batch_action_transfer(promise_index, &amount as *const Balance as _);
+    }
+}
+
+pub fn storage_byte_cost() -> Balance {
+    STORAGE_PRICE_PER_BYTE
+}
+
+pub fn promise_batch_create(account_id: AccountId) -> u64 {
+    unsafe { exports::promise_batch_create(account_id.len() as _, account_id.as_ptr() as _) }
+}

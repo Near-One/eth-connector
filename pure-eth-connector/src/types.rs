@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use super::*;
 use primitive_types::{H160, H256, U256};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use sha3::{Digest, Keccak256};
 
 pub type RawAddress = [u8; 20];
@@ -11,6 +11,18 @@ pub type AccountId = String;
 pub type Balance = u128;
 pub type Gas = u64;
 pub type StorageUsage = u64;
+
+#[derive(Serialize)]
+pub struct StorageBalance {
+    pub total: u128,
+    pub available: u128,
+}
+
+#[derive(Serialize)]
+pub struct StorageBalanceBounds {
+    pub min: u128,
+    pub max: Option<u128>,
+}
 
 #[derive(Clone)]
 pub struct Log {
@@ -120,6 +132,12 @@ pub enum PromiseResult {
 pub struct FunctionCallArgs {
     pub contract: RawAddress,
     pub input: Vec<u8>,
+}
+
+#[derive(Serialize)]
+pub struct FtResolveTransferResult {
+    pub amount: Balance,
+    pub refund_amount: Balance,
 }
 
 #[derive(BorshSerialize, BorshDeserialize)]

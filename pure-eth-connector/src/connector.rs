@@ -199,6 +199,23 @@ impl EthConnectorContract {
         ));
     }
 
+    pub fn ft_transfer_call(&mut self) {
+        let args: TransferCallCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
+
+        self.contract.token.ft_transfer_call(
+            args.receiver_id.clone(),
+            args.amount,
+            args.memo.clone(),
+            args.msg.clone(),
+        );
+        self.save_contract();
+        #[cfg(feature = "log")]
+        sdk::log(format!(
+            "Transfer call to {} amount success {}",
+            args.receiver_id, args.amount,
+        ));
+    }
+
     fn save_contract(&mut self) {
         sdk::save_contract(&self.contract);
     }
