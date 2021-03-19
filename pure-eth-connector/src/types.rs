@@ -91,9 +91,23 @@ pub struct StorageDepositCallArgs {
 
 #[derive(BorshSerialize)]
 pub struct WithdrawResult {
-    pub amount: u128,
+    pub amount: Balance,
     pub recipient_id: RawAddress,
     pub eth_custodian_address: RawAddress,
+}
+
+#[derive(BorshSerialize)]
+pub struct FtOnTransfer {
+    pub amount: Balance,
+    pub msg: String,
+    pub receiver_id: AccountId,
+}
+
+#[derive(BorshSerialize)]
+pub struct FtResolveTransfer {
+    pub receiver_id: AccountId,
+    pub amount: Balance,
+    pub current_account_id: AccountId,
 }
 
 pub enum PromiseResult {

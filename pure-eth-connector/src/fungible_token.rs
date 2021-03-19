@@ -123,20 +123,22 @@ impl FungibleToken {
     ) {
         sdk::assert_one_yocto();
         let sender_id = sdk::predecessor_account_id();
-        self.internal_transfer(&sender_id, receiver_id.as_ref(), amount, memo);
-        // Initiating receiver's call and the callback
-        ext_fungible_token_receiver::ft_on_transfer(
-            amount.into(),
+        self.internal_transfer(&sender_id, &receiver_id, amount, memo);
+        let data1 = FtOnTransfer {
+            amount,
             msg,
-            receiver_id.as_ref(),
-        )
-            .then(ext_self::ft_resolve_transfer(
-                receiver_id.into(),
-                amount.into(),
-                &env::current_account_id(),
-            ))
-
-
+            receiver_id: receiver_id.clone(),
+        }
+        .try_to_vec()
+        .unwrap();
+        let data2 = FtResolveTransfer {
+            receiver_id,
+            amount,
+            current_account_id: sdk::current_account_id(),
+        }
+        .try_to_vec()
+        .unwrap();
+        // Initiating receiver's call and the callback
         let promise0 = sdk::promise_create(
             sender_id.clone(),
             b"ft_on_transfer",
@@ -144,15 +146,6 @@ impl FungibleToken {
             sdk::NO_DEPOSIT,
             sdk::prepaid_gas() - GAS_FOR_FT_TRANSFER_CALL,
         );
-        let data = FinishDepositCallArgs {
-            new_owner_id: event.recipient,
-            amount: event.amount.as_u128(),
-            fee: event.fee.as_u128(),
-            proof,
-        }
-            .try_to_vec()
-            .unwrap();
-
         let promise1 = sdk::promise_then(
             promise0,
             sender_id,
