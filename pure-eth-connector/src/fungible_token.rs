@@ -1,6 +1,9 @@
 #![allow(dead_code)]
 use super::*;
 
+const GAS_FOR_RESOLVE_TRANSFER: Gas = 5_000_000_000_000;
+const GAS_FOR_FT_TRANSFER_CALL: Gas = 25_000_000_000_000 + GAS_FOR_RESOLVE_TRANSFER;
+
 #[derive(Debug, BorshDeserialize, BorshSerialize)]
 pub struct FungibleToken {
     /// AccountID -> Account balance.
@@ -109,5 +112,55 @@ impl FungibleToken {
     pub fn ft_balance_of(&self, account_id: AccountId) -> u128 {
         let key: &str = account_id.as_ref();
         *self.accounts.get(key).unwrap_or(&0)
+    }
+
+    pub fn ft_transfer_call(
+        &mut self,
+        receiver_id: AccountId,
+        amount: Balance,
+        memo: Option<String>,
+        msg: String,
+    ) {
+        sdk::assert_one_yocto();
+        let sender_id = sdk::predecessor_account_id();
+        self.internal_transfer(&sender_id, receiver_id.as_ref(), amount, memo);
+        // Initiating receiver's call and the callback
+        ext_fungible_token_receiver::ft_on_transfer(
+            amount.into(),
+            msg,
+            receiver_id.as_ref(),
+        )
+            .then(ext_self::ft_resolve_transfer(
+                receiver_id.into(),
+                amount.into(),
+                &env::current_account_id(),
+            ))
+
+
+        let promise0 = sdk::promise_create(
+            sender_id.clone(),
+            b"ft_on_transfer",
+            &data1[..],
+            sdk::NO_DEPOSIT,
+            sdk::prepaid_gas() - GAS_FOR_FT_TRANSFER_CALL,
+        );
+        let data = FinishDepositCallArgs {
+            new_owner_id: event.recipient,
+            amount: event.amount.as_u128(),
+            fee: event.fee.as_u128(),
+            proof,
+        }
+            .try_to_vec()
+            .unwrap();
+
+        let promise1 = sdk::promise_then(
+            promise0,
+            sender_id,
+            b"ft_resolve_transfer",
+            &data2[..],
+            sdk::NO_DEPOSIT,
+            GAS_FOR_RESOLVE_TRANSFER,
+        );
+        sdk::promise_return(promise1);
     }
 }

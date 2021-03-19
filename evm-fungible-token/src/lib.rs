@@ -286,7 +286,7 @@ impl EthConnector {
     pub fn storage_deposit(&mut self, account_id: Option<ValidAccountId>) -> AccountStorageBalance {
         self.token.storage_deposit(account_id)
     }
-
+    
     #[payable]
     pub fn storage_withdraw(&mut self, amount: Option<U128>) -> AccountStorageBalance {
         self.token.storage_withdraw(amount)

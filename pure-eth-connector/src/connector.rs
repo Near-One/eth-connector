@@ -160,7 +160,7 @@ impl EthConnectorContract {
         let recipient_address = validate_eth_address(args.recipient_id);
         // Burn tokens to recipient
         self.burn(sdk::predecessor_account_id(), args.amount);
-        let res = WithdrawResulr {
+        let res = WithdrawResult {
             recipient_id: recipient_address,
             amount: args.amount,
             eth_custodian_address: self.contract.eth_custodian_address,

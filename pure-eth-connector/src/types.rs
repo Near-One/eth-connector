@@ -59,8 +59,38 @@ pub struct WithdrawCallArgs {
     pub amount: u128,
 }
 
+#[derive(Deserialize)]
+pub struct TransferCallCallArgs {
+    pub receiver_id: AccountId,
+    pub amount: Balance,
+    pub memo: Option<String>,
+    pub msg: String,
+}
+
+#[derive(Deserialize)]
+pub struct ResolveTransferCallArgs {
+    pub sender_id: AccountId,
+    pub receiver_id: AccountId,
+    pub amount: Balance,
+}
+
+#[derive(Deserialize)]
+pub struct StorageBalanceOfCallArgs {
+    pub account_id: AccountId,
+}
+
+#[derive(Deserialize)]
+pub struct StorageWithdrawCallArgs {
+    pub amount: Option<u128>,
+}
+
+#[derive(Deserialize)]
+pub struct StorageDepositCallArgs {
+    pub account_id: Option<AccountId>,
+}
+
 #[derive(BorshSerialize)]
-pub struct WithdrawResulr {
+pub struct WithdrawResult {
     pub amount: u128,
     pub recipient_id: RawAddress,
     pub eth_custodian_address: RawAddress,
