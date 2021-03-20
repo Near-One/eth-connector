@@ -89,6 +89,11 @@ pub extern "C" fn ft_transfer() {
 }
 
 #[no_mangle]
+pub extern "C" fn ft_resolve_transfer() {
+    EthConnectorContract::new().ft_resolve_transfer();
+}
+
+#[no_mangle]
 pub extern "C" fn ft_transfer_call() {
     EthConnectorContract::new().ft_transfer_call();
 }

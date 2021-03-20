@@ -12,7 +12,7 @@ impl EthConnectorContract {
     }
 
     pub fn init_contract() {
-        //assert!(!sdk::state_exists(), "Contract already initialized");
+        assert!(!sdk::state_exists(), "Contract already initialized");
         #[cfg(feature = "log")]
         sdk::log("[init contract]".into());
         let args: InitCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
@@ -107,7 +107,7 @@ impl EthConnectorContract {
         sdk::log("Check verification_success".into());
         let verification_success: bool = bool::try_from_slice(&data0).unwrap();
         assert!(verification_success, "Failed to verify the proof");
-        //self.record_proof(data.proof.get_key());
+        self.record_proof(data.proof.get_key());
 
         // Mint tokens to recipient minus fee
         self.mint(data.new_owner_id, data.amount - data.fee);
@@ -196,6 +196,23 @@ impl EthConnectorContract {
         sdk::log(format!(
             "Transfer to {} amount {} with memo {:?} success",
             args.receiver_id, args.amount, args.memo
+        ));
+    }
+
+    pub fn ft_resolve_transfer(&mut self) {
+        sdk::assert_private_call();
+        let args: ResolveTransferCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
+        let amount = self.contract.token.ft_resolve_transfer(
+            args.sender_id.clone(),
+            args.receiver_id.clone(),
+            args.amount,
+        );
+        self.save_contract();
+        sdk::value_return(&amount.to_be_bytes());
+        #[cfg(feature = "log")]
+        sdk::log(format!(
+            "Resolve transfer from {} to {} amount {} success",
+            args.sender_id, args.receiver_id, args.amount
         ));
     }
 

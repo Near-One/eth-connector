@@ -159,6 +159,78 @@ impl FungibleToken {
         sdk::promise_return(promise1);
     }
 
+    pub fn internal_ft_resolve_transfer(
+        &mut self,
+        sender_id: &AccountId,
+        receiver_id: AccountId,
+        amount: Balance,
+    ) -> (u128, u128) {
+        // Get the unused amount from the `ft_on_transfer` call result.
+        let unused_amount = match sdk::promise_result(0) {
+            PromiseResult::NotReady => unreachable!(),
+            PromiseResult::Successful(value) => {
+                if let Ok(unused_amount) = serde_json::from_slice::<u128>(&value[..]) {
+                    if amount > unused_amount {
+                        unused_amount
+                    } else {
+                        amount
+                    }
+                } else {
+                    amount
+                }
+            }
+            PromiseResult::Failed => amount,
+        };
+
+        if unused_amount > 0 {
+            let receiver_balance =
+                if let Some(receiver_balance) = self.accounts.get(receiver_id.as_str()).cloned() {
+                    receiver_balance
+                } else {
+                    self.accounts.insert(receiver_id.clone(), 0);
+                    0
+                };
+            if receiver_balance > 0 {
+                let refund_amount = if receiver_balance > unused_amount {
+                    unused_amount
+                } else {
+                    receiver_balance
+                };
+                self.accounts
+                    .insert(receiver_id.clone(), receiver_balance - refund_amount);
+
+                if let Some(sender_balance) = self.accounts.get(sender_id.as_str()).cloned() {
+                    self.accounts
+                        .insert(sender_id.clone(), sender_balance + refund_amount);
+                    #[cfg(feature = "log")]
+                    sdk::log(format!(
+                        "Refund {} from {} to {}",
+                        refund_amount, receiver_id, sender_id
+                    ));
+                    return (amount - refund_amount, 0);
+                } else {
+                    // Sender's account was deleted, so we need to burn tokens.
+                    self.total_supply -= refund_amount;
+                    #[cfg(feature = "log")]
+                    sdk::log("The account of the sender was deleted".into());
+                    return (amount, refund_amount);
+                }
+            }
+        }
+        (amount, 0)
+    }
+
+    pub fn ft_resolve_transfer(
+        &mut self,
+        sender_id: AccountId,
+        receiver_id: AccountId,
+        amount: u128,
+    ) -> u128 {
+        self.internal_ft_resolve_transfer(&sender_id, receiver_id, amount)
+            .0
+            .into()
+    }
+
     pub fn internal_storage_unregister(
         &mut self,
         force: Option<bool>,
