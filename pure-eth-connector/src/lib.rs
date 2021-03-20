@@ -51,9 +51,8 @@ pub extern "C" fn on_panic(info: &core::panic::PanicInfo) -> ! {
 
 #[alloc_error_handler]
 #[no_mangle]
-#[allow(unused_unsafe)]
-pub extern "C" fn on_alloc_error(_: core::alloc::Layout) -> ! {
-    unsafe { core::intrinsics::abort() }
+pub unsafe fn on_alloc_error(_: core::alloc::Layout) -> ! {
+    core::intrinsics::abort();
 }
 
 #[no_mangle]
