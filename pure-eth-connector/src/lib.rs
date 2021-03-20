@@ -1,4 +1,5 @@
 #![no_std]
+#![feature(lang_items)]
 #![feature(core_intrinsics)]
 #![feature(alloc_error_handler)]
 #![feature(panic_info_message)]
@@ -30,9 +31,10 @@ pub use borsh::{BorshDeserialize, BorshSerialize};
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-#[panic_handler]
+#[lang = "panic_impl"]
 #[no_mangle]
-pub unsafe fn on_panic(info: &core::panic::PanicInfo) -> ! {
+#[allow(unused_unsafe)]
+pub extern "C" fn on_panic(info: &core::panic::PanicInfo) -> ! {
     #[cfg(feature = "log")]
     if let Some(msg) = info.message() {
         let msg = if let Some(log) = info.location() {
@@ -44,13 +46,14 @@ pub unsafe fn on_panic(info: &core::panic::PanicInfo) -> ! {
     } else if let Some(log) = info.location() {
         sdk::log(format!("{:?}", log));
     }
-    core::intrinsics::abort();
+    unsafe { core::intrinsics::abort() }
 }
 
 #[alloc_error_handler]
 #[no_mangle]
-pub unsafe fn on_alloc_error(_: core::alloc::Layout) -> ! {
-    core::intrinsics::abort();
+#[allow(unused_unsafe)]
+pub extern "C" fn on_alloc_error(_: core::alloc::Layout) -> ! {
+    unsafe { core::intrinsics::abort() }
 }
 
 #[no_mangle]

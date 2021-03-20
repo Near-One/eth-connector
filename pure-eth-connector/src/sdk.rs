@@ -392,7 +392,7 @@ pub fn promise_result(result_idx: u64) -> PromiseResult {
                 PromiseResult::Successful(bytes)
             }
             2 => PromiseResult::Failed,
-            _ => panic!(RETURN_CODE_ERR),
+            _ => panic!("{}", RETURN_CODE_ERR),
         }
     }
 }

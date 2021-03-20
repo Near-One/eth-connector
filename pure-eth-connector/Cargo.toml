@@ -10,6 +10,9 @@ resolver = "2"
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[profile.dev]
+panic = "abort"
+
 [profile.release]
 codegen-units = 1
 # Tell `rustc` to optimize for small code size.
