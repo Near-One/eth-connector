@@ -12,7 +12,7 @@ pub type Balance = u128;
 pub type Gas = u64;
 pub type StorageUsage = u64;
 
-#[derive(Serialize)]
+#[derive(BorshSerialize)]
 pub struct StorageBalance {
     pub total: u128,
     pub available: u128,
@@ -99,6 +99,7 @@ pub struct StorageWithdrawCallArgs {
 #[derive(Deserialize)]
 pub struct StorageDepositCallArgs {
     pub account_id: Option<AccountId>,
+    pub registration_only: Option<bool>,
 }
 
 #[derive(BorshSerialize)]

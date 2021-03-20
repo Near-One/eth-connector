@@ -299,4 +299,8 @@ impl EthConnector {
     pub fn storage_balance_of(&self, account_id: ValidAccountId) -> AccountStorageBalance {
         self.token.storage_balance_of(account_id)
     }
+
+    pub fn storage_minimum_balance(&self) -> U128 {
+        (Balance::from(self.account_storage_usage) * env::storage_byte_cost()).into()
+    }
 }

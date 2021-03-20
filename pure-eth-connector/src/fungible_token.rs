@@ -210,4 +210,64 @@ impl FungibleToken {
     pub fn storage_balance_of(&self, account_id: AccountId) -> Option<StorageBalance> {
         self.internal_storage_balance_of(&account_id)
     }
+
+    // `registration_only` doesn't affect the implementation for vanilla fungible token.
+    #[allow(unused_variables)]
+    pub fn storage_deposit(
+        &mut self,
+        account_id: Option<AccountId>,
+        registration_only: Option<bool>,
+    ) -> StorageBalance {
+        let amount: Balance = sdk::attached_deposit();
+        let account_id = account_id
+            .map(|a| a.into())
+            .unwrap_or_else(|| sdk::predecessor_account_id());
+        if self.accounts.contains_key(&account_id) {
+            #[cfg(feature = "log")]
+            sdk::log("The account is already registered, refunding the deposit".into());
+            if amount > 0 {
+                let promise0 = sdk::promise_batch_create(sdk::predecessor_account_id());
+                sdk::promise_batch_action_transfer(promise0, amount);
+            }
+        } else {
+            let min_balance = self.storage_balance_bounds().min;
+            if amount < min_balance {
+                #[cfg(feature = "log")]
+                sdk::panic_utf8(
+                    "The attached deposit is less than the mimimum storage balance".as_bytes(),
+                );
+            }
+
+            self.internal_register_account(&account_id);
+            let refund = amount - min_balance;
+            if refund > 0 {
+                let promise0 = sdk::promise_batch_create(sdk::predecessor_account_id());
+                sdk::promise_batch_action_transfer(promise0, refund);
+            }
+        }
+        self.internal_storage_balance_of(&account_id).unwrap()
+    }
+
+    pub fn storage_unregister(&mut self, force: Option<bool>) -> bool {
+        self.internal_storage_unregister(force).is_some()
+    }
+
+    pub fn storage_withdraw(&mut self, amount: Option<u128>) -> StorageBalance {
+        sdk::assert_one_yocto();
+        let predecessor_account_id = sdk::predecessor_account_id();
+        if let Some(storage_balance) = self.internal_storage_balance_of(&predecessor_account_id) {
+            match amount {
+                Some(amount) if amount > 0 => {
+                    sdk::panic_utf8(
+                        "The amount is greater than the available storage balance".as_bytes(),
+                    );
+                }
+                _ => storage_balance,
+            }
+        } else {
+            sdk::panic_utf8(
+                format!("The account {} is not registered", &predecessor_account_id).as_bytes(),
+            );
+        }
+    }
 }

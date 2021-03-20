@@ -216,6 +216,42 @@ impl EthConnectorContract {
         ));
     }
 
+    pub fn storage_deposit(&mut self) {
+        let args: StorageDepositCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
+        let res = self
+            .contract
+            .token
+            .storage_deposit(args.account_id, args.registration_only)
+            .try_to_vec()
+            .unwrap();
+        self.save_contract();
+        sdk::value_return(&res[..]);
+    }
+
+    pub fn storage_withdraw(&mut self) {
+        let args: StorageWithdrawCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
+        let res = self
+            .contract
+            .token
+            .storage_withdraw(args.amount)
+            .try_to_vec()
+            .unwrap();
+        self.save_contract();
+        sdk::value_return(&res[..]);
+    }
+
+    pub fn storage_balance_of(&self) {
+        let args: StorageBalanceOfCallArgs =
+            serde_json::from_slice(&sdk::read_input()[..]).unwrap();
+        let res = self
+            .contract
+            .token
+            .storage_balance_of(args.account_id)
+            .try_to_vec()
+            .unwrap();
+        sdk::value_return(&res[..]);
+    }
+
     fn save_contract(&mut self) {
         sdk::save_contract(&self.contract);
     }

@@ -93,6 +93,21 @@ pub extern "C" fn ft_transfer_call() {
     EthConnectorContract::new().ft_transfer_call();
 }
 
+#[no_mangle]
+pub extern "C" fn storage_deposit() {
+    EthConnectorContract::new().storage_deposit()
+}
+
+#[no_mangle]
+pub extern "C" fn storage_withdraw() {
+    EthConnectorContract::new().storage_withdraw()
+}
+
+#[no_mangle]
+pub extern "C" fn storage_balance_of() {
+    EthConnectorContract::new().storage_balance_of()
+}
+
 /// TODO: will be removed - for eth-prover tests only
 #[no_mangle]
 pub extern "C" fn verify_log_entry() {
