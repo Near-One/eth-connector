@@ -16,6 +16,12 @@ pub struct FungibleToken {
     pub account_storage_usage: StorageUsage,
 }
 
+impl Default for fungible_token::FungibleToken {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FungibleToken {
     pub fn new() -> Self {
         let mut this = Self {
@@ -35,8 +41,8 @@ impl FungibleToken {
         self.accounts.remove(&tmp_account_id);
     }
 
-    pub fn internal_unwrap_balance_of(&self, account_id: &AccountId) -> Balance {
-        match self.accounts.get(account_id.into()) {
+    pub fn internal_unwrap_balance_of(&self, account_id: &str) -> Balance {
+        match self.accounts.get(account_id) {
             Some(balance) => *balance,
             None => {
                 sdk::panic_utf8(format!("The account {} is not registered", &account_id).as_bytes())
@@ -44,8 +50,8 @@ impl FungibleToken {
         }
     }
 
-    pub fn internal_deposit(&mut self, account_id: &AccountId, amount: Balance) {
-        let balance = self.internal_unwrap_balance_of(account_id);
+    pub fn internal_deposit(&mut self, account_id: &str, amount: Balance) {
+        let balance = self.internal_unwrap_balance_of(&account_id.to_string());
         if let Some(new_balance) = balance.checked_add(amount) {
             self.accounts.insert(account_id.into(), new_balance);
             self.total_supply = self
@@ -57,8 +63,8 @@ impl FungibleToken {
         }
     }
 
-    pub fn internal_withdraw(&mut self, account_id: &AccountId, amount: Balance) {
-        let balance = self.internal_unwrap_balance_of(account_id);
+    pub fn internal_withdraw(&mut self, account_id: &str, amount: Balance) {
+        let balance = self.internal_unwrap_balance_of(&account_id);
         if let Some(new_balance) = balance.checked_sub(amount) {
             self.accounts.insert(account_id.into(), new_balance);
             self.total_supply = self
@@ -72,8 +78,8 @@ impl FungibleToken {
 
     pub fn internal_transfer(
         &mut self,
-        sender_id: &AccountId,
-        receiver_id: &AccountId,
+        sender_id: &str,
+        receiver_id: &str,
         amount: Balance,
         memo: Option<String>,
     ) {
@@ -82,8 +88,8 @@ impl FungibleToken {
             "Sender and receiver should be different"
         );
         assert!(amount > 0, "The amount should be a positive number");
-        self.internal_withdraw(sender_id, amount);
-        self.internal_deposit(receiver_id, amount);
+        self.internal_withdraw(&sender_id.to_string(), amount);
+        self.internal_deposit(&receiver_id.to_string(), amount);
         #[cfg(feature = "log")]
         sdk::log(format!(
             "Transfer {} from {} to {}",
@@ -95,8 +101,8 @@ impl FungibleToken {
         }
     }
 
-    pub fn internal_register_account(&mut self, account_id: &AccountId) {
-        if self.accounts.insert(account_id.into(), 0).is_some() {
+    pub fn internal_register_account(&mut self, account_id: &str) {
+        if self.accounts.insert(account_id.to_string(), 0).is_some() {
             sdk::panic_utf8("The account is already registered".as_bytes());
         }
     }
@@ -161,7 +167,7 @@ impl FungibleToken {
 
     pub fn internal_ft_resolve_transfer(
         &mut self,
-        sender_id: &AccountId,
+        sender_id: &str,
         receiver_id: AccountId,
         amount: Balance,
     ) -> (u128, u128) {
@@ -199,9 +205,9 @@ impl FungibleToken {
                 self.accounts
                     .insert(receiver_id.clone(), receiver_balance - refund_amount);
 
-                if let Some(sender_balance) = self.accounts.get(sender_id.as_str()).cloned() {
+                if let Some(sender_balance) = self.accounts.get(sender_id).cloned() {
                     self.accounts
-                        .insert(sender_id.clone(), sender_balance + refund_amount);
+                        .insert(sender_id.to_string(), sender_balance + refund_amount);
                     #[cfg(feature = "log")]
                     sdk::log(format!(
                         "Refund {} from {} to {}",
@@ -228,7 +234,6 @@ impl FungibleToken {
     ) -> u128 {
         self.internal_ft_resolve_transfer(&sender_id, receiver_id, amount)
             .0
-            .into()
     }
 
     pub fn internal_storage_unregister(
@@ -263,13 +268,13 @@ impl FungibleToken {
         let required_storage_balance =
             Balance::from(self.account_storage_usage) * sdk::storage_byte_cost();
         StorageBalanceBounds {
-            min: required_storage_balance.into(),
-            max: Some(required_storage_balance.into()),
+            min: required_storage_balance,
+            max: Some(required_storage_balance),
         }
     }
 
-    pub fn internal_storage_balance_of(&self, account_id: &AccountId) -> Option<StorageBalance> {
-        if self.accounts.contains_key(account_id.as_str()) {
+    pub fn internal_storage_balance_of(&self, account_id: &str) -> Option<StorageBalance> {
+        if self.accounts.contains_key(account_id) {
             Some(StorageBalance {
                 total: self.storage_balance_bounds().min,
                 available: 0,
@@ -291,9 +296,7 @@ impl FungibleToken {
         registration_only: Option<bool>,
     ) -> StorageBalance {
         let amount: Balance = sdk::attached_deposit();
-        let account_id = account_id
-            .map(|a| a.into())
-            .unwrap_or_else(|| sdk::predecessor_account_id());
+        let account_id = account_id.unwrap_or_else(sdk::predecessor_account_id);
         if self.accounts.contains_key(&account_id) {
             #[cfg(feature = "log")]
             sdk::log("The account is already registered, refunding the deposit".into());

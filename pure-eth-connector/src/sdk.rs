@@ -296,13 +296,7 @@ pub fn panic_hex(data: &[u8]) -> ! {
 }
 
 pub fn state_exists() -> bool {
-    unsafe {
-        if exports::storage_has_key(STATE_KEY.len() as u64, STATE_KEY.as_ptr() as u64) == 1 {
-            true
-        } else {
-            false
-        }
-    }
+    unsafe { exports::storage_has_key(STATE_KEY.len() as u64, STATE_KEY.as_ptr() as u64) == 1 }
 }
 
 pub fn storage_usage() -> u64 {

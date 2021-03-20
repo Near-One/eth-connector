@@ -4,6 +4,12 @@ pub struct EthConnectorContract {
     contract: EthConnector,
 }
 
+impl Default for EthConnectorContract {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl EthConnectorContract {
     pub fn new() -> Self {
         Self {

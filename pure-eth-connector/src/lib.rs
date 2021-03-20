@@ -1,3 +1,4 @@
+#![warn(clippy::all)]
 #![no_std]
 #![feature(lang_items)]
 #![feature(core_intrinsics)]
@@ -49,6 +50,9 @@ pub extern "C" fn on_panic(info: &core::panic::PanicInfo) -> ! {
     unsafe { core::intrinsics::abort() }
 }
 
+/// # Safety
+///
+/// This function only for no-std alloc error handler
 #[alloc_error_handler]
 #[no_mangle]
 pub unsafe fn on_alloc_error(_: core::alloc::Layout) -> ! {
