@@ -36,7 +36,6 @@ impl EthConnectorContract {
     }
 
     pub fn deposit(&self) {
-        //sdk::assert_one_yocto();
         #[cfg(feature = "log")]
         sdk::log("[Deposit tokens]".into());
         use core::ops::Sub;
@@ -46,7 +45,7 @@ impl EthConnectorContract {
 
         #[cfg(feature = "log")]
         sdk::log(format!(
-            "Deposit started: from {:?} ETH to {:?} NEAR with amount: {:?} and fee {:?}",
+            "Deposit started: from {} ETH to {} NEAR with amount: {:?} and fee {:?}",
             event.sender,
             event.recipient,
             event.amount.as_u128(),
@@ -69,7 +68,7 @@ impl EthConnectorContract {
         let proof_1 = proof.try_to_vec().unwrap();
         #[cfg(feature = "log")]
         sdk::log(format!(
-            "Deposit verify_log_entry for prover: {:?}",
+            "Deposit verify_log_entry for prover: {}",
             self.contract.prover_account,
         ));
         let promise0 = sdk::promise_create(
