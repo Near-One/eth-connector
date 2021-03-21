@@ -30,7 +30,7 @@ impl FungibleToken {
     fn measure_account_storage_usage(&mut self) {
         let initial_storage_usage = sdk::storage_usage();
         let tmp_account_id = "a".repeat(64);
-        self.accounts.insert(tmp_account_id.clone().into(), 0);
+        self.accounts.insert(tmp_account_id.clone(), 0);
         self.account_storage_usage = sdk::storage_usage() - initial_storage_usage;
         self.accounts.remove(&tmp_account_id);
     }

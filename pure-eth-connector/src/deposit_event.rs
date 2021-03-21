@@ -29,15 +29,15 @@ impl EthDepositedEvent {
             EthDepositedEvent::event_params(),
             data,
         );
-        let sender = event.log.params[0].value.clone().to_address().unwrap().0;
+        let sender = event.log.params[0].value.clone().into_address().unwrap().0;
         let sender = hex::encode(sender);
 
-        let recipient = event.log.params[1].value.clone().to_string().unwrap();
+        let recipient = event.log.params[1].value.clone().to_string();
         let amount = U128::from(
             event.log.params[2]
                 .value
                 .clone()
-                .to_uint()
+                .into_uint()
                 .unwrap()
                 .as_u128(),
         );
@@ -45,7 +45,7 @@ impl EthDepositedEvent {
             event.log.params[3]
                 .value
                 .clone()
-                .to_uint()
+                .into_uint()
                 .unwrap()
                 .as_u128(),
         );

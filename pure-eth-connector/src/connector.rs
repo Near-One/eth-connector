@@ -98,7 +98,7 @@ impl EthConnectorContract {
         let data: FinishDepositCallArgs =
             FinishDepositCallArgs::try_from_slice(&sdk::read_input()).unwrap();
         #[cfg(feature = "log")]
-        sdk::log(format!("Finish deposit amount: {:?}", data.amount));
+        sdk::log(format!("Finish deposit amount: {}", data.amount));
         assert_eq!(sdk::promise_results_count(), 1);
         let data0: Vec<u8> = match sdk::promise_result(0) {
             PromiseResult::Successful(x) => x,
@@ -134,7 +134,7 @@ impl EthConnectorContract {
 
     fn mint(&mut self, owner_id: AccountId, amount: Balance) {
         #[cfg(feature = "log")]
-        sdk::log(format!("Mint {:?} tokens for: {:?}", amount, owner_id));
+        sdk::log(format!("Mint {} tokens for: {}", amount, owner_id));
 
         let owner_id_key: &str = owner_id.as_ref();
         if self.contract.token.accounts.get(owner_id_key).is_none() {
@@ -150,7 +150,7 @@ impl EthConnectorContract {
 
     fn burn(&mut self, owner_id: AccountId, amount: Balance) {
         #[cfg(feature = "log")]
-        sdk::log(format!("Burn {:?} tokens for: {:?}", amount, owner_id));
+        sdk::log(format!("Burn {} tokens for: {}", amount, owner_id));
         self.contract.token.internal_withdraw(&owner_id, amount);
     }
 
@@ -195,8 +195,8 @@ impl EthConnectorContract {
         self.save_contract();
         #[cfg(feature = "log")]
         sdk::log(format!(
-            "Transfer to {} amount {} with memo {:?} success",
-            args.receiver_id, args.amount, args.memo
+            "Transfer amount {} to {} success with memo: {:?}",
+            args.amount, args.receiver_id, args.memo
         ));
     }
 
@@ -212,8 +212,8 @@ impl EthConnectorContract {
         sdk::value_return(&amount.to_be_bytes());
         #[cfg(feature = "log")]
         sdk::log(format!(
-            "Resolve transfer from {} to {} amount {} success",
-            args.sender_id, args.receiver_id, args.amount
+            "Resolve transfer of {} from {} to {} success",
+            args.amount, args.sender_id, args.receiver_id
         ));
     }
 
