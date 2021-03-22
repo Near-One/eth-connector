@@ -39,7 +39,7 @@ pub struct InitCallArgs {
     pub eth_custodian_address: AccountId,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug)]
 pub struct BalanceOfCallArgs {
     pub account_id: AccountId,
 }
@@ -55,8 +55,8 @@ pub struct TransferCallArgs {
 pub struct EthConnector {
     pub prover_account: AccountId,
     pub eth_custodian_address: EthAddress,
-    pub used_events: BTreeSet<Vec<u8>>,
-    pub token: FungibleToken,
+    // pub used_events: BTreeSet<Vec<u8>>,
+    // pub token: FungibleToken,
 }
 
 #[derive(BorshSerialize, BorshDeserialize)]

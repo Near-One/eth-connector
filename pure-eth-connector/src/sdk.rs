@@ -4,7 +4,6 @@ use core::mem::size_of;
 use primitive_types::H256;
 
 /// Key used to store the state of the contract.
-pub const STATE_KEY: &[u8] = b"STATE";
 pub const NO_DEPOSIT: Balance = 0;
 pub const RETURN_CODE_ERR: &str = "Unexpected return code.";
 pub const STORAGE_PRICE_PER_BYTE: Balance = 100_000_000_000_000_000_000; // 1e20yN, 0.0001N
@@ -210,8 +209,8 @@ pub fn read_storage(key: &[u8]) -> Option<Vec<u8>> {
     }
 }
 
-pub fn save_contract<T: BorshSerialize>(data: &T) {
-    write_storage(STATE_KEY, &data.try_to_vec().unwrap()[..]);
+pub fn save_contract<T: BorshSerialize>(key: &str, data: &T) {
+    write_storage(key.as_bytes(), &data.try_to_vec().unwrap()[..]);
 }
 
 pub fn get_contract_data<T: BorshDeserialize>() -> T {
@@ -293,10 +292,6 @@ pub fn panic_hex(data: &[u8]) -> ! {
     let message = crate::types::bytes_to_hex(data).into_bytes();
     unsafe { exports::panic_utf8(message.len() as _, message.as_ptr() as _) }
     unreachable!()
-}
-
-pub fn state_exists() -> bool {
-    unsafe { exports::storage_has_key(STATE_KEY.len() as u64, STATE_KEY.as_ptr() as u64) == 1 }
 }
 
 pub fn storage_usage() -> u64 {
@@ -444,4 +439,8 @@ pub fn sha256(value: &[u8]) -> Vec<u8> {
         exports::read_register(0, bytes.as_ptr() as *const u64 as u64);
         bytes
     }
+}
+
+pub fn storage_has_key(key: &str) -> bool {
+    unsafe { exports::storage_has_key(key.len() as u64, key.as_ptr() as u64) == 1 }
 }

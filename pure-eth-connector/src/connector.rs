@@ -1,5 +1,8 @@
 use super::*;
 
+pub const CONTRACT_NAME_KEY: &'staitc str = "EthConnector";
+pub const CONTRACT_FT_KEY: &'staitc str = "EthConnector.FungibleToken";
+
 pub struct EthConnectorContract {
     contract: EthConnector,
 }
@@ -18,7 +21,7 @@ impl EthConnectorContract {
     }
 
     pub fn init_contract() {
-        assert!(!sdk::state_exists(), "Contract already initialized");
+        assert_eq!(sdk::current_account_id(), sdk::predecessor_account_id());
         #[cfg(feature = "log")]
         sdk::log("[init contract]".into());
         let args: InitCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
@@ -29,10 +32,8 @@ impl EthConnectorContract {
         let contract_data = EthConnector {
             prover_account: args.prover_account,
             eth_custodian_address: validate_eth_address(args.eth_custodian_address),
-            used_events: BTreeSet::new(),
-            token: ft,
         };
-        sdk::save_contract(&contract_data);
+        sdk::save_contract(CONTRACT_NAME, &contract_data);
     }
 
     pub fn deposit(&self) {
