@@ -184,7 +184,7 @@ impl EthConnectorContract {
     }
 
     pub fn ft_balance_of(&self) {
-        let args: BalanceOfCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
+        let args = BalanceOfCallArgs::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));
         let balance = self.contract.token.ft_balance_of(args.account_id.clone());
         sdk::value_return(&balance.to_be_bytes());
         #[cfg(feature = "log")]

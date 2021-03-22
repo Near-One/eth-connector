@@ -4,6 +4,8 @@ use primitive_types::{H160, H256, U256};
 use serde::{Deserialize, Serialize};
 use sha3::{Digest, Keccak256};
 
+pub const FAILED_PARSE: &'static str = "Failed parse json";
+
 pub type RawAddress = [u8; 20];
 pub type RawU256 = [u8; 32];
 pub type RawH256 = [u8; 32];
@@ -214,4 +216,21 @@ pub fn keccak(data: &[u8]) -> H256 {
 
 pub fn near_account_to_evm_address(addr: &[u8]) -> H160 {
     H160::from_slice(&keccak(addr)[12..])
+}
+
+impl From<json::JsonValue> for BalanceOfCallArgs {
+    fn from(v: json::JsonValue) -> Self {
+        match v {
+            json::JsonValue::Object(o) => {
+                let account_id = match o.get("account_id").expect(FAILED_PARSE) {
+                    json::JsonValue::String(s) => s,
+                    _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
+                };
+                Self {
+                    account_id: account_id.clone(),
+                }
+            }
+            _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
+        }
+    }
 }
