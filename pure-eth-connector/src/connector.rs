@@ -35,13 +35,17 @@ impl EthConnectorContract {
         let owner_id = sdk::current_account_id();
         let mut ft = FungibleToken::new();
         ft.internal_register_account(owner_id.clone());
-        ft.internal_deposit(owner_id, 0);
         let contract_data = EthConnector {
             prover_account: args.prover_account,
             eth_custodian_address: validate_eth_address(args.eth_custodian_address),
         };
-        sdk::save_contract(CONTRACT_NAME_KEY, &contract_data);
-        sdk::save_contract(CONTRACT_FT_KEY, &ft);
+        Self {
+            contract: contract_data,
+            ft,
+        }
+        .save_contract();
+        // sdk::save_contract(CONTRACT_NAME_KEY, &contract_data);
+        // sdk::save_contract(CONTRACT_FT_KEY, &ft);
     }
 
     pub fn deposit(&self) {
@@ -285,7 +289,7 @@ impl EthConnectorContract {
     }
 
     fn save_used_event(&self, key: String) {
-        sdk::save_contract(self.used_event_key(key).as_str(), &[0u8]);
+        sdk::save_contract(self.used_event_key(key).as_str(), &0u8);
     }
 
     fn check_used_event(&self, key: String) -> bool {

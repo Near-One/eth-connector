@@ -335,10 +335,7 @@ impl FungibleToken {
     }
 
     pub fn accounts_insert(&self, account_id: AccountId, amount: Balance) {
-        sdk::save_contract(
-            self.ft_key(account_id).as_str(),
-            &amount.try_to_vec().unwrap(),
-        )
+        sdk::save_contract(self.ft_key(account_id.clone()).as_str(), &amount)
     }
 
     fn accounts_contains_key(&self, account_id: AccountId) -> bool {

@@ -90,7 +90,5 @@ pub fn parse_json(data: &[u8]) -> Option<JsonValue> {
     let mut index = 0;
     let parse_result =
         rjson::parse::<JsonValue, JsonArray, JsonObject, JsonValue>(&*data_array, &mut index);
-    //assert_eq!(index, data_array.len() - 1);
-    sdk::log(format!("{:?} == {:?}", index, data_array.len()));
     parse_result
 }
