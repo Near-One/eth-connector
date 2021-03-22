@@ -33,7 +33,7 @@ pub struct Log {
     pub data: Vec<u8>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug)]
 pub struct InitCallArgs {
     pub prover_account: AccountId,
     pub eth_custodian_address: AccountId,
@@ -226,6 +226,29 @@ impl From<json::JsonValue> for BalanceOfCallArgs {
                 };
                 Self {
                     account_id: account_id.clone(),
+                }
+            }
+            _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
+        }
+    }
+}
+
+impl From<json::JsonValue> for InitCallArgs {
+    fn from(v: json::JsonValue) -> Self {
+        match v {
+            json::JsonValue::Object(o) => {
+                let eth_custodian_address =
+                    match o.get("eth_custodian_address").expect(FAILED_PARSE) {
+                        json::JsonValue::String(s) => s,
+                        _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
+                    };
+                let prover_account = match o.get("prover_account").expect(FAILED_PARSE) {
+                    json::JsonValue::String(s) => s,
+                    _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
+                };
+                Self {
+                    eth_custodian_address: eth_custodian_address.clone(),
+                    prover_account: prover_account.clone(),
                 }
             }
             _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),

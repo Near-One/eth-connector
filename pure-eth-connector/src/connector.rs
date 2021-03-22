@@ -24,9 +24,14 @@ impl EthConnectorContract {
 
     pub fn init_contract() {
         assert_eq!(sdk::current_account_id(), sdk::predecessor_account_id());
+        assert!(
+            !sdk::storage_has_key(CONTRACT_NAME_KEY),
+            "Contract already initialized"
+        );
         #[cfg(feature = "log")]
         sdk::log("[init contract]".into());
-        let args: InitCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
+        let args: InitCallArgs =
+            InitCallArgs::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));
         let owner_id = sdk::current_account_id();
         let mut ft = FungibleToken::new();
         ft.internal_register_account(owner_id.clone());
