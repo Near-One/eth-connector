@@ -213,8 +213,8 @@ pub fn save_contract<T: BorshSerialize>(key: &str, data: &T) {
     write_storage(key.as_bytes(), &data.try_to_vec().unwrap()[..]);
 }
 
-pub fn get_contract_data<T: BorshDeserialize>() -> T {
-    let data = read_storage(STATE_KEY).expect("Failed read storage");
+pub fn get_contract_data<T: BorshDeserialize>(key:&atr) -> T {
+    let data = read_storage(key.as_bytes()).expect("Failed read storage");
     T::try_from_slice(&data).unwrap()
 }
 

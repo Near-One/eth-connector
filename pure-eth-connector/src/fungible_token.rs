@@ -31,7 +31,7 @@ impl FungibleToken {
 
     pub fn internal_unwrap_balance_of(&self, account_id: &str) -> Balance {
         match self.accounts_get(account_id) {
-            Some(balance) => *balance,
+            Some(balance) => u128::try_from_slice(&balance[..]).unwrap(),
             None => sdk::panic_utf8("The account is not registered".as_bytes()),
         }
     }

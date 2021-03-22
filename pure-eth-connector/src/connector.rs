@@ -1,10 +1,12 @@
 use super::*;
+use ethabi::Function;
 
-pub const CONTRACT_NAME_KEY: &'staitc str = "EthConnector";
-pub const CONTRACT_FT_KEY: &'staitc str = "EthConnector.FungibleToken";
+pub const CONTRACT_NAME_KEY: &'static str = "EthConnector";
+pub const CONTRACT_FT_KEY: &'static str = "EthConnector.FungibleToken";
 
 pub struct EthConnectorContract {
     contract: EthConnector,
+    ft: FungibleToken,
 }
 
 impl Default for EthConnectorContract {
@@ -16,7 +18,8 @@ impl Default for EthConnectorContract {
 impl EthConnectorContract {
     pub fn new() -> Self {
         Self {
-            contract: sdk::get_contract_data(),
+            contract: sdk::get_contract_data(CONTRACT_NAME_KEY),
+            ft: sdk::get_contract_data(CONTRACT_FT_KEY),
         }
     }
 
@@ -33,7 +36,7 @@ impl EthConnectorContract {
             prover_account: args.prover_account,
             eth_custodian_address: validate_eth_address(args.eth_custodian_address),
         };
-        sdk::save_contract(CONTRACT_NAME, &contract_data);
+        sdk::save_contract(CONTRACT_NAME_KEY, &contract_data);
     }
 
     pub fn deposit(&self) {
@@ -277,6 +280,7 @@ impl EthConnectorContract {
     }
 
     fn save_contract(&mut self) {
-        sdk::save_contract(&self.contract);
+        sdk::save_contract(CONTRACT_NAME_KEY, &self.contract);
+        sdk::save_contract(CONTRACT_FT_KEY, &self.ft);
     }
 }
