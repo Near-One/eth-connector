@@ -30,7 +30,7 @@ impl EthConnectorContract {
         let owner_id = sdk::current_account_id();
         let mut ft = FungibleToken::new();
         ft.internal_register_account(&owner_id);
-        ft.internal_deposit(&owner_id, 0);
+        ft.internal_deposit(owner_id, 0);
         let contract_data = EthConnector {
             prover_account: args.prover_account,
             eth_custodian_address: validate_eth_address(args.eth_custodian_address),
@@ -148,9 +148,9 @@ impl EthConnectorContract {
         if self.ft.accounts_get(owner_id.clone()).is_none() {
             // TODO: NEP-145 Account Storage implementation fee
             // It spent additional account amount for storage
-            self.ft.accounts_insert(&owner_id.clone(), 0);
+            self.ft.accounts_insert(owner_id.clone(), 0);
         }
-        self.ft.internal_deposit(&owner_id.clone(), amount);
+        self.ft.internal_deposit(owner_id, amount);
         self.save_contract();
         #[cfg(feature = "log")]
         sdk::log("Mint success".into());
@@ -284,6 +284,6 @@ impl EthConnectorContract {
     }
 
     fn check_used_event(&self, key: String) -> bool {
-        sdk::storage_has_key(self.used_event_key(key.clone()).as_str())
+        sdk::storage_has_key(self.used_event_key(key).as_str())
     }
 }
