@@ -1,8 +1,7 @@
 use super::*;
-use ethabi::Function;
 
-pub const CONTRACT_NAME_KEY: &'static str = "EthConnector";
-pub const CONTRACT_FT_KEY: &'static str = "EthConnector.FungibleToken";
+pub const CONTRACT_NAME_KEY: &str = "EthConnector";
+pub const CONTRACT_FT_KEY: &str = "EthConnector.FungibleToken";
 
 pub struct EthConnectorContract {
     contract: EthConnector,
@@ -37,6 +36,7 @@ impl EthConnectorContract {
             eth_custodian_address: validate_eth_address(args.eth_custodian_address),
         };
         sdk::save_contract(CONTRACT_NAME_KEY, &contract_data);
+        sdk::save_contract(CONTRACT_FT_KEY, &ft);
     }
 
     pub fn deposit(&self) {
@@ -129,10 +129,10 @@ impl EthConnectorContract {
         let initial_storage = sdk::storage_usage();
 
         assert!(
-            !self.contract.used_events.contains(&key[..]),
+            !self.check_used_event(String::from_utf8(key.clone()).unwrap()),
             "Proof event cannot be reused. Proof already exist."
         );
-        self.contract.used_events.insert(key);
+        self.save_used_event(&String::from_utf8(key).unwrap());
         let current_storage = sdk::storage_usage();
         let attached_deposit = sdk::attached_deposit();
         let required_deposit =
@@ -145,13 +145,12 @@ impl EthConnectorContract {
         #[cfg(feature = "log")]
         sdk::log(format!("Mint {} tokens for: {}", amount, owner_id));
 
-        let owner_id_key: &str = owner_id.as_ref();
-        if self.contract.token.accounts.get(owner_id_key).is_none() {
+        if self.ft.accounts_get(owner_id.clone()).is_none() {
             // TODO: NEP-145 Account Storage implementation fee
             // It spent additional account amount for storage
-            self.contract.token.accounts.insert(owner_id.clone(), 0);
+            self.ft.accounts_insert(&owner_id.clone(), 0);
         }
-        self.contract.token.internal_deposit(&owner_id, amount);
+        self.ft.internal_deposit(&owner_id.clone(), amount);
         self.save_contract();
         #[cfg(feature = "log")]
         sdk::log("Mint success".into());
@@ -160,7 +159,7 @@ impl EthConnectorContract {
     fn burn(&mut self, owner_id: AccountId, amount: Balance) {
         #[cfg(feature = "log")]
         sdk::log(format!("Burn {} tokens for: {}", amount, owner_id));
-        self.contract.token.internal_withdraw(&owner_id, amount);
+        self.ft.internal_withdraw(&owner_id, amount);
     }
 
     pub fn withdraw(&mut self) {
@@ -181,7 +180,7 @@ impl EthConnectorContract {
     }
 
     pub fn ft_total_supply(&self) {
-        let total_supply = self.contract.token.ft_total_supply();
+        let total_supply = self.ft.ft_total_supply();
         sdk::value_return(&total_supply.to_be_bytes());
         #[cfg(feature = "log")]
         sdk::log(format!("Total supply: {}", total_supply));
@@ -189,7 +188,7 @@ impl EthConnectorContract {
 
     pub fn ft_balance_of(&self) {
         let args = BalanceOfCallArgs::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));
-        let balance = self.contract.token.ft_balance_of(args.account_id.clone());
+        let balance = self.ft.ft_balance_of(args.account_id.clone());
         sdk::value_return(&balance.to_be_bytes());
         #[cfg(feature = "log")]
         sdk::log(format!("Balance [{}]: {}", args.account_id, balance));
@@ -198,8 +197,7 @@ impl EthConnectorContract {
     pub fn ft_transfer(&mut self) {
         let args: TransferCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
 
-        self.contract
-            .token
+        self.ft
             .ft_transfer(args.receiver_id.clone(), args.amount, args.memo.clone());
         self.save_contract();
         #[cfg(feature = "log")]
@@ -212,7 +210,7 @@ impl EthConnectorContract {
     pub fn ft_resolve_transfer(&mut self) {
         sdk::assert_private_call();
         let args: ResolveTransferCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
-        let amount = self.contract.token.ft_resolve_transfer(
+        let amount = self.ft.ft_resolve_transfer(
             args.sender_id.clone(),
             args.receiver_id.clone(),
             args.amount,
@@ -229,7 +227,7 @@ impl EthConnectorContract {
     pub fn ft_transfer_call(&mut self) {
         let args: TransferCallCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
 
-        self.contract.token.ft_transfer_call(
+        self.ft.ft_transfer_call(
             args.receiver_id.clone(),
             args.amount,
             args.memo.clone(),
@@ -246,8 +244,7 @@ impl EthConnectorContract {
     pub fn storage_deposit(&mut self) {
         let args: StorageDepositCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
         let res = self
-            .contract
-            .token
+            .ft
             .storage_deposit(args.account_id, args.registration_only)
             .try_to_vec()
             .unwrap();
@@ -257,12 +254,7 @@ impl EthConnectorContract {
 
     pub fn storage_withdraw(&mut self) {
         let args: StorageWithdrawCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
-        let res = self
-            .contract
-            .token
-            .storage_withdraw(args.amount)
-            .try_to_vec()
-            .unwrap();
+        let res = self.ft.storage_withdraw(args.amount).try_to_vec().unwrap();
         self.save_contract();
         sdk::value_return(&res[..]);
     }
@@ -271,8 +263,7 @@ impl EthConnectorContract {
         let args: StorageBalanceOfCallArgs =
             serde_json::from_slice(&sdk::read_input()[..]).unwrap();
         let res = self
-            .contract
-            .token
+            .ft
             .storage_balance_of(args.account_id)
             .try_to_vec()
             .unwrap();
@@ -282,5 +273,17 @@ impl EthConnectorContract {
     fn save_contract(&mut self) {
         sdk::save_contract(CONTRACT_NAME_KEY, &self.contract);
         sdk::save_contract(CONTRACT_FT_KEY, &self.ft);
+    }
+
+    fn used_event_key(&self, key: String) -> String {
+        [CONTRACT_NAME_KEY, "used-event", &key].join(".")
+    }
+
+    fn save_used_event(&self, key: &String) {
+        sdk::save_contract(self.used_event_key(key.clone()).as_str(), &[0u8]);
+    }
+
+    fn check_used_event(&self, key: String) -> bool {
+        sdk::storage_has_key(self.used_event_key(key.clone()).as_str())
     }
 }

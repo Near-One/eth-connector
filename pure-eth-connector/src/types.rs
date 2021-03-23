@@ -4,7 +4,7 @@ use primitive_types::{H160, H256, U256};
 use serde::{Deserialize, Serialize};
 use sha3::{Digest, Keccak256};
 
-pub const FAILED_PARSE: &'static str = "Failed parse json";
+pub const FAILED_PARSE: &str = "Failed parse json";
 
 pub type RawAddress = [u8; 20];
 pub type RawU256 = [u8; 32];
@@ -55,8 +55,6 @@ pub struct TransferCallArgs {
 pub struct EthConnector {
     pub prover_account: AccountId,
     pub eth_custodian_address: EthAddress,
-    // pub used_events: BTreeSet<Vec<u8>>,
-    // pub token: FungibleToken,
 }
 
 #[derive(BorshSerialize, BorshDeserialize)]

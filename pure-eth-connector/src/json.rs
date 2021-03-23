@@ -85,7 +85,7 @@ impl core::fmt::Display for JsonValue {
     }
 }
 
-pub fn parse_json(data: &Vec<u8>) -> Option<JsonValue> {
+pub fn parse_json(data: &[u8]) -> Option<JsonValue> {
     let data_array: Vec<char> = data.iter().map(|b| *b as char).collect::<Vec<_>>();
     let mut index = 0;
     let parse_result =

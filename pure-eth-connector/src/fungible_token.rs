@@ -22,21 +22,20 @@ impl Default for fungible_token::FungibleToken {
 
 impl FungibleToken {
     pub fn new() -> Self {
-        let mut this = Self {
+        Self {
             total_supply: 0,
             account_storage_usage: 0,
-        };
-        this
+        }
     }
 
-    pub fn internal_unwrap_balance_of(&self, account_id: &str) -> Balance {
-        match self.accounts_get(account_id) {
+    pub fn internal_unwrap_balance_of(&self, account_id: &AccountId) -> Balance {
+        match self.accounts_get(account_id.clone()) {
             Some(balance) => u128::try_from_slice(&balance[..]).unwrap(),
             None => sdk::panic_utf8("The account is not registered".as_bytes()),
         }
     }
 
-    pub fn internal_deposit(&mut self, account_id: &str, amount: Balance) {
+    pub fn internal_deposit(&mut self, account_id: &AccountId, amount: Balance) {
         let balance = self.internal_unwrap_balance_of(&account_id.to_string());
         if let Some(new_balance) = balance.checked_add(amount) {
             self.accounts_insert(account_id, new_balance);
@@ -49,7 +48,7 @@ impl FungibleToken {
         }
     }
 
-    pub fn internal_withdraw(&mut self, account_id: &str, amount: Balance) {
+    pub fn internal_withdraw(&mut self, account_id: &AccountId, amount: Balance) {
         let balance = self.internal_unwrap_balance_of(&account_id);
         if let Some(new_balance) = balance.checked_sub(amount) {
             self.accounts_insert(account_id, new_balance);
@@ -87,7 +86,7 @@ impl FungibleToken {
         }
     }
 
-    pub fn internal_register_account(&mut self, account_id: &str) {
+    pub fn internal_register_account(&mut self, account_id: &AccountId) {
         self.accounts_insert(account_id, 0)
     }
 
@@ -102,8 +101,7 @@ impl FungibleToken {
     }
 
     pub fn ft_balance_of(&self, account_id: AccountId) -> u128 {
-        let key: &str = account_id.as_ref();
-        if let Some(data) = self.accounts_get(key) {
+        if let Some(data) = self.accounts_get(account_id) {
             u128::try_from_slice(&data[..]).unwrap()
         } else {
             0
@@ -155,8 +153,8 @@ impl FungibleToken {
 
     pub fn internal_ft_resolve_transfer(
         &mut self,
-        sender_id: &str,
-        receiver_id: AccountId,
+        sender_id: &AccountId,
+        receiver_id: &AccountId,
         amount: Balance,
     ) -> (u128, u128) {
         // Get the unused amount from the `ft_on_transfer` call result.
@@ -178,10 +176,10 @@ impl FungibleToken {
 
         if unused_amount > 0 {
             let receiver_balance =
-                if let Some(receiver_balance) = self.accounts_get(receiver_id.as_str()) {
+                if let Some(receiver_balance) = self.accounts_get(receiver_id.clone()) {
                     u128::try_from_slice(&receiver_balance[..]).unwrap()
                 } else {
-                    self.accounts_insert(receiver_id.as_str(), 0);
+                    self.accounts_insert(receiver_id, 0);
                     0
                 };
             if receiver_balance > 0 {
@@ -190,9 +188,9 @@ impl FungibleToken {
                 } else {
                     receiver_balance
                 };
-                self.accounts_insert(receiver_id.as_str(), receiver_balance - refund_amount);
+                self.accounts_insert(receiver_id, receiver_balance - refund_amount);
 
-                if let Some(sender_balance) = self.accounts_get(sender_id) {
+                return if let Some(sender_balance) = self.accounts_get(sender_id.clone()) {
                     let sender_balance = u128::try_from_slice(&sender_balance[..]).unwrap();
                     self.accounts_insert(sender_id, sender_balance + refund_amount);
                     #[cfg(feature = "log")]
@@ -200,14 +198,14 @@ impl FungibleToken {
                         "Refund {} from {} to {}",
                         refund_amount, receiver_id, sender_id
                     ));
-                    return (amount - refund_amount, 0);
+                    (amount - refund_amount, 0)
                 } else {
                     // Sender's account was deleted, so we need to burn tokens.
                     self.total_supply -= refund_amount;
                     #[cfg(feature = "log")]
                     sdk::log("The account of the sender was deleted".into());
-                    return (amount, refund_amount);
-                }
+                    (amount, refund_amount)
+                };
             }
         }
         (amount, 0)
@@ -219,7 +217,7 @@ impl FungibleToken {
         receiver_id: AccountId,
         amount: u128,
     ) -> u128 {
-        self.internal_ft_resolve_transfer(&sender_id, receiver_id, amount)
+        self.internal_ft_resolve_transfer(&sender_id, &receiver_id, amount)
             .0
     }
 
@@ -230,7 +228,7 @@ impl FungibleToken {
         sdk::assert_one_yocto();
         let account_id = sdk::predecessor_account_id();
         let force = force.unwrap_or(false);
-        if let Some(balance) = self.accounts_get(account_id.as_str()) {
+        if let Some(balance) = self.accounts_get(account_id) {
             let balance = u128::try_from_slice(&balance[..]).unwrap();
             if balance == 0 || force {
                 self.accounts_remove(&account_id);
@@ -261,7 +259,7 @@ impl FungibleToken {
         }
     }
 
-    pub fn internal_storage_balance_of(&self, account_id: &str) -> Option<StorageBalance> {
+    pub fn internal_storage_balance_of(&self, account_id: &AccountId) -> Option<StorageBalance> {
         if self.accounts_contains_key(account_id) {
             Some(StorageBalance {
                 total: self.storage_balance_bounds().min,
@@ -297,7 +295,7 @@ impl FungibleToken {
             if amount < min_balance {
                 #[cfg(feature = "log")]
                 sdk::panic_utf8(
-                    "The attached deposit is less than the mimimum storage balance".as_bytes(),
+                    "The attached deposit is less than the minimum storage balance".as_bytes(),
                 );
             }
 
@@ -332,23 +330,26 @@ impl FungibleToken {
         }
     }
 
-    fn ft_key(&self, account_id: &str) -> &str {
-        &[CONTRACT_FT_KEY, account_id].join(".")
+    fn ft_key(&self, account_id: AccountId) -> String {
+        [CONTRACT_FT_KEY, &account_id].join(".")
     }
 
-    fn accounts_insert(&self, account_id: &str, amount: Balance) {
-        sdk::save_contract(self.ft_key(account_id), &amount.try_to_vec().unwrap())
+    pub fn accounts_insert(&self, account_id: &AccountId, amount: Balance) {
+        sdk::save_contract(
+            self.ft_key(account_id.clone()).as_str(),
+            &amount.try_to_vec().unwrap(),
+        )
     }
 
-    fn accounts_contains_key(&self, account_id: &str) -> bool {
-        sdk::storage_has_key(self.ft_key(account_id))
+    fn accounts_contains_key(&self, account_id: &AccountId) -> bool {
+        sdk::storage_has_key(self.ft_key(account_id.clone()).as_str())
     }
 
-    fn accounts_remove(&self, account_id: &str) {
-        sdk::remove_storage(self.ft_key(account_id).as_bytes())
+    fn accounts_remove(&self, account_id: &AccountId) {
+        sdk::remove_storage(self.ft_key(account_id.clone()).as_bytes())
     }
 
-    fn accounts_get(&self, account_id: &str) -> Option<Vec<u8>> {
+    pub fn accounts_get(&self, account_id: AccountId) -> Option<Vec<u8>> {
         sdk::read_storage(self.ft_key(account_id).as_bytes())
     }
 }
