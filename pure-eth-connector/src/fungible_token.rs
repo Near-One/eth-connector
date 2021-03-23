@@ -28,15 +28,15 @@ impl FungibleToken {
         }
     }
 
-    pub fn internal_unwrap_balance_of(&self, account_id: &AccountId) -> Balance {
-        match self.accounts_get(account_id.clone()) {
+    pub fn internal_unwrap_balance_of(&self, account_id: AccountId) -> Balance {
+        match self.accounts_get(account_id) {
             Some(balance) => u128::try_from_slice(&balance[..]).unwrap(),
             None => sdk::panic_utf8("The account is not registered".as_bytes()),
         }
     }
 
     pub fn internal_deposit(&mut self, account_id: AccountId, amount: Balance) {
-        let balance = self.internal_unwrap_balance_of(&account_id);
+        let balance = self.internal_unwrap_balance_of(account_id.clone());
         if let Some(new_balance) = balance.checked_add(amount) {
             self.accounts_insert(account_id, new_balance);
             self.total_supply = self
@@ -48,10 +48,10 @@ impl FungibleToken {
         }
     }
 
-    pub fn internal_withdraw(&mut self, account_id: &AccountId, amount: Balance) {
-        let balance = self.internal_unwrap_balance_of(&account_id);
+    pub fn internal_withdraw(&mut self, account_id: AccountId, amount: Balance) {
+        let balance = self.internal_unwrap_balance_of(account_id.clone());
         if let Some(new_balance) = balance.checked_sub(amount) {
-            self.accounts_insert(account_id.clone(), new_balance);
+            self.accounts_insert(account_id, new_balance);
             self.total_supply = self
                 .total_supply
                 .checked_sub(amount)
@@ -73,7 +73,7 @@ impl FungibleToken {
             "Sender and receiver should be different"
         );
         assert!(amount > 0, "The amount should be a positive number");
-        self.internal_withdraw(&sender_id.to_string(), amount);
+        self.internal_withdraw(sender_id.to_string(), amount);
         self.internal_deposit(receiver_id.to_string(), amount);
         #[cfg(feature = "log")]
         sdk::log(format!(
@@ -86,8 +86,8 @@ impl FungibleToken {
         }
     }
 
-    pub fn internal_register_account(&mut self, account_id: &AccountId) {
-        self.accounts_insert(account_id.clone(), 0)
+    pub fn internal_register_account(&mut self, account_id: AccountId) {
+        self.accounts_insert(account_id, 0)
     }
 
     pub fn ft_transfer(&mut self, receiver_id: AccountId, amount: Balance, memo: Option<String>) {
@@ -153,8 +153,8 @@ impl FungibleToken {
 
     pub fn internal_ft_resolve_transfer(
         &mut self,
-        sender_id: &AccountId,
-        receiver_id: &AccountId,
+        sender_id: AccountId,
+        receiver_id: AccountId,
         amount: Balance,
     ) -> (u128, u128) {
         // Get the unused amount from the `ft_on_transfer` call result.
@@ -217,7 +217,7 @@ impl FungibleToken {
         receiver_id: AccountId,
         amount: u128,
     ) -> u128 {
-        self.internal_ft_resolve_transfer(&sender_id, &receiver_id, amount)
+        self.internal_ft_resolve_transfer(sender_id, receiver_id, amount)
             .0
     }
 
@@ -299,7 +299,7 @@ impl FungibleToken {
                 );
             }
 
-            self.internal_register_account(&account_id);
+            self.internal_register_account(account_id.clone());
             let refund = amount - min_balance;
             if refund > 0 {
                 let promise0 = sdk::promise_batch_create(sdk::predecessor_account_id());
@@ -344,7 +344,7 @@ impl FungibleToken {
     fn accounts_contains_key(&self, account_id: AccountId) -> bool {
         sdk::storage_has_key(self.ft_key(account_id).as_str())
     }
-    
+
     fn accounts_remove(&self, account_id: AccountId) {
         sdk::remove_storage(self.ft_key(account_id).as_bytes())
     }

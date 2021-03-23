@@ -29,7 +29,7 @@ impl EthConnectorContract {
         let args: InitCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
         let owner_id = sdk::current_account_id();
         let mut ft = FungibleToken::new();
-        ft.internal_register_account(&owner_id);
+        ft.internal_register_account(owner_id.clone());
         ft.internal_deposit(owner_id, 0);
         let contract_data = EthConnector {
             prover_account: args.prover_account,
@@ -132,7 +132,7 @@ impl EthConnectorContract {
             !self.check_used_event(String::from_utf8(key.clone()).unwrap()),
             "Proof event cannot be reused. Proof already exist."
         );
-        self.save_used_event(&String::from_utf8(key).unwrap());
+        self.save_used_event(String::from_utf8(key).unwrap());
         let current_storage = sdk::storage_usage();
         let attached_deposit = sdk::attached_deposit();
         let required_deposit =
@@ -159,7 +159,7 @@ impl EthConnectorContract {
     fn burn(&mut self, owner_id: AccountId, amount: Balance) {
         #[cfg(feature = "log")]
         sdk::log(format!("Burn {} tokens for: {}", amount, owner_id));
-        self.ft.internal_withdraw(&owner_id, amount);
+        self.ft.internal_withdraw(owner_id, amount);
     }
 
     pub fn withdraw(&mut self) {
@@ -279,8 +279,8 @@ impl EthConnectorContract {
         [CONTRACT_NAME_KEY, "used-event", &key].join(".")
     }
 
-    fn save_used_event(&self, key: &String) {
-        sdk::save_contract(self.used_event_key(key.clone()).as_str(), &[0u8]);
+    fn save_used_event(&self, key: String) {
+        sdk::save_contract(self.used_event_key(key).as_str(), &[0u8]);
     }
 
     fn check_used_event(&self, key: String) -> bool {
