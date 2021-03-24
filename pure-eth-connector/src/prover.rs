@@ -89,9 +89,13 @@ impl From<json::JsonValue> for Proof {
         let header_data: Vec<u8> = v
             .array("header_data", json::JsonValue::parse_u8)
             .expect(FAILED_PARSE);
-        let proof: Vec<u8> = v
-            .array("proof", json::JsonValue::parse_u8)
+        let proof = v
+            .array("header_data", |v1| match v1 {
+                json::JsonValue::Array(arr) => arr.iter().map(json::JsonValue::parse_u8).collect(),
+                _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
+            })
             .expect(FAILED_PARSE);
+
         let skip_bridge_call = v.bool("skip_bridge_call").expect(FAILED_PARSE);
         Self {
             log_index,
