@@ -78,78 +78,29 @@ impl EthEvent {
 
 impl From<json::JsonValue> for Proof {
     fn from(v: json::JsonValue) -> Self {
-        match v {
-            json::JsonValue::Object(o) => {
-                let log_index = match o.get("log_index").expect(FAILED_PARSE) {
-                    json::JsonValue::Number(s) => *s as u64,
-                    _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
-                };
-                let log_entry_data = match o.get("log_entry_data").expect(FAILED_PARSE) {
-                    json::JsonValue::Array(s) => s
-                        .iter()
-                        .map(|v| match v {
-                            json::JsonValue::Number(s) => *s as u8,
-                            _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
-                        })
-                        .collect(),
-                    _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
-                };
-                let receipt_index = match o.get("receipt_index").expect(FAILED_PARSE) {
-                    json::JsonValue::Number(s) => *s as u64,
-                    _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
-                };
-                let receipt_data = match o.get("receipt_data").expect(FAILED_PARSE) {
-                    json::JsonValue::Array(s) => s
-                        .iter()
-                        .map(|v| match v {
-                            json::JsonValue::Number(s) => *s as u8,
-                            _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
-                        })
-                        .collect(),
-                    _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
-                };
-                let header_data = match o.get("header_data").expect(FAILED_PARSE) {
-                    json::JsonValue::Array(s) => s
-                        .iter()
-                        .map(|v| match v {
-                            json::JsonValue::Number(s) => *s as u8,
-                            _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
-                        })
-                        .collect(),
-                    _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
-                };
-                let proof = match o.get("proof").expect(FAILED_PARSE) {
-                    json::JsonValue::Array(s) => s
-                        .iter()
-                        .map(|v| match v {
-                            json::JsonValue::Array(arr) => arr
-                                .iter()
-                                .map(|v| match v {
-                                    json::JsonValue::Number(n) => *n as u8,
-                                    _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
-                                })
-                                .collect(),
-                            _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
-                        })
-                        .collect(),
-                    _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
-                };
-                let skip_bridge_call = match o.get("skip_bridge_call").expect(FAILED_PARSE) {
-                    json::JsonValue::Bool(s) => *s,
-                    _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
-                };
-
-                Self {
-                    log_index,
-                    log_entry_data,
-                    receipt_index,
-                    receipt_data,
-                    header_data,
-                    proof,
-                    skip_bridge_call,
-                }
-            }
-            _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
+        let log_index = v.u64("log_index").expect(FAILED_PARSE);
+        let log_entry_data: Vec<u8> = v
+            .array("log_entry_data", json::JsonValue::parse_u8)
+            .expect(FAILED_PARSE);
+        let receipt_index = v.u64("receipt_index").expect(FAILED_PARSE);
+        let receipt_data: Vec<u8> = v
+            .array("receipt_data", json::JsonValue::parse_u8)
+            .expect(FAILED_PARSE);
+        let header_data: Vec<u8> = v
+            .array("header_data", json::JsonValue::parse_u8)
+            .expect(FAILED_PARSE);
+        let proof: Vec<u8> = v
+            .array("proof", json::JsonValue::parse_u8)
+            .expect(FAILED_PARSE);
+        let skip_bridge_call = v.bool("skip_bridge_call").expect(FAILED_PARSE);
+        Self {
+            log_index,
+            log_entry_data,
+            receipt_index,
+            receipt_data,
+            header_data,
+            proof,
+            skip_bridge_call,
         }
     }
 }

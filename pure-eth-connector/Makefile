@@ -6,10 +6,7 @@ build:
 	@cp ~/dev/rs/near/eth-connector/pure-eth-connector/Makefile ~/dev/vagrant/near/ || true
 
 clippy:
-	@cargo clippy
-
-check:
-	@cargo check
+	@cargo clippy --lib --target wasm32-unknown-unknown
 
 fmt:
 	@cargo fmt

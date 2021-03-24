@@ -15,6 +15,58 @@ pub enum JsonValue {
 pub struct JsonArray(Vec<JsonValue>);
 pub struct JsonObject(BTreeMap<String, JsonValue>);
 
+impl JsonValue {
+    pub fn string(&self, key: &str) -> Result<String, ()> {
+        match self {
+            json::JsonValue::Object(o) => match o.get(key).ok_or(())? {
+                json::JsonValue::String(s) => Ok(s.into()),
+                _ => Err(()),
+            },
+            _ => Err(()),
+        }
+    }
+
+    pub fn u64(&self, key: &str) -> Result<u64, ()> {
+        match self {
+            json::JsonValue::Object(o) => match o.get(key).ok_or(())? {
+                json::JsonValue::Number(n) => Ok(*n as u64),
+                _ => Err(()),
+            },
+            _ => Err(()),
+        }
+    }
+
+    pub fn bool(&self, key: &str) -> Result<bool, ()> {
+        match self {
+            json::JsonValue::Object(o) => match o.get(key).ok_or(())? {
+                json::JsonValue::Bool(n) => Ok(*n),
+                _ => Err(()),
+            },
+            _ => Err(()),
+        }
+    }
+
+    pub fn parse_u8(v: &JsonValue) -> u8 {
+        match v {
+            json::JsonValue::Number(n) => *n as u8,
+            _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
+        }
+    }
+
+    pub fn array<T, F>(&self, key: &str, call: F) -> Result<Vec<T>, ()>
+    where
+        F: FnMut(&JsonValue) -> T,
+    {
+        match self {
+            json::JsonValue::Object(o) => match o.get(key).ok_or(())? {
+                json::JsonValue::Array(arr) => Ok(arr.iter().map(call).collect()),
+                _ => Err(()),
+            },
+            _ => Err(()),
+        }
+    }
+}
+
 impl Array<JsonValue, JsonObject, JsonValue> for JsonArray {
     fn new() -> Self {
         JsonArray(Vec::new())
@@ -38,6 +90,7 @@ impl Null<JsonValue, JsonArray, JsonObject> for JsonValue {
         JsonValue::Null
     }
 }
+
 impl Value<JsonArray, JsonObject, JsonValue> for JsonValue {}
 
 impl From<f64> for JsonValue {
@@ -45,21 +98,25 @@ impl From<f64> for JsonValue {
         JsonValue::Number(v)
     }
 }
+
 impl From<bool> for JsonValue {
     fn from(v: bool) -> Self {
         JsonValue::Bool(v)
     }
 }
+
 impl From<String> for JsonValue {
     fn from(v: String) -> Self {
         JsonValue::String(v)
     }
 }
+
 impl From<JsonArray> for JsonValue {
     fn from(v: JsonArray) -> Self {
         JsonValue::Array(v.0)
     }
 }
+
 impl From<JsonObject> for JsonValue {
     fn from(v: JsonObject) -> Self {
         JsonValue::Object(v.0)
@@ -88,7 +145,5 @@ impl core::fmt::Display for JsonValue {
 pub fn parse_json(data: &[u8]) -> Option<JsonValue> {
     let data_array: Vec<char> = data.iter().map(|b| *b as char).collect::<Vec<_>>();
     let mut index = 0;
-    let parse_result =
-        rjson::parse::<JsonValue, JsonArray, JsonObject, JsonValue>(&*data_array, &mut index);
-    parse_result
+    rjson::parse::<JsonValue, JsonArray, JsonObject, JsonValue>(&*data_array, &mut index)
 }

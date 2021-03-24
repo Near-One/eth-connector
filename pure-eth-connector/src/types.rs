@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 use super::*;
 use primitive_types::{H160, H256, U256};
-use serde::{Deserialize, Serialize};
 use sha3::{Digest, Keccak256};
 
 pub const FAILED_PARSE: &str = "Failed parse json";
@@ -20,7 +19,6 @@ pub struct StorageBalance {
     pub available: u128,
 }
 
-#[derive(Serialize)]
 pub struct StorageBalanceBounds {
     pub min: u128,
     pub max: Option<u128>,
@@ -44,7 +42,7 @@ pub struct BalanceOfCallArgs {
     pub account_id: AccountId,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug)]
 pub struct TransferCallArgs {
     pub receiver_id: AccountId,
     pub amount: Balance,
@@ -65,13 +63,11 @@ pub struct FinishDepositCallArgs {
     pub proof: Proof,
 }
 
-#[derive(Deserialize)]
 pub struct WithdrawCallArgs {
     pub recipient_id: AccountId,
     pub amount: u128,
 }
 
-#[derive(Deserialize)]
 pub struct TransferCallCallArgs {
     pub receiver_id: AccountId,
     pub amount: Balance,
@@ -79,24 +75,20 @@ pub struct TransferCallCallArgs {
     pub msg: String,
 }
 
-#[derive(Deserialize)]
 pub struct ResolveTransferCallArgs {
     pub sender_id: AccountId,
     pub receiver_id: AccountId,
     pub amount: Balance,
 }
 
-#[derive(Deserialize)]
 pub struct StorageBalanceOfCallArgs {
     pub account_id: AccountId,
 }
 
-#[derive(Deserialize)]
 pub struct StorageWithdrawCallArgs {
     pub amount: Option<u128>,
 }
 
-#[derive(Deserialize)]
 pub struct StorageDepositCallArgs {
     pub account_id: Option<AccountId>,
     pub registration_only: Option<bool>,
@@ -135,7 +127,6 @@ pub struct FunctionCallArgs {
     pub input: Vec<u8>,
 }
 
-#[derive(Serialize)]
 pub struct FtResolveTransferResult {
     pub amount: Balance,
     pub refund_amount: Balance,
@@ -218,40 +209,17 @@ pub fn near_account_to_evm_address(addr: &[u8]) -> H160 {
 
 impl From<json::JsonValue> for BalanceOfCallArgs {
     fn from(v: json::JsonValue) -> Self {
-        match v {
-            json::JsonValue::Object(o) => {
-                let account_id = match o.get("account_id").expect(FAILED_PARSE) {
-                    json::JsonValue::String(s) => s,
-                    _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
-                };
-                Self {
-                    account_id: account_id.clone(),
-                }
-            }
-            _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
+        Self {
+            account_id: v.string("account_id").expect(FAILED_PARSE),
         }
     }
 }
 
 impl From<json::JsonValue> for InitCallArgs {
     fn from(v: json::JsonValue) -> Self {
-        match v {
-            json::JsonValue::Object(o) => {
-                let eth_custodian_address =
-                    match o.get("eth_custodian_address").expect(FAILED_PARSE) {
-                        json::JsonValue::String(s) => s,
-                        _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
-                    };
-                let prover_account = match o.get("prover_account").expect(FAILED_PARSE) {
-                    json::JsonValue::String(s) => s,
-                    _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
-                };
-                Self {
-                    eth_custodian_address: eth_custodian_address.clone(),
-                    prover_account: prover_account.clone(),
-                }
-            }
-            _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
+        Self {
+            eth_custodian_address: v.string("eth_custodian_address").expect(FAILED_PARSE),
+            prover_account: v.string("prover_account").expect(FAILED_PARSE),
         }
     }
 }

@@ -34,7 +34,7 @@ impl EthConnectorContract {
             InitCallArgs::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));
         let owner_id = sdk::current_account_id();
         let mut ft = FungibleToken::new();
-        ft.internal_register_account(owner_id.clone());
+        ft.internal_register_account(owner_id);
         let contract_data = EthConnector {
             prover_account: args.prover_account,
             eth_custodian_address: validate_eth_address(args.eth_custodian_address),
@@ -170,115 +170,115 @@ impl EthConnectorContract {
         sdk::log(format!("Burn {} tokens for: {}", amount, owner_id));
         self.ft.internal_withdraw(owner_id, amount);
     }
-
-    pub fn withdraw(&mut self) {
-        #[cfg(feature = "log")]
-        sdk::log("Start withdraw".into());
-        let args: WithdrawCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
-        let recipient_address = validate_eth_address(args.recipient_id);
-        // Burn tokens to recipient
-        self.burn(sdk::predecessor_account_id(), args.amount);
-        let res = WithdrawResult {
-            recipient_id: recipient_address,
-            amount: args.amount,
-            eth_custodian_address: self.contract.eth_custodian_address,
+    /*
+        pub fn withdraw(&mut self) {
+            #[cfg(feature = "log")]
+            sdk::log("Start withdraw".into());
+            let args: WithdrawCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
+            let recipient_address = validate_eth_address(args.recipient_id);
+            // Burn tokens to recipient
+            self.burn(sdk::predecessor_account_id(), args.amount);
+            let res = WithdrawResult {
+                recipient_id: recipient_address,
+                amount: args.amount,
+                eth_custodian_address: self.contract.eth_custodian_address,
+            }
+            .try_to_vec()
+            .unwrap();
+            sdk::value_return(&res[..]);
         }
-        .try_to_vec()
-        .unwrap();
-        sdk::value_return(&res[..]);
-    }
 
-    pub fn ft_total_supply(&self) {
-        let total_supply = self.ft.ft_total_supply();
-        sdk::value_return(&total_supply.to_be_bytes());
-        #[cfg(feature = "log")]
-        sdk::log(format!("Total supply: {}", total_supply));
-    }
+        pub fn ft_total_supply(&self) {
+            let total_supply = self.ft.ft_total_supply();
+            sdk::value_return(&total_supply.to_be_bytes());
+            #[cfg(feature = "log")]
+            sdk::log(format!("Total supply: {}", total_supply));
+        }
 
-    pub fn ft_balance_of(&self) {
-        let args = BalanceOfCallArgs::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));
-        let balance = self.ft.ft_balance_of(args.account_id.clone());
-        sdk::value_return(&balance.to_string().as_bytes());
-        #[cfg(feature = "log")]
-        sdk::log(format!("Balance [{}]: {}", args.account_id, balance));
-    }
+        pub fn ft_balance_of(&self) {
+            let args = BalanceOfCallArgs::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));
+            let balance = self.ft.ft_balance_of(args.account_id.clone());
+            sdk::value_return(&balance.to_string().as_bytes());
+            #[cfg(feature = "log")]
+            sdk::log(format!("Balance [{}]: {}", args.account_id, balance));
+        }
 
-    pub fn ft_transfer(&mut self) {
-        let args: TransferCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
+        pub fn ft_transfer(&mut self) {
+            let args: TransferCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
 
-        self.ft
-            .ft_transfer(args.receiver_id.clone(), args.amount, args.memo.clone());
-        self.save_contract();
-        #[cfg(feature = "log")]
-        sdk::log(format!(
-            "Transfer amount {} to {} success with memo: {:?}",
-            args.amount, args.receiver_id, args.memo
-        ));
-    }
+            self.ft
+                .ft_transfer(args.receiver_id.clone(), args.amount, args.memo.clone());
+            self.save_contract();
+            #[cfg(feature = "log")]
+            sdk::log(format!(
+                "Transfer amount {} to {} success with memo: {:?}",
+                args.amount, args.receiver_id, args.memo
+            ));
+        }
 
-    pub fn ft_resolve_transfer(&mut self) {
-        sdk::assert_private_call();
-        let args: ResolveTransferCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
-        let amount = self.ft.ft_resolve_transfer(
-            args.sender_id.clone(),
-            args.receiver_id.clone(),
-            args.amount,
-        );
-        self.save_contract();
-        sdk::value_return(&amount.to_be_bytes());
-        #[cfg(feature = "log")]
-        sdk::log(format!(
-            "Resolve transfer of {} from {} to {} success",
-            args.amount, args.sender_id, args.receiver_id
-        ));
-    }
+        pub fn ft_resolve_transfer(&mut self) {
+            sdk::assert_private_call();
+            let args: ResolveTransferCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
+            let amount = self.ft.ft_resolve_transfer(
+                args.sender_id.clone(),
+                args.receiver_id.clone(),
+                args.amount,
+            );
+            self.save_contract();
+            sdk::value_return(&amount.to_be_bytes());
+            #[cfg(feature = "log")]
+            sdk::log(format!(
+                "Resolve transfer of {} from {} to {} success",
+                args.amount, args.sender_id, args.receiver_id
+            ));
+        }
 
-    pub fn ft_transfer_call(&mut self) {
-        let args: TransferCallCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
+        pub fn ft_transfer_call(&mut self) {
+            let args: TransferCallCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
 
-        self.ft.ft_transfer_call(
-            args.receiver_id.clone(),
-            args.amount,
-            args.memo.clone(),
-            args.msg.clone(),
-        );
-        self.save_contract();
-        #[cfg(feature = "log")]
-        sdk::log(format!(
-            "Transfer call to {} amount success {}",
-            args.receiver_id, args.amount,
-        ));
-    }
+            self.ft.ft_transfer_call(
+                args.receiver_id.clone(),
+                args.amount,
+                args.memo.clone(),
+                args.msg.clone(),
+            );
+            self.save_contract();
+            #[cfg(feature = "log")]
+            sdk::log(format!(
+                "Transfer call to {} amount success {}",
+                args.receiver_id, args.amount,
+            ));
+        }
 
-    pub fn storage_deposit(&mut self) {
-        let args: StorageDepositCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
-        let res = self
-            .ft
-            .storage_deposit(args.account_id, args.registration_only)
-            .try_to_vec()
-            .unwrap();
-        self.save_contract();
-        sdk::value_return(&res[..]);
-    }
+        pub fn storage_deposit(&mut self) {
+            let args: StorageDepositCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
+            let res = self
+                .ft
+                .storage_deposit(args.account_id, args.registration_only)
+                .try_to_vec()
+                .unwrap();
+            self.save_contract();
+            sdk::value_return(&res[..]);
+        }
 
-    pub fn storage_withdraw(&mut self) {
-        let args: StorageWithdrawCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
-        let res = self.ft.storage_withdraw(args.amount).try_to_vec().unwrap();
-        self.save_contract();
-        sdk::value_return(&res[..]);
-    }
+        pub fn storage_withdraw(&mut self) {
+            let args: StorageWithdrawCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
+            let res = self.ft.storage_withdraw(args.amount).try_to_vec().unwrap();
+            self.save_contract();
+            sdk::value_return(&res[..]);
+        }
 
-    pub fn storage_balance_of(&self) {
-        let args: StorageBalanceOfCallArgs =
-            serde_json::from_slice(&sdk::read_input()[..]).unwrap();
-        let res = self
-            .ft
-            .storage_balance_of(args.account_id)
-            .try_to_vec()
-            .unwrap();
-        sdk::value_return(&res[..]);
-    }
-
+        pub fn storage_balance_of(&self) {
+            let args: StorageBalanceOfCallArgs =
+                serde_json::from_slice(&sdk::read_input()[..]).unwrap();
+            let res = self
+                .ft
+                .storage_balance_of(args.account_id)
+                .try_to_vec()
+                .unwrap();
+            sdk::value_return(&res[..]);
+        }
+    */
     fn save_contract(&mut self) {
         sdk::save_contract(CONTRACT_NAME_KEY, &self.contract);
         sdk::save_contract(CONTRACT_FT_KEY, &self.ft);

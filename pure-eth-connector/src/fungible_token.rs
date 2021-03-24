@@ -151,7 +151,7 @@ impl FungibleToken {
         sdk::promise_return(promise1);
     }
 
-    pub fn internal_ft_resolve_transfer(
+    /*pub fn internal_ft_resolve_transfer(
         &mut self,
         sender_id: AccountId,
         receiver_id: AccountId,
@@ -219,7 +219,7 @@ impl FungibleToken {
     ) -> u128 {
         self.internal_ft_resolve_transfer(sender_id, receiver_id, amount)
             .0
-    }
+    }*/
 
     pub fn internal_storage_unregister(
         &mut self,
@@ -335,7 +335,7 @@ impl FungibleToken {
     }
 
     pub fn accounts_insert(&self, account_id: AccountId, amount: Balance) {
-        sdk::save_contract(self.ft_key(account_id.clone()).as_str(), &amount)
+        sdk::save_contract(self.ft_key(account_id).as_str(), &amount)
     }
 
     fn accounts_contains_key(&self, account_id: AccountId) -> bool {

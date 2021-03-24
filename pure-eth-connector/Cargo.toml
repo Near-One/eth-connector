@@ -29,8 +29,6 @@ borsh = { version = "0.8", default-features = false }
 primitive-types = { version = "0.8.0", default-features = false, features = ["rlp"] }
 hex = { version = "0.4", default-features = false, features = ["alloc"] }
 sha3 = { version = "0.8", default-features = false }
-serde = { version = "1.0", default-features = false, features=["derive", "alloc"] }
-serde_json = { version = "1.0", default-features = false, features=["alloc"] }
 ethabi = { git = "https://github.com/darwinia-network/ethabi", branch = "xavier-no-std", default-features = false }
 rjson = "0.3.1"
 
