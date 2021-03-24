@@ -24,11 +24,14 @@ pub struct Proof {
 }
 
 impl Proof {
-    pub fn get_key(&self) -> Vec<u8> {
+    pub fn get_key(&self) -> String {
         let mut data = self.log_index.try_to_vec().unwrap();
         data.extend(self.receipt_index.try_to_vec().unwrap());
         data.extend(self.header_data.clone());
         sdk::sha256(&data[..])
+            .iter()
+            .map(|n| n.to_string())
+            .collect()
     }
 }
 

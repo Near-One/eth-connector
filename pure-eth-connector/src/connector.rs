@@ -44,8 +44,6 @@ impl EthConnectorContract {
             ft,
         }
         .save_contract();
-        // sdk::save_contract(CONTRACT_NAME_KEY, &contract_data);
-        // sdk::save_contract(CONTRACT_FT_KEY, &ft);
     }
 
     pub fn deposit(&self) {
@@ -55,7 +53,6 @@ impl EthConnectorContract {
 
         let proof: Proof = Proof::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));
         let event = EthDepositedEvent::from_log_entry_data(&proof.log_entry_data);
-
         #[cfg(feature = "log")]
         sdk::log(format!(
             "Deposit started: from {} ETH to {} NEAR with amount: {:?} and fee {:?}",
@@ -134,14 +131,17 @@ impl EthConnectorContract {
         self.mint(sdk::predecessor_account_id(), data.fee);
     }
 
-    fn record_proof(&mut self, key: Vec<u8>) -> Balance {
+    fn record_proof(&mut self, key: String) -> Balance {
+        #[cfg(feature = "log")]
+        sdk::log("Record proof".into());
         let initial_storage = sdk::storage_usage();
+        let key = key.as_str();
 
         assert!(
-            !self.check_used_event(String::from_utf8(key.clone()).unwrap()),
+            !self.check_used_event(key),
             "Proof event cannot be reused. Proof already exist."
         );
-        self.save_used_event(String::from_utf8(key).unwrap());
+        self.save_used_event(key);
         let current_storage = sdk::storage_usage();
         let attached_deposit = sdk::attached_deposit();
         let required_deposit =
@@ -198,7 +198,7 @@ impl EthConnectorContract {
     pub fn ft_balance_of(&self) {
         let args = BalanceOfCallArgs::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));
         let balance = self.ft.ft_balance_of(args.account_id.clone());
-        sdk::value_return(&balance.to_be_bytes());
+        sdk::value_return(&balance.to_string().as_bytes());
         #[cfg(feature = "log")]
         sdk::log(format!("Balance [{}]: {}", args.account_id, balance));
     }
@@ -284,15 +284,15 @@ impl EthConnectorContract {
         sdk::save_contract(CONTRACT_FT_KEY, &self.ft);
     }
 
-    fn used_event_key(&self, key: String) -> String {
-        [CONTRACT_NAME_KEY, "used-event", &key].join(".")
+    fn used_event_key(&self, key: &str) -> String {
+        [CONTRACT_NAME_KEY, "used-event", key].join(".")
     }
 
-    fn save_used_event(&self, key: String) {
+    fn save_used_event(&self, key: &str) {
         sdk::save_contract(self.used_event_key(key).as_str(), &0u8);
     }
 
-    fn check_used_event(&self, key: String) -> bool {
+    fn check_used_event(&self, key: &str) -> bool {
         sdk::storage_has_key(self.used_event_key(key).as_str())
     }
 }
