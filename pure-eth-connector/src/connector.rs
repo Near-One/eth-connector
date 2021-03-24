@@ -49,7 +49,7 @@ impl EthConnectorContract {
         sdk::log("[Deposit tokens]".into());
         use core::ops::Sub;
 
-        let proof: Proof = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
+        let proof: Proof = Proof::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));
         let event = EthDepositedEvent::from_log_entry_data(&proof.log_entry_data);
 
         #[cfg(feature = "log")]

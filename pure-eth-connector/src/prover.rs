@@ -1,6 +1,5 @@
 use super::*;
 use ethabi::{Event, EventParam, Hash, Log, ParamType, RawLog};
-use serde::Deserialize;
 
 pub type EthAddress = [u8; 20];
 
@@ -13,7 +12,7 @@ pub fn validate_eth_address(address: String) -> EthAddress {
     result
 }
 
-#[derive(Default, Deserialize, BorshDeserialize, BorshSerialize, Clone)]
+#[derive(Default, BorshDeserialize, BorshSerialize, Clone)]
 pub struct Proof {
     pub log_index: u64,
     pub log_entry_data: Vec<u8>,
@@ -70,6 +69,84 @@ impl EthEvent {
         Self {
             eth_custodian_address,
             log,
+        }
+    }
+}
+
+impl From<json::JsonValue> for Proof {
+    fn from(v: json::JsonValue) -> Self {
+        match v {
+            json::JsonValue::Object(o) => {
+                let log_index = match o.get("log_index").expect(FAILED_PARSE) {
+                    json::JsonValue::Number(s) => *s as u64,
+                    _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
+                };
+                let log_entry_data = match o.get("log_entry_data").expect(FAILED_PARSE) {
+                    json::JsonValue::Array(s) => s
+                        .iter()
+                        .map(|v| match v {
+                            json::JsonValue::Number(s) => *s as u8,
+                            _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
+                        })
+                        .collect(),
+                    _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
+                };
+                let receipt_index = match o.get("receipt_index").expect(FAILED_PARSE) {
+                    json::JsonValue::Number(s) => *s as u64,
+                    _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
+                };
+                let receipt_data = match o.get("receipt_data").expect(FAILED_PARSE) {
+                    json::JsonValue::Array(s) => s
+                        .iter()
+                        .map(|v| match v {
+                            json::JsonValue::Number(s) => *s as u8,
+                            _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
+                        })
+                        .collect(),
+                    _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
+                };
+                let header_data = match o.get("header_data").expect(FAILED_PARSE) {
+                    json::JsonValue::Array(s) => s
+                        .iter()
+                        .map(|v| match v {
+                            json::JsonValue::Number(s) => *s as u8,
+                            _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
+                        })
+                        .collect(),
+                    _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
+                };
+                let proof = match o.get("proof").expect(FAILED_PARSE) {
+                    json::JsonValue::Array(s) => s
+                        .iter()
+                        .map(|v| match v {
+                            json::JsonValue::Array(arr) => arr
+                                .iter()
+                                .map(|v| match v {
+                                    json::JsonValue::Number(n) => *n as u8,
+                                    _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
+                                })
+                                .collect(),
+                            _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
+                        })
+                        .collect(),
+                    _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
+                };
+                let skip_bridge_call = match o.get("skip_bridge_call").expect(FAILED_PARSE) {
+                    json::JsonValue::Bool(s) => *s,
+                    _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
+                };
+
+                Self {
+                    log_index,
+                    log_entry_data,
+                    receipt_index,
+                    receipt_data,
+                    header_data,
+                    proof,
+                    skip_bridge_call,
+                }
+            }
+            _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
         }
     }
 }
