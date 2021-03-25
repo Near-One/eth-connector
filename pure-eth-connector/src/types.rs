@@ -232,3 +232,19 @@ impl From<json::JsonValue> for WithdrawCallArgs {
         }
     }
 }
+
+impl From<json::JsonValue> for StorageWithdrawCallArgs {
+    fn from(v: json::JsonValue) -> Self {
+        Self {
+            amount: v.u128("amount").ok(),
+        }
+    }
+}
+
+impl From<json::JsonValue> for StorageBalanceOfCallArgs {
+    fn from(v: json::JsonValue) -> Self {
+        Self {
+            account_id: v.string("account_id").expect(FAILED_PARSE),
+        }
+    }
+}
