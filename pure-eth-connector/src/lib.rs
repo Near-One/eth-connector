@@ -70,7 +70,7 @@ pub extern "C" fn new() {
 pub extern "C" fn deposit() {
     EthConnectorContract::new().deposit()
 }
-/*
+
 #[no_mangle]
 pub extern "C" fn withdraw() {
     EthConnectorContract::new().withdraw()
@@ -90,7 +90,7 @@ pub extern "C" fn ft_total_supply() {
 pub extern "C" fn ft_balance_of() {
     EthConnectorContract::new().ft_balance_of();
 }
-
+/*
 #[no_mangle]
 pub extern "C" fn ft_transfer() {
     EthConnectorContract::new().ft_transfer();

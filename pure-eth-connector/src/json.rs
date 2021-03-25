@@ -36,6 +36,16 @@ impl JsonValue {
         }
     }
 
+    pub fn u128(&self, key: &str) -> Result<u128, ()> {
+        match self {
+            json::JsonValue::Object(o) => match o.get(key).ok_or(())? {
+                json::JsonValue::Number(n) => Ok(*n as u128),
+                _ => Err(()),
+            },
+            _ => Err(()),
+        }
+    }
+
     pub fn bool(&self, key: &str) -> Result<bool, ()> {
         match self {
             json::JsonValue::Object(o) => match o.get(key).ok_or(())? {

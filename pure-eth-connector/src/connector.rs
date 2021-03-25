@@ -129,6 +129,8 @@ impl EthConnectorContract {
         self.mint(data.new_owner_id, data.amount - data.fee);
         // Mint fee for Predecessor
         self.mint(sdk::predecessor_account_id(), data.fee);
+        // Save new contract data
+        self.save_contract();
     }
 
     fn record_proof(&mut self, key: String) -> Balance {
@@ -146,7 +148,6 @@ impl EthConnectorContract {
         let attached_deposit = sdk::attached_deposit();
         let required_deposit =
             Balance::from(current_storage - initial_storage) * sdk::STORAGE_PRICE_PER_BYTE;
-        self.save_contract();
         attached_deposit - required_deposit
     }
 
@@ -155,12 +156,9 @@ impl EthConnectorContract {
         sdk::log(format!("Mint {} tokens for: {}", amount, owner_id));
 
         if self.ft.accounts_get(owner_id.clone()).is_none() {
-            // TODO: NEP-145 Account Storage implementation fee
-            // It spent additional account amount for storage
             self.ft.accounts_insert(owner_id.clone(), 0);
         }
         self.ft.internal_deposit(owner_id, amount);
-        self.save_contract();
         #[cfg(feature = "log")]
         sdk::log("Mint success".into());
     }
@@ -170,39 +168,42 @@ impl EthConnectorContract {
         sdk::log(format!("Burn {} tokens for: {}", amount, owner_id));
         self.ft.internal_withdraw(owner_id, amount);
     }
+
+    pub fn withdraw(&mut self) {
+        #[cfg(feature = "log")]
+        sdk::log("Start withdraw".into());
+        let args: WithdrawCallArgs =
+            WithdrawCallArgs::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));
+        let recipient_address = validate_eth_address(args.recipient_id);
+        let res = WithdrawResult {
+            recipient_id: recipient_address,
+            amount: args.amount,
+            eth_custodian_address: self.contract.eth_custodian_address,
+        }
+        .try_to_vec()
+        .unwrap();
+        // Burn tokens to recipient
+        self.burn(sdk::predecessor_account_id(), args.amount);
+        // Save new contract data
+        self.save_contract();
+        sdk::value_return(&res[..]);
+    }
+
+    pub fn ft_total_supply(&self) {
+        let total_supply = self.ft.ft_total_supply();
+        sdk::value_return(&total_supply.to_be_bytes());
+        #[cfg(feature = "log")]
+        sdk::log(format!("Total supply: {}", total_supply));
+    }
+
+    pub fn ft_balance_of(&self) {
+        let args = BalanceOfCallArgs::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));
+        let balance = self.ft.ft_balance_of(args.account_id.clone());
+        sdk::value_return(&balance.to_string().as_bytes());
+        #[cfg(feature = "log")]
+        sdk::log(format!("Balance [{}]: {}", args.account_id, balance));
+    }
     /*
-        pub fn withdraw(&mut self) {
-            #[cfg(feature = "log")]
-            sdk::log("Start withdraw".into());
-            let args: WithdrawCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
-            let recipient_address = validate_eth_address(args.recipient_id);
-            // Burn tokens to recipient
-            self.burn(sdk::predecessor_account_id(), args.amount);
-            let res = WithdrawResult {
-                recipient_id: recipient_address,
-                amount: args.amount,
-                eth_custodian_address: self.contract.eth_custodian_address,
-            }
-            .try_to_vec()
-            .unwrap();
-            sdk::value_return(&res[..]);
-        }
-
-        pub fn ft_total_supply(&self) {
-            let total_supply = self.ft.ft_total_supply();
-            sdk::value_return(&total_supply.to_be_bytes());
-            #[cfg(feature = "log")]
-            sdk::log(format!("Total supply: {}", total_supply));
-        }
-
-        pub fn ft_balance_of(&self) {
-            let args = BalanceOfCallArgs::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));
-            let balance = self.ft.ft_balance_of(args.account_id.clone());
-            sdk::value_return(&balance.to_string().as_bytes());
-            #[cfg(feature = "log")]
-            sdk::log(format!("Balance [{}]: {}", args.account_id, balance));
-        }
-
         pub fn ft_transfer(&mut self) {
             let args: TransferCallArgs = serde_json::from_slice(&sdk::read_input()[..]).unwrap();
 

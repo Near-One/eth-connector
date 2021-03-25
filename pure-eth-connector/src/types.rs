@@ -15,13 +15,13 @@ pub type StorageUsage = u64;
 
 #[derive(BorshSerialize)]
 pub struct StorageBalance {
-    pub total: u128,
-    pub available: u128,
+    pub total: Balance,
+    pub available: Balance,
 }
 
 pub struct StorageBalanceBounds {
-    pub min: u128,
-    pub max: Option<u128>,
+    pub min: Balance,
+    pub max: Option<Balance>,
 }
 
 #[derive(Clone)]
@@ -58,14 +58,14 @@ pub struct EthConnector {
 #[derive(BorshSerialize, BorshDeserialize)]
 pub struct FinishDepositCallArgs {
     pub new_owner_id: AccountId,
-    pub amount: u128,
-    pub fee: u128,
+    pub amount: Balance,
+    pub fee: Balance,
     pub proof: Proof,
 }
 
 pub struct WithdrawCallArgs {
     pub recipient_id: AccountId,
-    pub amount: u128,
+    pub amount: Balance,
 }
 
 pub struct TransferCallCallArgs {
@@ -220,6 +220,15 @@ impl From<json::JsonValue> for InitCallArgs {
         Self {
             eth_custodian_address: v.string("eth_custodian_address").expect(FAILED_PARSE),
             prover_account: v.string("prover_account").expect(FAILED_PARSE),
+        }
+    }
+}
+
+impl From<json::JsonValue> for WithdrawCallArgs {
+    fn from(v: json::JsonValue) -> Self {
+        Self {
+            recipient_id: v.string("recipient_id").expect(FAILED_PARSE),
+            amount: v.u128("amount").expect(FAILED_PARSE),
         }
     }
 }
