@@ -204,64 +204,65 @@ impl EthConnectorContract {
         sdk::log(format!("Balance [{}]: {}", args.account_id, balance));
     }
     /*
-            pub fn ft_transfer(&mut self) {
-                let args: TransferCallArgs = TransferCallArgs::::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));
+                pub fn ft_transfer(&mut self) {
+                    let args: TransferCallArgs = TransferCallArgs::::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));
 
-                self.ft
-                    .ft_transfer(args.receiver_id.clone(), args.amount, args.memo.clone());
-                self.save_contract();
-                #[cfg(feature = "log")]
-                sdk::log(format!(
-                    "Transfer amount {} to {} success with memo: {:?}",
-                    args.amount, args.receiver_id, args.memo
-                ));
-            }
+                    self.ft
+                        .ft_transfer(args.receiver_id.clone(), args.amount, args.memo.clone());
+                    self.save_contract();
+                    #[cfg(feature = "log")]
+                    sdk::log(format!(
+                        "Transfer amount {} to {} success with memo: {:?}",
+                        args.amount, args.receiver_id, args.memo
+                    ));
+                }
 
-            pub fn ft_resolve_transfer(&mut self) {
-                sdk::assert_private_call();
-                let args: ResolveTransferCallArgs = ResolveTransferCallArgs::f::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));
-                let amount = self.ft.ft_resolve_transfer(
-                    args.sender_id.clone(),
-                    args.receiver_id.clone(),
-                    args.amount,
-                );
-                self.save_contract();
-                sdk::value_return(&amount.to_be_bytes());
-                #[cfg(feature = "log")]
-                sdk::log(format!(
-                    "Resolve transfer of {} from {} to {} success",
-                    args.amount, args.sender_id, args.receiver_id
-                ));
-            }
+                pub fn ft_resolve_transfer(&mut self) {
+                    sdk::assert_private_call();
+                    let args: ResolveTransferCallArgs = ResolveTransferCallArgs::f::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));
+                    let amount = self.ft.ft_resolve_transfer(
+                        args.sender_id.clone(),
+                        args.receiver_id.clone(),
+                        args.amount,
+                    );
+                    self.save_contract();
+                    sdk::value_return(&amount.to_be_bytes());
+                    #[cfg(feature = "log")]
+                    sdk::log(format!(
+                        "Resolve transfer of {} from {} to {} success",
+                        args.amount, args.sender_id, args.receiver_id
+                    ));
+                }
 
-            pub fn ft_transfer_call(&mut self) {
-                let args: TransferCallCallArgs = TransferCallCallArgs::::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));
+                pub fn ft_transfer_call(&mut self) {
+                    let args: TransferCallCallArgs = TransferCallCallArgs::::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));
 
-                self.ft.ft_transfer_call(
-                    args.receiver_id.clone(),
-                    args.amount,
-                    args.memo.clone(),
-                    args.msg.clone(),
-                );
-                self.save_contract();
-                #[cfg(feature = "log")]
-                sdk::log(format!(
-                    "Transfer call to {} amount success {}",
-                    args.receiver_id, args.amount,
-                ));
-            }
-
-            pub fn storage_deposit(&mut self) {
-                let args: StorageDepositCallArgs = StorageDepositCallArgs::::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));
-                let res = self
-                    .ft
-                    .storage_deposit(args.account_id, args.registration_only)
-                    .try_to_vec()
-                    .unwrap();
-                self.save_contract();
-                sdk::value_return(&res[..]);
-            }
+                    self.ft.ft_transfer_call(
+                        args.receiver_id.clone(),
+                        args.amount,
+                        args.memo.clone(),
+                        args.msg.clone(),
+                    );
+                    self.save_contract();
+                    #[cfg(feature = "log")]
+                    sdk::log(format!(
+                        "Transfer call to {} amount success {}",
+                        args.receiver_id, args.amount,
+                    ));
+                }
     */
+    pub fn storage_deposit(&mut self) {
+        let args: StorageDepositCallArgs =
+            StorageDepositCallArgs::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));
+        let res = self
+            .ft
+            .storage_deposit(args.account_id, args.registration_only)
+            .try_to_vec()
+            .unwrap();
+        self.save_contract();
+        sdk::value_return(&res[..]);
+    }
+
     pub fn storage_withdraw(&mut self) {
         let args: StorageWithdrawCallArgs =
             StorageWithdrawCallArgs::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));

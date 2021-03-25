@@ -248,3 +248,12 @@ impl From<json::JsonValue> for StorageBalanceOfCallArgs {
         }
     }
 }
+
+impl From<json::JsonValue> for StorageDepositCallArgs {
+    fn from(v: json::JsonValue) -> Self {
+        Self {
+            account_id: v.string("account_id").ok(),
+            registration_only: v.bool("registration_only").ok(),
+        }
+    }
+}

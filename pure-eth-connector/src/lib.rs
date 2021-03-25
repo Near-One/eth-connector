@@ -105,12 +105,12 @@ pub extern "C" fn ft_resolve_transfer() {
 pub extern "C" fn ft_transfer_call() {
     EthConnectorContract::new().ft_transfer_call();
 }
-
+*/
 #[no_mangle]
 pub extern "C" fn storage_deposit() {
     EthConnectorContract::new().storage_deposit()
 }
-*/
+
 #[no_mangle]
 pub extern "C" fn storage_withdraw() {
     EthConnectorContract::new().storage_withdraw()
