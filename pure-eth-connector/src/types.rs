@@ -257,3 +257,14 @@ impl From<json::JsonValue> for StorageDepositCallArgs {
         }
     }
 }
+
+impl From<json::JsonValue> for TransferCallCallArgs {
+    fn from(v: json::JsonValue) -> Self {
+        Self {
+            receiver_id: v.string("receiver_id").expect(FAILED_PARSE),
+            amount: v.u128("amount").expect(FAILED_PARSE),
+            memo: v.string("memo").ok(),
+            msg: v.string("msg").expect(FAILED_PARSE),
+        }
+    }
+}
