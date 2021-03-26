@@ -2,6 +2,8 @@ use super::*;
 
 pub const CONTRACT_NAME_KEY: &str = "EthConnector";
 pub const CONTRACT_FT_KEY: &str = "EthConnector.FungibleToken";
+const GAS_FOR_FINISH_DEPOSIT: Gas = 5_000_000_000_000;
+const GAS_FOR_VERIFY_LOG_ENTRY: Gas = 5_000_000_000_000;
 
 pub struct EthConnectorContract {
     contract: EthConnector,
@@ -75,7 +77,6 @@ impl EthConnectorContract {
             "Not enough balance for deposit fee"
         );
         let account_id = sdk::current_account_id();
-        let prepaid_gas = sdk::prepaid_gas();
         let proof_1 = proof.try_to_vec().unwrap();
         #[cfg(feature = "log")]
         sdk::log(format!(
@@ -87,7 +88,7 @@ impl EthConnectorContract {
             b"verify_log_entry",
             &proof_1[..],
             sdk::NO_DEPOSIT,
-            prepaid_gas / 3,
+            GAS_FOR_VERIFY_LOG_ENTRY,
         );
         let data = FinishDepositCallArgs {
             new_owner_id: event.recipient,
@@ -104,7 +105,7 @@ impl EthConnectorContract {
             b"finish_deposit",
             &data[..],
             sdk::NO_DEPOSIT,
-            prepaid_gas / 3,
+            GAS_FOR_FINISH_DEPOSIT,
         );
         sdk::promise_return(promise1);
     }
