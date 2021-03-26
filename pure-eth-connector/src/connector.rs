@@ -203,20 +203,21 @@ impl EthConnectorContract {
         #[cfg(feature = "log")]
         sdk::log(format!("Balance [{}]: {}", args.account_id, balance));
     }
+
+    pub fn ft_transfer(&mut self) {
+        let args: TransferCallArgs =
+            TransferCallArgs::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));
+
+        self.ft
+            .ft_transfer(args.receiver_id.clone(), args.amount, args.memo.clone());
+        self.save_contract();
+        #[cfg(feature = "log")]
+        sdk::log(format!(
+            "Transfer amount {} to {} success with memo: {:?}",
+            args.amount, args.receiver_id, args.memo
+        ));
+    }
     /*
-                    pub fn ft_transfer(&mut self) {
-                        let args: TransferCallArgs = TransferCallArgs::::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));
-
-                        self.ft
-                            .ft_transfer(args.receiver_id.clone(), args.amount, args.memo.clone());
-                        self.save_contract();
-                        #[cfg(feature = "log")]
-                        sdk::log(format!(
-                            "Transfer amount {} to {} success with memo: {:?}",
-                            args.amount, args.receiver_id, args.memo
-                        ));
-                    }
-
                     pub fn ft_resolve_transfer(&mut self) {
                         sdk::assert_private_call();
                         let args: ResolveTransferCallArgs = ResolveTransferCallArgs::f::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));
