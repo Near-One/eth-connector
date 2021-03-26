@@ -54,7 +54,6 @@ impl EthConnectorContract {
         use core::ops::Sub;
 
         let proof: Proof = Proof::from(parse_json(&sdk::read_input()).unwrap());
-        sdk::log("2".into());
         let event = EthDepositedEvent::from_log_entry_data(&proof.log_entry_data);
         #[cfg(feature = "log")]
         sdk::log(format!(

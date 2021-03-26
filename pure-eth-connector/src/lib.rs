@@ -42,13 +42,13 @@ pub extern "C" fn on_panic(info: &core::panic::PanicInfo) -> ! {
     #[cfg(feature = "log")]
     if let Some(msg) = info.message() {
         let msg = if let Some(log) = info.location() {
-            [msg.to_string(), log.to_string()].join(": ")
+            [msg.to_string(), " [".into(), log.to_string(), "]".into()].join("")
         } else {
             msg.to_string()
         };
         sdk::log(msg);
     } else if let Some(log) = info.location() {
-        sdk::log(format!("{:?}", log.to_string()));
+        sdk::log(log.to_string());
     }
     unsafe { core::intrinsics::abort() }
 }
