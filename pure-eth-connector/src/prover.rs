@@ -90,7 +90,7 @@ impl From<json::JsonValue> for Proof {
             .array("header_data", json::JsonValue::parse_u8)
             .expect(FAILED_PARSE);
         let proof = v
-            .array("header_data", |v1| match v1 {
+            .array("proof", |v1| match v1 {
                 json::JsonValue::Array(arr) => arr.iter().map(json::JsonValue::parse_u8).collect(),
                 _ => sdk::panic_utf8(FAILED_PARSE.as_bytes()),
             })

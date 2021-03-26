@@ -36,6 +36,7 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[lang = "panic_impl"]
 #[no_mangle]
+#[cfg_attr(not(feature = "log"), allow(unused_variables))]
 #[allow(unused_unsafe)]
 pub extern "C" fn on_panic(info: &core::panic::PanicInfo) -> ! {
     #[cfg(feature = "log")]
@@ -45,9 +46,9 @@ pub extern "C" fn on_panic(info: &core::panic::PanicInfo) -> ! {
         } else {
             msg.to_string()
         };
-        sdk::log(["panic".into(), msg].join(": "));
+        sdk::log(msg);
     } else if let Some(log) = info.location() {
-        sdk::log(log.to_string());
+        sdk::log(format!("{:?}", log.to_string()));
     }
     unsafe { core::intrinsics::abort() }
 }

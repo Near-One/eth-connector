@@ -66,7 +66,7 @@ impl FungibleToken {
         sender_id: &str,
         receiver_id: &str,
         amount: Balance,
-        memo: Option<String>,
+        #[allow(unused_variables)] memo: Option<String>,
     ) {
         assert_ne!(
             sender_id, receiver_id,
@@ -80,8 +80,8 @@ impl FungibleToken {
             "Transfer {} from {} to {}",
             amount, sender_id, receiver_id
         ));
+        #[cfg(feature = "log")]
         if let Some(memo) = memo {
-            #[cfg(feature = "log")]
             sdk::log(format!("Memo: {}", memo));
         }
     }
