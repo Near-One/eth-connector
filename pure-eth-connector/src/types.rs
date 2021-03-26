@@ -278,3 +278,13 @@ impl From<json::JsonValue> for TransferCallArgs {
         }
     }
 }
+
+impl From<json::JsonValue> for ResolveTransferCallArgs {
+    fn from(v: json::JsonValue) -> Self {
+        Self {
+            sender_id: v.string("sender_id").expect(FAILED_PARSE),
+            receiver_id: v.string("receiver_id").expect(FAILED_PARSE),
+            amount: v.u128("amount").expect(FAILED_PARSE),
+        }
+    }
+}

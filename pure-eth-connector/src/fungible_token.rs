@@ -151,7 +151,7 @@ impl FungibleToken {
         sdk::promise_return(promise1);
     }
 
-    /*pub fn internal_ft_resolve_transfer(
+    pub fn internal_ft_resolve_transfer(
         &mut self,
         sender_id: AccountId,
         receiver_id: AccountId,
@@ -161,7 +161,7 @@ impl FungibleToken {
         let unused_amount = match sdk::promise_result(0) {
             PromiseResult::NotReady => unreachable!(),
             PromiseResult::Successful(value) => {
-                if let Ok(unused_amount) = serde_json::from_slice::<u128>(&value[..]) {
+                if let Ok(unused_amount) = Balance::try_from_slice(&value[..]) {
                     if amount > unused_amount {
                         unused_amount
                     } else {
@@ -219,7 +219,7 @@ impl FungibleToken {
     ) -> u128 {
         self.internal_ft_resolve_transfer(sender_id, receiver_id, amount)
             .0
-    }*/
+    }
 
     pub fn internal_storage_unregister(
         &mut self,

@@ -217,24 +217,25 @@ impl EthConnectorContract {
             args.amount, args.receiver_id, args.memo
         ));
     }
-    /*
-                    pub fn ft_resolve_transfer(&mut self) {
-                        sdk::assert_private_call();
-                        let args: ResolveTransferCallArgs = ResolveTransferCallArgs::f::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));
-                        let amount = self.ft.ft_resolve_transfer(
-                            args.sender_id.clone(),
-                            args.receiver_id.clone(),
-                            args.amount,
-                        );
-                        self.save_contract();
-                        sdk::value_return(&amount.to_be_bytes());
-                        #[cfg(feature = "log")]
-                        sdk::log(format!(
-                            "Resolve transfer of {} from {} to {} success",
-                            args.amount, args.sender_id, args.receiver_id
-                        ));
-                    }
-    */
+
+    pub fn ft_resolve_transfer(&mut self) {
+        sdk::assert_private_call();
+        let args: ResolveTransferCallArgs =
+            ResolveTransferCallArgs::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));
+        let amount = self.ft.ft_resolve_transfer(
+            args.sender_id.clone(),
+            args.receiver_id.clone(),
+            args.amount,
+        );
+        self.save_contract();
+        sdk::value_return(&amount.to_be_bytes());
+        #[cfg(feature = "log")]
+        sdk::log(format!(
+            "Resolve transfer of {} from {} to {} success",
+            args.amount, args.sender_id, args.receiver_id
+        ));
+    }
+
     pub fn ft_transfer_call(&mut self) {
         let args: TransferCallCallArgs =
             TransferCallCallArgs::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));

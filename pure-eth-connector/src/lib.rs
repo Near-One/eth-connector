@@ -41,13 +41,13 @@ pub extern "C" fn on_panic(info: &core::panic::PanicInfo) -> ! {
     #[cfg(feature = "log")]
     if let Some(msg) = info.message() {
         let msg = if let Some(log) = info.location() {
-            format!("{}: {:?}", msg, log)
+            [msg.to_string(), log.to_string()].join(": ")
         } else {
-            format!("{}", msg)
+            msg.to_string()
         };
-        sdk::log(format!("panic: {}", msg));
+        sdk::log(["panic".into(), msg].join(": "));
     } else if let Some(log) = info.location() {
-        sdk::log(format!("{:?}", log));
+        sdk::log(log.to_string());
     }
     unsafe { core::intrinsics::abort() }
 }
@@ -95,12 +95,12 @@ pub extern "C" fn ft_balance_of() {
 pub extern "C" fn ft_transfer() {
     EthConnectorContract::new().ft_transfer();
 }
-/*
+
 #[no_mangle]
 pub extern "C" fn ft_resolve_transfer() {
     EthConnectorContract::new().ft_resolve_transfer();
 }
-*/
+
 #[no_mangle]
 pub extern "C" fn ft_transfer_call() {
     EthConnectorContract::new().ft_transfer_call();
