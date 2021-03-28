@@ -3,7 +3,7 @@ use super::*;
 pub const CONTRACT_NAME_KEY: &str = "EthConnector";
 pub const CONTRACT_FT_KEY: &str = "EthConnector.FungibleToken";
 const GAS_FOR_FINISH_DEPOSIT: Gas = 5_000_000_000_000;
-const GAS_FOR_VERIFY_LOG_ENTRY: Gas = 5_000_000_000_000;
+const GAS_FOR_VERIFY_LOG_ENTRY: Gas = 9_000_000_000_000;
 
 pub struct EthConnectorContract {
     contract: EthConnector,
