@@ -25,7 +25,7 @@ impl EthConnectorContract {
     }
 
     pub fn init_contract() {
-        assert_eq!(sdk::current_account_id(), sdk::predecessor_account_id());
+        //assert_eq!(sdk::current_account_id(), sdk::predecessor_account_id());
         assert!(
             !sdk::storage_has_key(CONTRACT_NAME_KEY),
             "Contract already initialized"
