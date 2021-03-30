@@ -37,4 +37,8 @@ impl EthConnector {
         skip_bridge_call: bool,
     ) {
     }
+
+    #[payable]
+    #[result_serializer(borsh)]
+    pub fn withdraw(&mut self, recipient_id: AccountId, amount: u64) {}
 }

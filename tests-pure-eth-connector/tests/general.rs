@@ -62,31 +62,31 @@ fn test_sim_deposit() {
     assert_eq!(minted_balance, DEPOSITED_FEE);
 }
 
-/*
 #[test]
 fn test_sim_withdraw() {
     let (master_account, contract) = init();
     call_deposit(&master_account, &contract);
 
-    let withdraw_amount = 100;
+    let withdraw_amount: u128 = 100;
     let _res = call!(
         master_account,
-        contract.withdraw(RECIPIENT_ETH_ADDRESS.into(), U128::from(withdraw_amount)),
+        contract.withdraw(RECIPIENT_ETH_ADDRESS.into(), withdraw_amount as u64),
         gas = DEFAULT_GAS * 3
     );
 
-    println!("#1: {:#?}", _res.promise_results());
+    //println!("#1: {:#?}", _res.promise_results());
 
-    let x = view!(contract.ft_balance_of(master_account.account_id.into()));
-    println!("{:?}", x);
-
-    let burned_balance = view!(contract.ft_balance_of(master_account.account_id)).unwrap_json::<u128>();
+    let minted_balance =
+        view!(contract.ft_balance_of(DEPOSITED_RECIPIENT.into())).unwrap_json::<u128>();
     assert_eq!(
-        burned_balance,
+        minted_balance,
         DEPOSITED_AMOUNT - DEPOSITED_FEE - withdraw_amount
     );
+
+    let minted_balance = view!(contract.ft_balance_of(CONTRACT_ACC.into())).unwrap_json::<u128>();
+    assert_eq!(minted_balance, DEPOSITED_FEE);
 }
-*/
+
 fn call_deposit(master_account: &UserAccount, contract: &ContractAccount<EthConnectorContract>) {
     let proof: Proof = serde_json::from_str(PROOF_DATA).unwrap();
 
