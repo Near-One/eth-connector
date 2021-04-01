@@ -1,5 +1,3 @@
-require('dotenv').config();
-
 const hre = require('hardhat');
 const ethereumConfig = require('./json/ethereum-config.json');
 
@@ -86,7 +84,8 @@ async function findProof (depositTxHash) {
     await fs.writeFile(file, JSON.stringify(args))
     console.log(`Proof has been successfully generated and saved at ${file}`);
 
-    return serializeBorsh(proofBorshSchema, formattedProof);
+    //return serializeBorsh(proofBorshSchema, formattedProof);
+    return args;
 }
 
 async function buildTree (block) {
