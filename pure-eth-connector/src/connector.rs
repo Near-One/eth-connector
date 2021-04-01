@@ -192,7 +192,7 @@ impl EthConnectorContract {
 
     pub fn ft_total_supply(&self) {
         let total_supply = self.ft.ft_total_supply();
-        sdk::value_return(&total_supply.to_be_bytes());
+        sdk::value_return(&total_supply.to_string().as_bytes());
         #[cfg(feature = "log")]
         sdk::log(format!("Total supply: {}", total_supply));
     }

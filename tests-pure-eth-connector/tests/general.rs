@@ -106,3 +106,19 @@ fn call_deposit(master_account: &UserAccount, contract: &ContractAccount<EthConn
 
     //println!("#1: {:#?}", _res.promise_results());
 }
+
+#[test]
+fn test_ft_total_supply() {
+    let (master_account, contract) = init();
+
+    call_deposit(&master_account, &contract);
+
+    let balance = view!(contract.ft_balance_of(DEPOSITED_RECIPIENT.into())).unwrap_json::<u128>();
+    assert_eq!(balance, DEPOSITED_AMOUNT - DEPOSITED_FEE);
+
+    let balance = view!(contract.ft_balance_of(CONTRACT_ACC.into())).unwrap_json::<u128>();
+    assert_eq!(balance, DEPOSITED_FEE);
+
+    let balance = view!(contract.ft_total_supply()).unwrap_json::<u128>();
+    assert_eq!(balance, DEPOSITED_AMOUNT);
+}
