@@ -1,7 +1,8 @@
 #![allow(unused_imports)]
 #![allow(dead_code)]
 #![allow(unused_variables)]
-use connector::{EthConnectorContract, Proof};
+use connector::EthConnectorContract;
+use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::serde_json;
 use near_sdk_sim::types::AccountId;
 use near_sdk_sim::{call, deploy, init_simulator, view, ContractAccount, UserAccount, DEFAULT_GAS};
@@ -21,6 +22,18 @@ const CUSTODIAN_ADDRESS: &'static str = "b9f7219e434EAA7021Ae5f9Ecd0CaBc2405447A
 const PROVER_ACCOUNT: &'static str = "eth_connector.root";
 const CONTRACT_ACC: &'static str = "eth_connector.root";
 const RECIPIENT_ETH_ADDRESS: &'static str = "891b2749238b27ff58e951088e55b04de71dc374";
+
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct Proof {
+    pub log_index: u64,
+    pub log_entry_data: Vec<u8>,
+    pub receipt_index: u64,
+    pub receipt_data: Vec<u8>,
+    pub header_data: Vec<u8>,
+    pub proof: Vec<Vec<u8>>,
+    pub skip_bridge_call: bool,
+}
 
 fn init() -> (UserAccount, ContractAccount<EthConnectorContract>) {
     let master_account = init_simulator(None);
@@ -121,4 +134,32 @@ fn test_ft_total_supply() {
 
     let balance = view!(contract.ft_total_supply()).unwrap_json::<u128>();
     assert_eq!(balance, DEPOSITED_AMOUNT);
+}
+
+#[test]
+fn test_ft_transfer() {
+    let (master_account, contract) = init();
+
+    call_deposit(&master_account, &contract);
+
+    let balance = view!(contract.ft_balance_of(DEPOSITED_RECIPIENT.into())).unwrap_json::<u128>();
+    assert_eq!(balance, DEPOSITED_AMOUNT - DEPOSITED_FEE);
+
+    let balance = view!(contract.ft_balance_of(CONTRACT_ACC.into())).unwrap_json::<u128>();
+    assert_eq!(balance, DEPOSITED_FEE);
+
+    let transfer_amount = 777;
+    let _res = call!(
+        master_account,
+        contract.ft_transfer(
+            CONTRACT_ACC.into(),
+            transfer_amount,
+            Some("Transfered".into())
+        ),
+        deposit = 1
+    );
+
+    //println!("#1: {:#?}", _res.promise_results());
+    let balance = view!(contract.ft_balance_of(CONTRACT_ACC.into())).unwrap_json::<u128>();
+    assert_eq!(balance, DEPOSITED_FEE + transfer_amount as u128);
 }
