@@ -1,7 +1,7 @@
 #![allow(unused_variables)]
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::{near_bindgen, AccountId};
+use near_sdk::{near_bindgen, AccountId, Balance};
 
 #[near_bindgen]
 pub struct EthConnector;
@@ -20,14 +20,12 @@ pub struct Proof {
 
 #[near_bindgen]
 impl EthConnector {
-    #[init]
     pub fn new(prover_account: AccountId, eth_custodian_address: String) {}
 
     pub fn ft_balance_of(&self, account_id: AccountId) {}
 
-    #[payable]
     pub fn deposit(
-        &mut self,
+        &self,
         log_index: u64,
         log_entry_data: Vec<u8>,
         receipt_index: u64,
@@ -38,7 +36,24 @@ impl EthConnector {
     ) {
     }
 
-    #[payable]
-    #[result_serializer(borsh)]
-    pub fn withdraw(&mut self, recipient_id: AccountId, amount: u64) {}
+    pub fn withdraw(&self, recipient_id: AccountId, amount: u64) {}
+
+    pub fn ft_total_supply(&self) {}
+
+    pub fn ft_transfer(&self, receiver_id: AccountId, amount: Balance, memo: Option<String>) {}
+
+    pub fn ft_transfer_call(
+        &self,
+        receiver_id: AccountId,
+        amount: Balance,
+        memo: Option<String>,
+        msg: String,
+    ) {
+    }
+
+    pub fn storage_deposit(&self, account_id: Option<AccountId>, registration_only: Option<bool>) {}
+
+    pub fn storage_withdraw(&self, amount: Option<u128>) {}
+
+    pub fn storage_balance_of(&self, account_id: AccountId) {}
 }
