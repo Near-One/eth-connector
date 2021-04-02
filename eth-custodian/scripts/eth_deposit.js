@@ -4,9 +4,8 @@ const hre = require('hardhat');
 
 const ethereumConfig = require('./json/ethereum-config.json');
 
-const ROPSTEN_NETWORK = true;
 
-async function main() {
+async function ethDepositToNear(provider, nearRecipient, amountToTransfer, fee) {
     [deployerAccount] = await hre.ethers.getSigners();
 
     console.log(`Call deposit with the account: ${deployerAccount.address}`);
@@ -20,40 +19,40 @@ async function main() {
 
     console.log(`EthCustodian address: ${ethCustodian.address}`);
 
-    const deployerWallet = new hre.ethers.Wallet(process.env.ROPSTEN_PRIVATE_KEY, hre.ethers.getDefaultProvider());
+    const deployerWallet = new hre.ethers.Wallet(process.env.ROPSTEN_PRIVATE_KEY, provider);
     let unsignedTx = await ethCustodian
         .connect(deployerWallet)
         .populateTransaction
-        .depositToNear(ethereumConfig.nearRecipient, ethereumConfig.fee);
+        .depositToNear(nearRecipient, fee);
 
-    unsignedTx.nonce = await hre.ethers.provider.getTransactionCount(deployerWallet.address);
-    unsignedTx.value = ethereumConfig.amountToTransfer;
+    unsignedTx.nonce = await provider.getTransactionCount(deployerWallet.address);
+    unsignedTx.value = Number(amountToTransfer);
 
-    await ethCustodian
-        .connect(deployerWallet)
-        .estimateGas
-        .depositToNear(ethereumConfig.nearRecipient, ethereumConfig.fee)
-        .then(function(estimatedGas) {
-            unsignedTx.gasLimit = estimatedGas;
-    });
-    console.log(`Estimated gas: ${unsignedTx.gasLimit}`);
-
-    if (ROPSTEN_NETWORK) {
-        unsignedTx.gasLimit = 80000;
+    if (network.name == 'ropsten') {
+        unsignedTx.gasLimit = 800000;
         unsignedTx.gasPrice = 100000000000;
         console.log(`We are on the Ropsten network, use custom ` +
                     `gasLimit=${unsignedTx.gasLimit}; gasPrice=${unsignedTx.gasPrice}`);
+    } else {
+        await ethCustodian
+            .connect(deployerWallet)
+            .estimateGas
+            .depositToNear(nearRecipient, fee)
+            .then(function(estimatedGas) {
+                unsignedTx.gasLimit = estimatedGas;
+            });
+        console.log(`Estimated gas: ${unsignedTx.gasLimit}`);
     }
 
-    console.log(`Amount to transfer: ${hre.ethers.utils.formatEther(ethereumConfig.amountToTransfer)} ETH`
-                + ` (${ethereumConfig.amountToTransfer} wei); fee: ${ethereumConfig.fee} wei`);
+    console.log(`Amount to transfer: ${hre.ethers.utils.formatEther(amountToTransfer)} ETH`
+                + ` (${amountToTransfer} wei); fee: ${fee} wei`);
 
     // Sign and send tx
     const signedTx = await deployerWallet.signTransaction(unsignedTx);
-    const tx = await hre.ethers.provider.sendTransaction(signedTx);
+    const tx = await provider.sendTransaction(signedTx);
     console.log(`Sent Tx with hash: ${tx.hash}`);
 
-    await hre.ethers.provider.waitForTransaction(tx.hash).then(function(receipt) {
+    await provider.waitForTransaction(tx.hash).then(function(receipt) {
         console.log(`Transaction mined: ${tx.hash}`);
         console.log(receipt);
     });
@@ -65,9 +64,4 @@ async function main() {
     console.log(`Use the following TX hash for the following steps:\nTX hash: ${tx.hash}`);
 }
 
-main()
-    .then(() => process.exit(0))
-    .catch(error => {
-        console.error(error);
-        process.exit(1);
-    });
+exports.ethDepositToNear = ethDepositToNear;

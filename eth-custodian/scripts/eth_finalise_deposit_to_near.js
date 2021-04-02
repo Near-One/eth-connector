@@ -1,6 +1,5 @@
 require('dotenv').config();
 
-const hre = require('hardhat');
 const ethereumConfig = require('./json/ethereum-config.json');
 
 const { BN } = require('bn.js');
@@ -11,7 +10,7 @@ const NEAR_KEY_STORE_PATH = process.env.NEAR_KEY_STORE_PATH;
 const nearAPI = require('near-api-js');
 const keyStore = new nearAPI.keyStores.UnencryptedFileSystemKeyStore(NEAR_KEY_STORE_PATH);
 
-async function ethFinaliseDepositToNear (depositTxHash, nearAccount, nearJsonRpc, nearNetwork) {
+async function ethFinaliseDepositToNear (depositTxHash, nearAccount, nearRecipient, nearJsonRpc, nearNetwork) {
     const proof = await Proof.findProof(depositTxHash);
     console.log(`The proof was successfully found for txHash=${depositTxHash}`);
 
@@ -35,8 +34,10 @@ async function ethFinaliseDepositToNear (depositTxHash, nearAccount, nearJsonRpc
         }
     );
 
-    const initialBalance = await connector.ft_balance_of({ 'account_id': ethereumConfig.nearRecipient });
-    console.log(`Bridged ETH balance of ${ethereumConfig.nearRecipient} before finalisation of the deposit: ${initialBalance}`);
+    if (nearRecipient) {
+        const initialBalance = await connector.ft_balance_of({ 'account_id': nearRecipient });
+        console.log(`Bridged ETH balance of ${nearRecipient} before finalisation of the deposit: ${initialBalance}`);
+    }
 
     const gas_limit = new BN('300000000000000'); // Gas limit
     const payment_for_storage = new BN('100000000000000000000').mul(new BN('600')); // Attached payment to pay for the storage
@@ -45,8 +46,10 @@ async function ethFinaliseDepositToNear (depositTxHash, nearAccount, nearJsonRpc
     //const proofJson = JSON.stringify(proof);
     //await connector.deposit( proofJson );
 
-    const finalBalance = await connector.ft_balance_of({ 'account_id': ethereumConfig.nearRecipient });
-    console.log(`Bridged ETH balance of ${ethereumConfig.nearRecipient} after finalisation of the deposit: ${finalBalance}`);
+    if (nearRecipient) {
+        const finalBalance = await connector.ft_balance_of({ 'account_id': nearRecipient });
+        console.log(`Bridged ETH balance of ${nearRecipient} after finalisation of the deposit: ${finalBalance}`);
+    }
 }
 
 exports.ethFinaliseDepositToNear = ethFinaliseDepositToNear;
