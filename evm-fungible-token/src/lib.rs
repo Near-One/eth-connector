@@ -292,10 +292,6 @@ impl EthConnector {
         self.token.storage_withdraw(amount)
     }
 
-    pub fn storage_minimum_balance(&self) -> U128 {
-        self.token.storage_minimum_balance()
-    }
-
     pub fn storage_balance_of(&self, account_id: ValidAccountId) -> AccountStorageBalance {
         self.token.storage_balance_of(account_id)
     }
