@@ -222,14 +222,15 @@ impl EthConnectorContract {
     pub fn ft_resolve_transfer(&mut self) {
         sdk::assert_private_call();
         let args: ResolveTransferCallArgs =
-            ResolveTransferCallArgs::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));
+            ResolveTransferCallArgs::try_from_slice(&sdk::read_input()).unwrap();
         let amount = self.ft.ft_resolve_transfer(
             args.sender_id.clone(),
             args.receiver_id.clone(),
             args.amount,
         );
+        // `ft_resolve_transfer` can changed `total_supply` so we should save contract
         self.save_contract();
-        sdk::value_return(&amount.to_be_bytes());
+        sdk::value_return(&amount.to_string().as_bytes());
         #[cfg(feature = "log")]
         sdk::log(format!(
             "Resolve transfer of {} from {} to {} success",
@@ -240,6 +241,11 @@ impl EthConnectorContract {
     pub fn ft_transfer_call(&mut self) {
         let args: TransferCallCallArgs =
             TransferCallCallArgs::from(parse_json(&sdk::read_input()).expect(FAILED_PARSE));
+        #[cfg(feature = "log")]
+        sdk::log(format!(
+            "Transfer call to {} amount {}",
+            args.receiver_id, args.amount,
+        ));
 
         self.ft.ft_transfer_call(
             args.receiver_id.clone(),
@@ -247,12 +253,6 @@ impl EthConnectorContract {
             args.memo.clone(),
             args.msg.clone(),
         );
-        self.save_contract();
-        #[cfg(feature = "log")]
-        sdk::log(format!(
-            "Transfer call to {} amount success {}",
-            args.receiver_id, args.amount,
-        ));
     }
 
     pub fn storage_deposit(&mut self) {

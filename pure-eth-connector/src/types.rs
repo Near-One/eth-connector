@@ -75,10 +75,11 @@ pub struct TransferCallCallArgs {
     pub msg: String,
 }
 
+#[derive(Debug, BorshDeserialize, BorshSerialize)]
 pub struct ResolveTransferCallArgs {
     pub sender_id: AccountId,
-    pub receiver_id: AccountId,
     pub amount: Balance,
+    pub receiver_id: AccountId,
 }
 
 pub struct StorageBalanceOfCallArgs {
@@ -228,7 +229,7 @@ impl From<json::JsonValue> for WithdrawCallArgs {
     fn from(v: json::JsonValue) -> Self {
         Self {
             recipient_id: v.string("recipient_id").expect(FAILED_PARSE),
-            amount: v.u128("amount").expect( FAILED_PARSE),
+            amount: v.u128("amount").expect(FAILED_PARSE),
         }
     }
 }

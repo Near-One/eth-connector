@@ -116,7 +116,8 @@ impl FungibleToken {
         msg: String,
     ) {
         sdk::assert_one_yocto();
-        //self.internal_transfer(&sender_id, &receiver_id, amount, memo);
+        let sender_id = sdk::predecessor_account_id();
+        self.internal_transfer(&sender_id, &receiver_id, amount, memo);
         let data1 = FtOnTransfer {
             amount,
             msg,
@@ -188,13 +189,19 @@ impl FungibleToken {
                     receiver_balance
                 };
                 self.accounts_insert(receiver_id.clone(), receiver_balance - refund_amount);
+                #[cfg(feature = "log")]
+                sdk::log(format!(
+                    "Decrease receiver {} balance to: {}",
+                    receiver_id.clone(),
+                    receiver_balance - refund_amount
+                ));
 
                 return if let Some(sender_balance) = self.accounts_get(sender_id.clone()) {
                     let sender_balance = u128::try_from_slice(&sender_balance[..]).unwrap();
                     self.accounts_insert(sender_id.clone(), sender_balance + refund_amount);
                     #[cfg(feature = "log")]
                     sdk::log(format!(
-                        "Refund {} from {} to {}",
+                        "Refund amount {} from {} to {}",
                         refund_amount, receiver_id, sender_id
                     ));
                     (amount - refund_amount, 0)
