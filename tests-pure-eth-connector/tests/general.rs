@@ -163,3 +163,32 @@ fn test_ft_transfer() {
     let balance = view!(contract.ft_balance_of(CONTRACT_ACC.into())).unwrap_json::<u128>();
     assert_eq!(balance, DEPOSITED_FEE + transfer_amount as u128);
 }
+
+#[test]
+fn test_ft_transfer_call() {
+    let (master_account, contract) = init();
+
+    call_deposit(&master_account, &contract);
+
+    let balance = view!(contract.ft_balance_of(DEPOSITED_RECIPIENT.into())).unwrap_json::<u128>();
+    assert_eq!(balance, DEPOSITED_AMOUNT - DEPOSITED_FEE);
+
+    let balance = view!(contract.ft_balance_of(CONTRACT_ACC.into())).unwrap_json::<u128>();
+    assert_eq!(balance, DEPOSITED_FEE);
+    
+    let transfer_amount = 100;
+    let _res = call!(
+        master_account,
+        contract.ft_transfer_call(
+            CONTRACT_ACC.into(),
+            transfer_amount,
+            Some("Transfered".into()),
+            "msg".into()
+        ),
+        deposit = 1
+    );
+
+    println!("#1: {:#?}", _res.promise_results());
+    // let balance = view!(contract.ft_balance_of(CONTRACT_ACC.into())).unwrap_json::<u128>();
+    // assert_eq!(balance, DEPOSITED_FEE + transfer_amount as u128);
+}

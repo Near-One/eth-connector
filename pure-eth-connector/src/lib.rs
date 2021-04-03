@@ -130,3 +130,13 @@ pub extern "C" fn verify_log_entry() {
     let data = true.try_to_vec().unwrap();
     sdk::value_return(&data[..]);
 }
+
+
+/// TODO: will be removed - for eth-prover tests only
+#[no_mangle]
+pub extern "C" fn ft_on_transfer() {
+    #[cfg(feature = "log")]
+        sdk::log("Call ft_on_trasfer".into());
+    let data = 10.try_to_vec().unwrap();
+    sdk::value_return(&data[..]);
+}

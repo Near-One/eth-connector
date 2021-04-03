@@ -228,7 +228,7 @@ impl From<json::JsonValue> for WithdrawCallArgs {
     fn from(v: json::JsonValue) -> Self {
         Self {
             recipient_id: v.string("recipient_id").expect(FAILED_PARSE),
-            amount: v.u128("amount").expect(FAILED_PARSE),
+            amount: v.u128("amount").expect( FAILED_PARSE),
         }
     }
 }

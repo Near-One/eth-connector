@@ -116,8 +116,7 @@ impl FungibleToken {
         msg: String,
     ) {
         sdk::assert_one_yocto();
-        let sender_id = sdk::predecessor_account_id();
-        self.internal_transfer(&sender_id, &receiver_id, amount, memo);
+        //self.internal_transfer(&sender_id, &receiver_id, amount, memo);
         let data1 = FtOnTransfer {
             amount,
             msg,
@@ -126,7 +125,7 @@ impl FungibleToken {
         .try_to_vec()
         .unwrap();
         let data2 = FtResolveTransfer {
-            receiver_id,
+            receiver_id: receiver_id.clone(),
             amount,
             current_account_id: sdk::current_account_id(),
         }
@@ -134,7 +133,7 @@ impl FungibleToken {
         .unwrap();
         // Initiating receiver's call and the callback
         let promise0 = sdk::promise_create(
-            sender_id.clone(),
+            receiver_id.clone(),
             b"ft_on_transfer",
             &data1[..],
             sdk::NO_DEPOSIT,
@@ -142,7 +141,7 @@ impl FungibleToken {
         );
         let promise1 = sdk::promise_then(
             promise0,
-            sender_id,
+            sdk::current_account_id(),
             b"ft_resolve_transfer",
             &data2[..],
             sdk::NO_DEPOSIT,
