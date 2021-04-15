@@ -8,7 +8,7 @@ require('hardhat-gas-reporter');
 const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY;
 const ROPSTEN_PRIVATE_KEY = process.env.ROPSTEN_PRIVATE_KEY;
 
-task('eth-deposit-to-near', 'Deposits provided `amount` (wei) having `fee`(wei) to ETH Custodian to transfer it to Near')
+task('eth-deposit-to-near', 'Deposits the provided `amount` (wei) having `fee`(wei) to ETH Custodian to transfer it to Near')
     .addParam('nearRecipient', 'AccountID of recipient on Near')
     .addParam('amount', 'Amount (wei) to transfer', 0, types.int)
     .addParam('fee', 'Fee (wei) for the transfer', 0, types.int)
@@ -29,7 +29,7 @@ task('eth-generate-deposit-proof', 'Generates deposit proof for the given TX has
         await Proof.findProof(taskArgs.txHash);
     });
 
-task('eth-finalise-deposit-to-near', 'Generates deposit proof for the given TX hash and submits it to Near to finalise the deposit')
+task('eth-finalise-deposit-to-near', 'Generates the deposit proof for the given TX hash and submits it to Near to finalise the deposit')
     .addParam('txHash', 'transaction hash')
     .addParam('nearAccount', 'Near account that will submit the deposit transaction to Near')
     .addOptionalParam('nearRecipient', 'Near account that will receive the transferred amount (Used for verbose purposes to get detailed information)', undefined)
@@ -38,6 +38,33 @@ task('eth-finalise-deposit-to-near', 'Generates deposit proof for the given TX h
     .setAction(async taskArgs => {
         const { ethFinaliseDepositToNear } = require('./scripts/eth_finalise_deposit_to_near');
         await ethFinaliseDepositToNear(taskArgs.txHash, taskArgs.nearAccount, taskArgs.nearRecipient, taskArgs.nearJsonRpc, taskArgs.nearNetwork);
+    });
+
+task('near-withdraw-to-eth', 'Withdraws the provided `amount` (wei) having `fee`(wei) from `nearAccount` to `ethRecipient` to transfer it to Ethereum')
+    .addParam('nearAccount', 'Near account to withdraw from')
+    .addParam('ethRecipient', 'Address of the recipient on Ethereum')
+    .addParam('amount', 'Amount (wei) to transfer', 0, types.int)
+    .addParam('fee', 'Fee (wei) for the transfer', 0, types.int)
+    .addOptionalParam('nearJsonRpc', 'Near JSON RPC address (default: "https://rpc.testnet.near.org/"', 'https://rpc.testnet.near.org/')
+    .addOptionalParam('nearNetwork', 'Near network (default: default)', 'default')
+    .setAction(async taskArgs => {
+        if (taskArgs.amount <= 0 || taskArgs.fee > taskArgs.amount) {
+            throw new Error(
+                'The amount to transfer should be greater than 0 and bigger than fee'
+            );
+        }
+        const { nearWithdrawToEth } = require('./scripts/near_withdraw_to_eth');
+        await nearWithdrawToEth(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork, taskArgs.ethRecipient, taskArgs.amount, taskArgs.fee);
+    });
+
+task('near-finalise-withdraw-to-eth', 'Generates the receipt proof for the given TX hash and submits it to Ethereum to finalise the withdraw')
+    .addParam('receiptId', 'Withdrawal success receipt ID')
+    .addParam('nearAccount', 'Near account that will relay the transaction')
+    .addOptionalParam('nearJsonRpc', 'Near JSON RPC address (default: "https://rpc.testnet.near.org/"', 'https://rpc.testnet.near.org/')
+    .addOptionalParam('nearNetwork', 'Near network (default: default)', 'default')
+    .setAction(async taskArgs => {
+        const { nearFinaliseWithdrawToEth } = require('./scripts/near_finalise_withdraw');
+        await nearFinaliseWithdrawToEth(hre.ethers.provider, taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork, taskArgs.receiptId);
     });
 
 module.exports = {

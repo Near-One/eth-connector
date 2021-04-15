@@ -80,7 +80,7 @@ Run: `$ make eth-finalise-deposit-to-near TX_HASH=<DEPOSIT_TX_HASH_HERE> NEAR_AC
 Send a `withdraw` transaction to the bridgedETH contract to withdraw `AMOUNT` bridgedETH (wei) from the `NEAR_ACCOUNT` and
 transfer the appropriate amount of ETH (wei) to `ETH_RECIPIENT` (Specify without '0x' prefix).
 During the execution, the contract will issue an execution outcome, which would be used during finalisation step to contruct the proof for the EthCustodian in Ethereum. <br/>
-Run: `$ make near-withdraw-from NEAR_ACCOUNT=<YOUR_NEAR_ACCOUNT_HERE> ETH_RECIPIENT=<ETH_ADDRESS_OF_RECIPIENT_HERE> AMOUNT=<WITHDRAW_AMOUNT_HERE>`
+Run: `$ make near-withdraw-to-eth NEAR_ACCOUNT=<YOUR_NEAR_ACCOUNT_HERE> ETH_RECIPIENT=<ETH_ADDRESS_OF_RECIPIENT_HERE> AMOUNT=<WITHDRAW_AMOUNT_HERE>` FEE=<WITHDRAW_FEE_HERE>
 
 3. **Wait sufficiently long**
 This approximately takes 10 minutes for the Ropsten bridge deployment.
@@ -90,7 +90,7 @@ First metric `near_bridge_near2eth_client_height` should become higher than the 
 4. **Finalise withdraw to Eth**
 Call withdraw in Near blockchain to finalise the deposit transaction with the given `TX_HASH`. You can find `TX_HASH` in the output of the previous step.
 Send a `withdraw` transaction to the EthCustodian contract. After bridge syncing we are able to prove the fact of withdrawal transaction on NEAR to the EthCustodian contract. <br/>
-Run: `$ make near-finalise-withdraw TX_HASH=<WITHDRAW_TX_HASH_HERE>`
+Run: `$ make near-finalise-withdraw-to-eth TX_HASH=<WITHDRAW_TX_HASH_HERE>`
 
 ## Ethereum -> Near transfer (ETH -> nETH (native ETH in Near-EVM))
 WIP

@@ -42,9 +42,7 @@ async function ethFinaliseDepositToNear (depositTxHash, nearAccount, nearRecipie
     const gas_limit = new BN('300000000000000'); // Gas limit
     const payment_for_storage = new BN('100000000000000000000').mul(new BN('600')); // Attached payment to pay for the storage
     console.log(`Submitting deposit transaction from: ${nearAccount} account`);
-    await connector.deposit({'proof': proof, 'gas': gas_limit});//, payment_for_storage});
-    //const proofJson = JSON.stringify(proof);
-    //await connector.deposit( proofJson );
+    await connector.deposit({'proof': proof});//, 'gas': gas_limit, 'storage': payment_for_storage});
 
     if (nearRecipient) {
         const finalBalance = await connector.ft_balance_of({ 'account_id': nearRecipient });

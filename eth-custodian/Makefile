@@ -1,15 +1,16 @@
 .PHONY: compile test
 
 NETWORK=ropsten
-VERSION=v01
+VERSION=v02
 NEAR_EVM_ACCOUNT=${VERSION}.kconnector.testnet
 NEAR_ACCOUNT=
 RPC_ENDPOINT=https://rpc.testnet.near.org
 ETH_RECIPIENT=
-AMOUNT=
-FEE=
+AMOUNT=0
+FEE=0
 PROOF=
 TX_HASH=
+RECEIPT_ID=
 
 NEAR_RECIPIENT=${NEAR_ACCOUNT}
 
@@ -38,11 +39,18 @@ eth-finalise-deposit-to-near:
 	yarn hardhat --network ${NETWORK} eth-finalise-deposit-to-near --tx-hash ${TX_HASH} --near-account ${NEAR_ACCOUNT}
 
 near-get-balance-of:
-	near view ${NEAR_EVM_ACCOUNT} ft_balance_of --account-id ${NEAR_ACCOUNT} '{ "account_id": "${NEAR_ACCOUNT}" }'
+	near view ${NEAR_EVM_ACCOUNT} ft_balance_of '{ "account_id": "${NEAR_ACCOUNT}" }'
 
-near-withdraw-from:
+near-call-withdraw-from:
 	near call ${NEAR_EVM_ACCOUNT} withdraw --account-id ${NEAR_ACCOUNT} \
 		'{ "recipient_id": "${ETH_RECIPIENT}", "amount": "${AMOUNT}" }'
+
+near-withdraw-to-eth:
+	yarn hardhat --network ${NETWORK} near-withdraw-to-eth \
+		--near-account ${NEAR_ACCOUNT} --eth-recipient ${ETH_RECIPIENT} --amount ${AMOUNT} --fee ${FEE}
+
+near-finalise-withdraw-to-eth:
+	yarn hardhat --network ${NETWORK} near-finalise-withdraw-to-eth --receipt-id ${RECEIPT_ID} --near-account ${NEAR_ACCOUNT}
 
 near-get-tx-status:
 	/usr/bin/http post ${RPC_ENDPOINT} jsonrpc=2.0 method=EXPERIMENTAL_tx_status \
@@ -54,6 +62,6 @@ near-deposit:
 near-deposit-to-nostd:
 	near call ${NEAR_EVM_ACCOUNT} deposit '${PROOF}' --account-id ${NEAR_ACCOUNT} --gas 300000000000000
 
-near-withdraw-from-nostd:
+near-call-withdraw-from-nostd:
 	near call ${NEAR_EVM_ACCOUNT} withdraw --account-id ${NEAR_ACCOUNT} \
 		'{ "recipient_id": "${ETH_RECIPIENT}", "amount": ${AMOUNT} }'

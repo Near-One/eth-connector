@@ -56,11 +56,16 @@ async function findProof (depositTxHash) {
     const blockTo = receipt.blockNumber;
     const depositedEvents = await ethCustodian.queryFilter(eventFilter, blockFrom, blockTo);
 
+    depositedEvents.forEach(element => console.log(`Deposit event: ${JSON.stringify(element)}`));
     const log = depositedEvents
         .filter(depositedEvent => depositedEvent.transactionHash == depositTxHash)[0];
 
+    const logIndexInArray = receipt.logs.findIndex(
+        l => l.logIndex === log.logIndex
+    );
+
     const formattedProof = new BorshProof({
-        log_index: log.logIndex,
+        log_index: logIndexInArray,
         log_entry_data: Array.from(Log.fromObject(log).serialize()),
         receipt_index: proof.txIndex,
         receipt_data: Array.from(Receipt.fromObject(receipt).serialize()),
@@ -70,7 +75,7 @@ async function findProof (depositTxHash) {
 
     const skipBridgeCall = false;
     const args = {
-        log_index: log.logIndex,
+        log_index: logIndexInArray,
         log_entry_data: formattedProof.log_entry_data,
         receipt_index: formattedProof.receipt_index,
         receipt_data: formattedProof.receipt_data,
