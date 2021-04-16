@@ -11,7 +11,8 @@ const nearAPI = require('near-api-js');
 const keyStore = new nearAPI.keyStores.UnencryptedFileSystemKeyStore(NEAR_KEY_STORE_PATH);
 
 async function ethFinaliseDepositToNear (depositTxHash, nearAccount, nearRecipient, nearJsonRpc, nearNetwork) {
-    const proof = await Proof.findProof(depositTxHash);
+    const depositedToNear = true;
+    const proof = await Proof.findProof(depositTxHash, depositedToNear);
     console.log(`The proof was successfully found for txHash=${depositTxHash}`);
 
     // Init NEAR API

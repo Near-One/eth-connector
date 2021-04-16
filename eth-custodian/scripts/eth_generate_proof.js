@@ -33,7 +33,7 @@ const proofBorshSchema = new Map([
 
 const filenamePrefix = 'proofdata_' + ethereumConfig.nearEvmAccount;
 
-async function findProof (depositTxHash) {
+async function findProof (depositTxHash, depositedToNear) {
     const ethCustodianContractFactory = await hre.ethers.getContractFactory('EthCustodian');
     const ethCustodian = await ethCustodianContractFactory.attach(ethereumConfig.ethConnectorAddress);
 
@@ -51,7 +51,9 @@ async function findProof (depositTxHash) {
         receipt.transactionIndex
     );
 
-    const eventFilter = ethCustodian.filters.DepositedToNear(null);
+    const eventFilter = depositedToNear
+        ? ethCustodian.filters.DepositedToNear(null)
+        : ethCustodian.filters.DepositedToEVM(null);
     const blockFrom = receipt.blockNumber;
     const blockTo = receipt.blockNumber;
     const depositedEvents = await ethCustodian.queryFilter(eventFilter, blockFrom, blockTo);

@@ -29,11 +29,14 @@ eth-deploy-contracts:
 eth-deposit-to-near:
 	yarn hardhat --network ${NETWORK} eth-deposit-to-near --near-recipient ${NEAR_RECIPIENT} --amount ${AMOUNT} --fee ${FEE}
 
+eth-deposit-to-evm:
+	yarn hardhat --network ${NETWORK} eth-deposit-to-evm --eth-recipient-on-near ${ETH_RECIPIENT} --amount ${AMOUNT} --fee ${FEE}
+
 eth-withdraw:
 	yarn hardhat run --network ${NETWORK} scripts/eth_withdraw.js
 
 eth-generate-deposit-proof:
-	mkdir -p build/proofs && yarn hardhat --network ${NETWORK} eth-generate-deposit-proof --tx-hash ${TX_HASH}
+	mkdir -p build/proofs && yarn hardhat --network ${NETWORK} eth-generate-deposit-proof --tx-hash ${TX_HASH} --deposited-to-near ${DEPOSITED_TO_NEAR}
 
 eth-finalise-deposit-to-near:
 	yarn hardhat --network ${NETWORK} eth-finalise-deposit-to-near --tx-hash ${TX_HASH} --near-account ${NEAR_ACCOUNT}

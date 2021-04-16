@@ -18,15 +18,32 @@ task('eth-deposit-to-near', 'Deposits the provided `amount` (wei) having `fee`(w
                 'The amount to transfer should be greater than 0 and bigger than fee'
             );
         }
-        const { ethDepositToNear } = require('./scripts/eth_deposit');
-        await ethDepositToNear(hre.ethers.provider, taskArgs.nearRecipient, taskArgs.amount, taskArgs.fee);
+        const { ethDeposit } = require('./scripts/eth_deposit');
+        const depositToNear = true;
+        await ethDeposit(hre.ethers.provider, depositToNear, taskArgs.nearRecipient, taskArgs.amount, taskArgs.fee);
+    });
+
+task('eth-deposit-to-evm', 'Deposits the provided `amount` (wei) having `fee`(wei) to ETH Custodian to transfer it to Near EVM')
+    .addParam('ethRecipientOnNear', 'AccountID of recipient on Near')
+    .addParam('amount', 'Amount (wei) to transfer', 0, types.int)
+    .addParam('fee', 'Fee (wei) for the transfer', 0, types.int)
+    .setAction(async taskArgs => {
+        if (taskArgs.amount <= 0 || taskArgs.fee > taskArgs.amount) {
+            throw new Error(
+                'The amount to transfer should be greater than 0 and bigger than fee'
+            );
+        }
+        const { ethDeposit } = require('./scripts/eth_deposit');
+        const depositToNear = false;
+        await ethDeposit(hre.ethers.provider, depositToNear, taskArgs.ethRecipientOnNear, taskArgs.amount, taskArgs.fee);
     });
 
 task('eth-generate-deposit-proof', 'Generates deposit proof for the given TX hash')
     .addParam('txHash', 'transaction hash')
+    .addParam('depositedToNear', 'whether the transaction was deposited to Near or not', true, types.boolean)
     .setAction(async taskArgs => {
         const Proof = require('./scripts/eth_generate_proof');
-        await Proof.findProof(taskArgs.txHash);
+        await Proof.findProof(taskArgs.txHash, taskArgs.depositedToNear);
     });
 
 task('eth-finalise-deposit-to-near', 'Generates the deposit proof for the given TX hash and submits it to Near to finalise the deposit')
