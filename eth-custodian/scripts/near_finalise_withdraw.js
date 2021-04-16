@@ -21,6 +21,7 @@ const keyStore = new nearAPI.keyStores.UnencryptedFileSystemKeyStore(NEAR_KEY_ST
 async function nearFinaliseWithdrawToEth(provider, nearAccount, nearJsonRpc, nearNetwork, receiptId) {
     console.log(`Finalising withdraw having receipt: ${receiptId}`);
     console.log(`--------------------------------------------------------------------------------`)
+    console.log(`Eth Custodian address: ${ethereumConfig.ethConnectorAddress}`);
 
     const signerAccount = new ethers.Wallet(process.env.ROPSTEN_PRIVATE_KEY, provider);
     const client = new ethers.Contract(ethereumConfig.clientAddress, clientAbi, signerAccount);
@@ -62,7 +63,7 @@ async function nearFinaliseWithdrawToEth(provider, nearAccount, nearJsonRpc, nea
         return;
     }
 
-    console.log(`Proof: ${JSON.stringify(proof)}`);
+    //console.log(`Proof: ${JSON.stringify(proof)}`);
     const borshProof = borshifyOutcomeProof(proof);
 
     const accountBalanceBefore = await signerAccount.getBalance();
@@ -76,13 +77,13 @@ async function nearFinaliseWithdrawToEth(provider, nearAccount, nearJsonRpc, nea
         withdrawTx = await ethCustodian.withdraw(borshProof, clientHeight, options);
     }
     catch (e) {
-        console.log('Because of some reason transaction was not applied as expected. Perhaps the execution outcome was already used.');
+        console.log('Because of some reason transaction was not applied as expected.');
         console.log(e);
         return;
     }
     if (!(await provider.waitForTransaction(withdrawTx.hash)).status) {
 
-        console.log('Because of some reason transaction was not applied as expected');
+        console.log('Because of some reason transaction was not applied as expected. Perhaps the execution outcome was already used.');
         return;
     }
     console.log(`Withdraw transaction completed. Hash: ${withdrawTx.hash}`);

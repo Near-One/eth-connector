@@ -62,6 +62,7 @@ task('near-withdraw-to-eth', 'Withdraws the provided `amount` (wei) having `fee`
     .addParam('ethRecipient', 'Address of the recipient on Ethereum')
     .addParam('amount', 'Amount (wei) to transfer', 0, types.int)
     .addParam('fee', 'Fee (wei) for the transfer', 0, types.int)
+    .addOptionalParam('noStd', 'Set this if you are using no-std version of the connector (default: false)', false, types.boolean)
     .addOptionalParam('nearJsonRpc', 'Near JSON RPC address (default: "https://rpc.testnet.near.org/"', 'https://rpc.testnet.near.org/')
     .addOptionalParam('nearNetwork', 'Near network (default: default)', 'default')
     .setAction(async taskArgs => {
@@ -71,7 +72,7 @@ task('near-withdraw-to-eth', 'Withdraws the provided `amount` (wei) having `fee`
             );
         }
         const { nearWithdrawToEth } = require('./scripts/near_withdraw_to_eth');
-        await nearWithdrawToEth(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork, taskArgs.ethRecipient, taskArgs.amount, taskArgs.fee);
+        await nearWithdrawToEth(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork, taskArgs.noStd, taskArgs.ethRecipient, taskArgs.amount, taskArgs.fee);
     });
 
 task('near-finalise-withdraw-to-eth', 'Generates the receipt proof for the given TX hash and submits it to Ethereum to finalise the withdraw')

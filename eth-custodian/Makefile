@@ -11,6 +11,7 @@ FEE=0
 PROOF=
 TX_HASH=
 RECEIPT_ID=
+NO_STD=false
 
 NEAR_RECIPIENT=${NEAR_ACCOUNT}
 
@@ -50,7 +51,7 @@ near-call-withdraw-from:
 
 near-withdraw-to-eth:
 	yarn hardhat --network ${NETWORK} near-withdraw-to-eth \
-		--near-account ${NEAR_ACCOUNT} --eth-recipient ${ETH_RECIPIENT} --amount ${AMOUNT} --fee ${FEE}
+		--near-account ${NEAR_ACCOUNT} --eth-recipient ${ETH_RECIPIENT} --amount ${AMOUNT} --fee ${FEE} --no-std ${NO_STD}
 
 near-finalise-withdraw-to-eth:
 	yarn hardhat --network ${NETWORK} near-finalise-withdraw-to-eth --receipt-id ${RECEIPT_ID} --near-account ${NEAR_ACCOUNT}

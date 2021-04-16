@@ -10,7 +10,7 @@ const NEAR_KEY_STORE_PATH = process.env.NEAR_KEY_STORE_PATH;
 const nearAPI = require('near-api-js');
 const keyStore = new nearAPI.keyStores.UnencryptedFileSystemKeyStore(NEAR_KEY_STORE_PATH);
 
-async function nearWithdrawToEth(nearAccount, nearJsonRpc, nearNetwork, ethRecipient, amount, fee) {
+async function nearWithdrawToEth(nearAccount, nearJsonRpc, nearNetwork, nostd, ethRecipient, amount, fee) {
     console.log(`Starting the withdrawal. ETH recipient: ${ethRecipient}; amount: ${amount} wei; fee: ${fee} wei`);
     console.log(`--------------------------------------------------------------------------------`);
 
@@ -42,7 +42,7 @@ async function nearWithdrawToEth(nearAccount, nearJsonRpc, nearNetwork, ethRecip
         'withdraw',
         {
             recipient_id: ethRecipient.replace('0x', ''),
-            amount: amount.toString(),
+            amount: nostd ? amount : amount.toString(),
             //fee: fee.toString(),
         },
         new BN('300' + '0'.repeat(12)) // 300 TGas
