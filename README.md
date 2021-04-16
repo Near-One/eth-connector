@@ -10,6 +10,7 @@
 | Version | Description            | Status      | Ethereum Connector Address                 | NEAR Connector Account |
 |---------|------------------------|-------------|--------------------------------------------|------------------------|
 |   v0.1  | NEAR testnet - Ropsten | [Working](https://explorer.testnet.near.org/accounts/v01.kconnector.testnet)   | 0xE3eBE85E0c42cC59cF09a1367d2CA30B26639659 | v01.kconnector.testnet |
+|   v0.2  | NEAR testnet - Ropsten | [Working](https://explorer.testnet.near.org/accounts/v02.kconnector.testnet)   | 0x4dE5E423CA193dF67081A1BAb17d253B55d63688 | v02.kconnector.testnet |
 | no-std  | NEAR testnet - Ropsten | [Working](https://explorer.testnet.near.org/accounts/nostd-v01.kconnector.testnet)   | 0x88657f6D4c4bbDB193C2b0B78DD74cD38479f819 | nostd-v01.kconnector.testnet |
 
 # Step-by-step testing guide
