@@ -1,0 +1,6 @@
+{
+    "proverAddress": "An address of the prover contract (e.g. '0xb3df48b0ea3e91b43226fb3c5eb335b7e3d76faa')",
+    "clientAddress": "An address of the client contract (e.g. '0xb289c6e6c98644dc9f6a03c044564bc8558b6087')",
+    "nearEvmAccount": "An address of the NEAR evm account (e.g. 'v02.kconnector.testnet')",
+    "ethConnectorAddress": "An address of the ETH connector (EthCustodian) contract"
+}

@@ -6,9 +6,16 @@ import "rainbow-bridge/contracts/eth/nearbridge/contracts/Borsh.sol";
 import { INearProver, ProofKeeper } from "./ProofKeeper.sol";
 
 contract EthCustodian is ProofKeeper {
-    event Deposited (
+    event DepositedToEVM (
         address indexed sender,
         address indexed ethRecipientOnNear,
+        uint256 amount,
+        uint256 fee
+    );
+
+    event DepositedToNear (
+        address indexed sender,
+        string nearRecipient,
         uint256 amount,
         uint256 fee
     );
@@ -22,6 +29,7 @@ contract EthCustodian is ProofKeeper {
     struct BurnResult {
         uint128 amount;
         address recipient;
+        address ethCustodian;
     }
 
     /// EthCustodian is linked to the EVM on NEAR side.
@@ -34,14 +42,25 @@ contract EthCustodian is ProofKeeper {
     }
 
     /// Deposits the specified amount of provided ETH (except from the relayer's fee) into the smart contract.
-    /// `ethRecipientOnNear` - the ETH address of recipient in NEAR EVM
+    /// `ethRecipientOnNear` - the ETH address of the recipient in NEAR EVM
     /// `fee` - the amount of fee that will be paid to the near-relayer in nETH.
-    function deposit(address ethRecipientOnNear, uint256 fee)
+    function depositToEVM(address ethRecipientOnNear, uint256 fee)
         external
         payable
     {
         require(fee < msg.value, "The fee cannot be bigger than the transferred amount.");
-        emit Deposited(msg.sender, ethRecipientOnNear, msg.value, fee);
+        emit DepositedToEVM(msg.sender, ethRecipientOnNear, msg.value, fee);
+    }
+
+    /// Deposits the specified amount of provided ETH (except from the relayer's fee) into the smart contract.
+    /// `nearRecipientAccountId` - the AccountID of the recipient in NEAR
+    /// `fee` - the amount of fee that will be paid to the near-relayer in nETH.
+    function depositToNear(string memory nearRecipientAccountId, uint256 fee)
+        external
+        payable
+    {
+        require(fee < msg.value, "The fee cannot be bigger than the transferred amount.");
+        emit DepositedToNear(msg.sender, nearRecipientAccountId, msg.value, fee);
     }
 
     /// Withdraws the appropriate amount of ETH which is encoded in `proofData`
@@ -49,6 +68,8 @@ contract EthCustodian is ProofKeeper {
     {
         ProofDecoder.ExecutionStatus memory status = _parseAndConsumeProof(proofData, proofBlockHeight);
         BurnResult memory result = _decodeBurnResult(status.successValue);
+        require(result.ethCustodian == address(this),
+                "Can only withdraw coins that were expected for the current contract");
         payable(result.recipient).transfer(result.amount);
         emit Withdrawn(result.recipient, result.amount);
     }
@@ -59,9 +80,11 @@ contract EthCustodian is ProofKeeper {
         returns (BurnResult memory result)
     {
         Borsh.Data memory borshData = Borsh.from(data);
-        bytes20 recipient = borshData.decodeBytes20();
         result.amount = borshData.decodeU128();
+        bytes20 recipient = borshData.decodeBytes20();
         result.recipient = address(uint160(recipient));
+        bytes20 ethCustodian = borshData.decodeBytes20();
+        result.ethCustodian = address(uint160(ethCustodian));
     }
 
     address public admin;

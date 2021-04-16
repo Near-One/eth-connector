@@ -78,13 +78,13 @@ impl EthConnector {
     pub fn deposit(&mut self, proof: Proof) {
         let event = EthDepositedEvent::from_log_entry_data(&proof.log_entry_data);
 
-        log!(
-            "Deposit started: from {:?} ETH to {:?} NEAR with amount: {:?} and fee {:?}",
-            event.sender,
-            event.recipient,
-            event.amount,
-            event.fee
-        );
+        // log!(
+        //     "Deposit started: from {:?} ETH to {:?} NEAR with amount: {:?} and fee {:?}",
+        //     event.sender,
+        //     event.recipient,
+        //     event.amount,
+        //     event.fee
+        // );
 
         assert_eq!(
             event.eth_custodian_address,
@@ -102,10 +102,10 @@ impl EthConnector {
         let prepaid_gas = env::prepaid_gas();
         // Serialize with Borsh
         let proof_2 = proof_1.try_to_vec().unwrap();
-        log!(
-            "Deposit verify_log_entry for prover: {:?}",
-            self.prover_account,
-        );
+        // log!(
+        //     "Deposit verify_log_entry for prover: {:?}",
+        //     self.prover_account,
+        // );
         let promise0 = env::promise_create(
             self.prover_account.clone(),
             b"verify_log_entry",
@@ -141,13 +141,13 @@ impl EthConnector {
         fee: U128,
         proof: Proof,
     ) {
-        log!("Finish deposit amount: {:?}", amount);
+        // log!("Finish deposit amount: {:?}", amount);
         assert_eq!(env::promise_results_count(), 1);
         let data0: Vec<u8> = match env::promise_result(0) {
             PromiseResult::Successful(x) => x,
             _ => panic!("Promise with index 0 failed"),
         };
-        log!("Check verification_success");
+        // log!("Check verification_success");
         let verification_success: bool = bool::try_from_slice(&data0).unwrap();
         assert!(verification_success, "Failed to verify the proof");
         self.record_proof(&proof.get_key());
@@ -165,7 +165,7 @@ impl EthConnector {
     /// TODO: should be related to NEP-145
     #[private]
     fn mint(&mut self, owner_id: AccountId, amount: Balance) {
-        log!("Mint {:?} tokens for: {:?}", amount, owner_id);
+        // log!("Mint {:?} tokens for: {:?}", amount, owner_id);
 
         if self.token.accounts.get(&owner_id).is_none() {
             // TODO: NEP-145 Account Storage impelemtation nee
@@ -173,13 +173,13 @@ impl EthConnector {
             self.token.accounts.insert(&owner_id, &0);
         }
         self.token.internal_deposit(&owner_id, amount);
-        log!("Mint success");
+        // log!("Mint success");
     }
 
     /// Burn Fungible Token for account
     #[private]
     fn burn(&mut self, owner_id: AccountId, amount: Balance) {
-        log!("Burn {:?} tokens for: {:?}", amount, owner_id);
+        // log!("Burn {:?} tokens for: {:?}", amount, owner_id);
         self.token.internal_withdraw(&owner_id, amount);
     }
 
@@ -191,17 +191,16 @@ impl EthConnector {
         &mut self,
         recipient_id: AccountId,
         amount: U128,
-    ) -> (ResultType, u128, [u8; 20], [u8; 20]) {
-        log!("Start withdraw");
+    ) -> (u128, [u8; 20], [u8; 20]) {
+        // log!("Start withdraw");
         let recipient_address = validate_eth_address(recipient_id);
         let amount: Balance = amount.into();
         // Burn tokens to recipient
         self.burn(env::predecessor_account_id(), amount);
         (
-            ResultType::Withdraw,
             amount,
-            self.eth_custodian_address,
             recipient_address,
+            self.eth_custodian_address,
         )
     }
 

@@ -7,8 +7,9 @@ const { borshifyOutcomeProof } = require('rainbow-bridge-lib/rainbow/borshify-pr
 const SCHEMA = {
   'Withdrawn': {
     kind: 'struct', fields: [
-      ['recipient', [20]],
       ['amount', 'u128'],
+      ['recipient', [20]],
+      ['ethCustodian', [20]],
     ]
   }
 };
@@ -21,7 +22,7 @@ describe('ProofKeeper contract', () => {
     let ethRecipient;
     let minBlockAcceptanceHeight;
 
-    const nearProofProducerAccount = Buffer.from('evm.near');
+    const nearProofProducerAccount = Buffer.from('v1.eth-connector.testnet');
 
     beforeEach(async () => {
         [ethRecipient] = await ethers.getSigners();
@@ -57,15 +58,16 @@ describe('ProofKeeper contract', () => {
     });
 
     describe('Parse and Consume proof', () => {
-        let proof = require('./proof_template.json');
+        let proof = require('./proof_template_from_testnet.json');
         let proofBlockHeight;
         let serializedProof;
 
         beforeEach(async() => {
             let amount = 1000;
             proof.outcome_proof.outcome.status.SuccessValue = serialize(SCHEMA, 'Withdrawn', {
-                recipient: ethers.utils.arrayify(ethRecipient.address),
                 amount: amount,
+                recipient: ethers.utils.arrayify(ethRecipient.address),
+                ethCustodian: ethers.utils.arrayify("0xabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"),
             }).toString('base64');
             proofBlockHeight = 1099
 
@@ -121,7 +123,7 @@ describe('ProofKeeper contract', () => {
             )
                 .to
                 .be
-                .revertedWith('Can only unlock tokens from the linked proof producer on Near blockchain');
+                .revertedWith('Can only withdraw coins from the linked proof producer on Near blockchain');
         });
     });
 });
