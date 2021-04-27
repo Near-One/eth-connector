@@ -1,6 +1,6 @@
 // Sources flattened with hardhat v2.0.10 https://hardhat.org
 
-// File @openzeppelin/contracts/math/SafeMath.sol@v3.4.0
+// File @openzeppelin/contracts/math/SafeMath.sol@v3.4.1
 
 
 pragma solidity >=0.6.0 <0.8.0;

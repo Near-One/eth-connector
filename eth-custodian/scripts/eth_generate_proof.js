@@ -52,9 +52,7 @@ async function findProof (depositTxHash, depositedToNear) {
     );
 
     console.log(`Depositing to NEAR: ${depositedToNear}`)
-    const eventFilter = depositedToNear
-        ? ethCustodian.filters.DepositedToNear(null)
-        : ethCustodian.filters.DepositedToEVM(null);
+    const eventFilter = ethCustodian.filters.Deposited(null);
     const blockFrom = receipt.blockNumber;
     const blockTo = receipt.blockNumber;
     const depositedEvents = await ethCustodian.queryFilter(eventFilter, blockFrom, blockTo);
