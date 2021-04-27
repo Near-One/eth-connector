@@ -43,8 +43,8 @@
 
 3. Create `.env` file inside `eth-custodian` directory: `$ touch .env`.
 
-4. Add to the file your Alchemy API key:
-`$ echo "ALCHEMY_API_KEY=YOUR_ALCHEMY_API_KEY_HERE" >> .env` <br/>
+4. Add to the file your RPC endpoint (with or without API key):
+`$ echo "WEB3_RPC_ENDPOINT=YOUR_WEB3_RPC_ENDPOINT_HERE" >> .env` <br/>
 RPC access can be easily gained from [Alchemy](https://www.alchemyapi.io/).
 
 5. Add to the file Ropsten Private key:
@@ -53,6 +53,9 @@ RPC access can be easily gained from [Alchemy](https://www.alchemyapi.io/).
 6. Add path to the Near credentials (e.g. this usually will be at `~/.near-credentials` on Linux <br/>
 and `/Users/<user>/.near-credentials` on MacOS: <br/>
 `$ echo "NEAR_KEY_STORE_PATH=PATH_TO_YOUR_NEAR_CREDENTIALS_HERE" >> .env`
+
+7. Compile Ethereum contracts with: <br/>
+`$ make compile`
 
 ## Ethereum -> Near transfer (ETH -> bridgedETH (NEP-141))
 1. Go to _eth-custodian_ directory: `$ cd eth-custodian`.

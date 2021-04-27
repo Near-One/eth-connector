@@ -5,7 +5,7 @@ require('dotenv').config();
 require('@nomiclabs/hardhat-waffle');
 require('hardhat-gas-reporter');
 
-const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY;
+const WEB3_RPC_ENDPOINT = process.env.WEB3_RPC_ENDPOINT;
 const ROPSTEN_PRIVATE_KEY = process.env.ROPSTEN_PRIVATE_KEY;
 
 task('eth-deposit-to-near', 'Deposits the provided `amount` (wei) having `fee`(wei) to ETH Custodian to transfer it to Near')
@@ -105,7 +105,7 @@ module.exports = {
   },
   networks: {
     ropsten: {
-      url: `https://eth-ropsten.alchemyapi.io/v2/${ALCHEMY_API_KEY}`,
+      url: `${WEB3_RPC_ENDPOINT}`,
       accounts: [`0x${ROPSTEN_PRIVATE_KEY}`]
     }
   },
