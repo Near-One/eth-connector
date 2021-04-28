@@ -40,10 +40,9 @@ task('eth-deposit-to-evm', 'Deposits the provided `amount` (wei) having `fee`(we
 
 task('eth-generate-deposit-proof', 'Generates deposit proof for the given TX hash')
     .addParam('txHash', 'transaction hash')
-    .addParam('depositedToNear', 'whether the transaction was deposited to Near or not', true, types.boolean)
     .setAction(async taskArgs => {
         const Proof = require('./scripts/eth_generate_proof');
-        await Proof.findProof(taskArgs.txHash, taskArgs.depositedToNear);
+        await Proof.findProof(taskArgs.txHash);
     });
 
 task('eth-finalise-deposit-to-near', 'Generates the deposit proof for the given TX hash and submits it to Near to finalise the deposit')
@@ -54,7 +53,20 @@ task('eth-finalise-deposit-to-near', 'Generates the deposit proof for the given 
     .addOptionalParam('nearNetwork', 'Near network (default: default)', 'default')
     .setAction(async taskArgs => {
         const { ethFinaliseDepositToNear } = require('./scripts/eth_finalise_deposit_to_near');
-        await ethFinaliseDepositToNear(taskArgs.txHash, taskArgs.nearAccount, taskArgs.nearRecipient, taskArgs.nearJsonRpc, taskArgs.nearNetwork);
+        const depositToNear = false;
+        await ethFinaliseDepositToNear(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork, depositToNear, taskArgs.txHash, taskArgs.nearRecipient);
+    });
+
+task('eth-finalise-deposit-to-evm', 'Generates the deposit proof for the given TX hash and submits it to Near to finalise the deposit')
+    .addParam('txHash', 'transaction hash')
+    .addParam('nearAccount', 'Near account that will submit the deposit transaction to Near')
+    .addOptionalParam('nearRecipient', 'Near account that will receive the transferred amount (Used for verbose purposes to get detailed information)', undefined)
+    .addOptionalParam('nearJsonRpc', 'Near JSON RPC address (default: "https://rpc.testnet.near.org/"', 'https://rpc.testnet.near.org/')
+    .addOptionalParam('nearNetwork', 'Near network (default: default)', 'default')
+    .setAction(async taskArgs => {
+        const { ethFinaliseDepositToNear } = require('./scripts/eth_finalise_deposit_to_near');
+        const depositToNear = false;
+        await ethFinaliseDepositToNear(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork, depositToNear, taskArgs.txHash, taskArgs.nearRecipient);
     });
 
 task('near-withdraw-to-eth', 'Withdraws the provided `amount` (wei) having `fee`(wei) from `nearAccount` to `ethRecipient` to transfer it to Ethereum')
@@ -83,6 +95,15 @@ task('near-finalise-withdraw-to-eth', 'Generates the receipt proof for the given
     .setAction(async taskArgs => {
         const { nearFinaliseWithdrawToEth } = require('./scripts/near_finalise_withdraw');
         await nearFinaliseWithdrawToEth(hre.ethers.provider, taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork, taskArgs.receiptId);
+    });
+
+task('aurora-init-eth-connector', 'Initializes the Eth connector in the Aurora contract')
+    .addParam('nearAccount', 'Near account that will submit the deposit transaction to Near')
+    .addOptionalParam('nearJsonRpc', 'Near JSON RPC address (default: "https://rpc.testnet.near.org/"', 'https://rpc.testnet.near.org/')
+    .addOptionalParam('nearNetwork', 'Near network (default: default)', 'default')
+    .setAction(async taskArgs => {
+        const { auroraInitEthConnector } = require('./scripts/aurora_init_eth_connector');
+        await auroraInitEthConnector(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork);
     });
 
 module.exports = {

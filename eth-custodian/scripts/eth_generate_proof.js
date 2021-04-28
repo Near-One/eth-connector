@@ -26,14 +26,15 @@ const proofBorshSchema = new Map([
       ['receipt_index', 'u64'],
       ['receipt_data', ['u8']],
       ['header_data', ['u8']],
-      ['proof', [['u8']]]
+      ['proof', [['u8']]],
+      ['skip_bridge_call', 'u8']
     ]
   }]
 ]);
 
 const filenamePrefix = 'proofdata_' + ethereumConfig.nearEvmAccount;
 
-async function findProof (depositTxHash, depositedToNear) {
+async function findProof (depositTxHash, shouldBorshifyProof=false) {
     const ethCustodianContractFactory = await hre.ethers.getContractFactory('EthCustodian');
     const ethCustodian = await ethCustodianContractFactory.attach(ethereumConfig.ethConnectorAddress);
 
@@ -51,7 +52,6 @@ async function findProof (depositTxHash, depositedToNear) {
         receipt.transactionIndex
     );
 
-    console.log(`Depositing to NEAR: ${depositedToNear}`)
     const eventFilter = ethCustodian.filters.Deposited(null);
     const blockFrom = receipt.blockNumber;
     const blockTo = receipt.blockNumber;
@@ -65,16 +65,17 @@ async function findProof (depositTxHash, depositedToNear) {
         l => l.logIndex === log.logIndex
     );
 
+    const skipBridgeCall = false;
     const formattedProof = new BorshProof({
         log_index: logIndexInArray,
         log_entry_data: Array.from(Log.fromObject(log).serialize()),
         receipt_index: proof.txIndex,
         receipt_data: Array.from(Receipt.fromObject(receipt).serialize()),
         header_data: Array.from(proof.header_rlp),
-        proof: Array.from(proof.receiptProof).map(utils.rlp.encode).map(b => Array.from(b))
+        proof: Array.from(proof.receiptProof).map(utils.rlp.encode).map(b => Array.from(b)),
+        skip_bridge_call: skipBridgeCall,
     });
 
-    const skipBridgeCall = false;
     const args = {
         log_index: logIndexInArray,
         log_entry_data: formattedProof.log_entry_data,
@@ -90,7 +91,16 @@ async function findProof (depositTxHash, depositedToNear) {
     await fs.writeFile(file, JSON.stringify(args))
     console.log(`Proof has been successfully generated and saved at ${file}`);
 
-    //return serializeBorsh(proofBorshSchema, formattedProof);
+    if (shouldBorshifyProof) {
+        const serializedProof = serializeBorsh(proofBorshSchema, formattedProof);
+
+        const borshFile = Path.join(path, `${filenamePrefix}_${args.receipt_index}_${args.log_index}_${depositTxHash}.borsh`)
+        await fs.writeFile(file, serializedProof);
+        console.log(`Borsh-serialized proof has been successfully generated and saved at ${borshFile}`);
+
+        return serializedProof;
+    }
+
     return args;
 }
 

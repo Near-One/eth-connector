@@ -1,7 +1,7 @@
 .PHONY: compile test
 
 NETWORK=ropsten
-VERSION=v02
+VERSION=a01
 NEAR_EVM_ACCOUNT=${VERSION}.kconnector.testnet
 NEAR_ACCOUNT=
 RPC_ENDPOINT=https://rpc.testnet.near.org
@@ -37,7 +37,7 @@ eth-withdraw:
 	yarn hardhat run --network ${NETWORK} scripts/eth_withdraw.js
 
 eth-generate-deposit-proof:
-	mkdir -p build/proofs && yarn hardhat --network ${NETWORK} eth-generate-deposit-proof --tx-hash ${TX_HASH} --deposited-to-near ${DEPOSITED_TO_NEAR}
+	mkdir -p build/proofs && yarn hardhat --network ${NETWORK} eth-generate-deposit-proof --tx-hash ${TX_HASH}
 
 eth-finalise-deposit-to-near:
 	yarn hardhat --network ${NETWORK} eth-finalise-deposit-to-near --tx-hash ${TX_HASH} --near-account ${NEAR_ACCOUNT}
@@ -69,3 +69,6 @@ near-deposit-to-nostd:
 near-call-withdraw-from-nostd:
 	near call ${NEAR_EVM_ACCOUNT} withdraw --account-id ${NEAR_ACCOUNT} \
 		'{ "recipient_id": "${ETH_RECIPIENT}", "amount": ${AMOUNT} }'
+
+aurora-init-eth-connector:
+	yarn hardhat --network ${NETWORK} aurora-init-eth-connector --near-account ${NEAR_ACCOUNT}

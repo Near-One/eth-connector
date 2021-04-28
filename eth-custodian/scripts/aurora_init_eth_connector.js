@@ -1,6 +1,14 @@
-const ethereumConfig = require('./json/ethereum-config.json');
+require('dotenv').config();
 
+const ethereumConfig = require('./json/ethereum-config.json');
+const nearAPI = require('near-api-js');
 const { serialize: serializeBorsh } = require('near-api-js/lib/utils/serialize');
+
+const NEAR_KEY_STORE_PATH = process.env.NEAR_KEY_STORE_PATH;
+// NEAR keystore init
+const keyStore = new nearAPI.keyStores.UnencryptedFileSystemKeyStore(NEAR_KEY_STORE_PATH);
+
+const PROVER_ACCOUNT_TESTNET = 'prover.ropsten.testnet';
 
 class BorshInitEthConnectorArgs {
   constructor (initArgs) {
@@ -9,22 +17,16 @@ class BorshInitEthConnectorArgs {
 };
 
 const initEthConnectorArgsBorshSchema = new Map([
-  [BorshInitCallArgs, {
+  [BorshInitEthConnectorArgs, {
     kind: 'struct',
     fields: [
-      ['prover_account', 'AccountId'],
-      ['eth_custodian_address', ['AccountId']],
+      ['prover_account', 'string'],
+      ['eth_custodian_address', 'string'],
     ]
   }]
 ]);
 
-const PROVER_ACCOUNT_TESTNET = 'prover.ropsten.testnet';
-
-// NEAR keystore init
-const nearAPI = require('near-api-js');
-const keyStore = new nearAPI.keyStores.UnencryptedFileSystemKeyStore(NEAR_KEY_STORE_PATH);
-
-async function evmInitEthConnector (nearAccount, nearJsonRpc, nearNetwork) {
+async function auroraInitEthConnector (nearAccount, nearJsonRpc, nearNetwork) {
     // Init NEAR API
     const near = await nearAPI.connect({
         deps: {
@@ -46,13 +48,11 @@ async function evmInitEthConnector (nearAccount, nearJsonRpc, nearNetwork) {
 
     const formattedArgs = new BorshInitEthConnectorArgs({
         prover_account: PROVER_ACCOUNT_TESTNET,
-        eth_custodian_address: ethereumConfig.ethConnectorAddress,
+        eth_custodian_address: ethereumConfig.ethConnectorAddress.replace('0x', ''),
     });
     const borshCallArgs = serializeBorsh(initEthConnectorArgsBorshSchema, formattedArgs);
 
     await aurora.new_eth_connector(borshCallArgs);
-    console.log('Gotcha!');
 }
 
-exports.evmInitEthConnector = evmInitEthConnector;
-
+exports.auroraInitEthConnector = auroraInitEthConnector;
