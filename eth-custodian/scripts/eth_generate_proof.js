@@ -26,8 +26,7 @@ const proofBorshSchema = new Map([
       ['receipt_index', 'u64'],
       ['receipt_data', ['u8']],
       ['header_data', ['u8']],
-      ['proof', [['u8']]],
-      ['skip_bridge_call', 'u8']
+      ['proof', [['u8']]]
     ]
   }]
 ]);
@@ -65,7 +64,6 @@ async function findProof (depositTxHash, shouldBorshifyProof=false) {
         l => l.logIndex === log.logIndex
     );
 
-    const skipBridgeCall = false;
     const formattedProof = new BorshProof({
         log_index: logIndexInArray,
         log_entry_data: Array.from(Log.fromObject(log).serialize()),
@@ -73,7 +71,6 @@ async function findProof (depositTxHash, shouldBorshifyProof=false) {
         receipt_data: Array.from(Receipt.fromObject(receipt).serialize()),
         header_data: Array.from(proof.header_rlp),
         proof: Array.from(proof.receiptProof).map(utils.rlp.encode).map(b => Array.from(b)),
-        skip_bridge_call: skipBridgeCall,
     });
 
     const args = {
@@ -83,7 +80,6 @@ async function findProof (depositTxHash, shouldBorshifyProof=false) {
         receipt_data: formattedProof.receipt_data,
         header_data: formattedProof.header_data,
         proof: formattedProof.proof,
-        skip_bridge_call: skipBridgeCall
     }
 
     const path = "build/proofs";
