@@ -48,13 +48,13 @@ task('eth-generate-deposit-proof', 'Generates deposit proof for the given TX has
 task('near-finalise-deposit-from-eth', 'Generates the deposit proof for the given Ethereum TX hash and submits it to Near to finalise the deposit')
     .addParam('txHash', 'transaction hash')
     .addParam('nearAccount', 'Near account that will submit the deposit transaction to Near')
+    .addOptionalParam('depositedToNear', 'Set this if you are depositing to Near NEP-14. Used only for balance information (default: false)', false, types.boolean)
     .addOptionalParam('nearRecipient', 'Near account that will receive the transferred amount (Used for verbose purposes to get detailed information)', undefined)
     .addOptionalParam('nearJsonRpc', 'Near JSON RPC address (default: "https://rpc.testnet.near.org/"', 'https://rpc.testnet.near.org/')
     .addOptionalParam('nearNetwork', 'Near network (default: default)', 'default')
     .setAction(async taskArgs => {
         const { nearFinaliseDepositFromEth } = require('./scripts/near_finalise_deposit_from_eth');
-        const depositedToNear = true;
-        await nearFinaliseDepositFromEth(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork, depositedToNear, taskArgs.txHash, taskArgs.nearRecipient);
+        await nearFinaliseDepositFromEth(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork, taskArgs.depositedToNear, taskArgs.txHash, taskArgs.nearRecipient);
     });
 
 task('near-withdraw-bridged-eth', 'Withdraws the provided `amount` (bridgedWei) having `fee` (bridgedWei) from `nearAccount` to `ethRecipient` to transfer it to Ethereum')

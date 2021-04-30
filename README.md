@@ -7,11 +7,9 @@
 
 ## Deployments
 
-| Version | Description            | Status      | Ethereum Connector Address                 | NEAR Connector Account |
-|---------|------------------------|-------------|--------------------------------------------|------------------------|
-|   v0.1  | NEAR testnet - Ropsten | [Working](https://explorer.testnet.near.org/accounts/v01.kconnector.testnet)   | 0xE3eBE85E0c42cC59cF09a1367d2CA30B26639659 | v01.kconnector.testnet |
-|   v0.2  | NEAR testnet - Ropsten | [Working](https://explorer.testnet.near.org/accounts/v02.kconnector.testnet)   | 0x4dE5E423CA193dF67081A1BAb17d253B55d63688 | v02.kconnector.testnet |
-| no-std  | NEAR testnet - Ropsten | [Working](https://explorer.testnet.near.org/accounts/nostd-v01.kconnector.testnet)   | 0x88657f6D4c4bbDB193C2b0B78DD74cD38479f819 | nostd-v01.kconnector.testnet |
+| Version        | Description            | Status      | Ethereum Connector Address                 | NEAR Connector Account |
+|----------------|------------------------|-------------|--------------------------------------------|------------------------|
+|   aurora-v0.1  | NEAR testnet - Ropsten | [Working](https://explorer.testnet.near.org/accounts/v01.kconnector.testnet)   | 0x4D8C60b494f02D76CC9D41F835029eC7Ff1A4881 | a01.kconnector.testnet |
 
 # Step-by-step testing guide
 
@@ -66,16 +64,16 @@ and deposit `AMOUNT` (wei) having `FEE` (wei) to `NEAR_RECIPIENT` account on Nea
 Run: `$ make eth-deposit-to-near NEAR_RECIPIENT=<ACCOUNT_ID_OF_RECIPIENT_HERE> AMOUNT=<DEPOSIT_AMOUNT_HERE> FEE=<DEPOSIT_FEE_HERE>`.
 
 3. **Wait sufficiently long**
-You need to wait for 30 confirmations for Ropsten blockchain. This is needed to achieve finality of Ropsten block, including locking transaction.
+You need to wait for 3 confirmations for Ropsten blockchain. This is needed to achieve finality of Ropsten block, including locking transaction.
 The status of syncing of the bridge can be observed [here](http://35.235.76.186:8002/metrics).
-First metric (`near_bridge_eth2near_client_block_number`) should become more than the height of a block with transaction from the step 2 at least by 30,
+First metric (`near_bridge_eth2near_client_block_number`) should become more than the height of a block with transaction from the step 2 at least by 3,
 for successfull finalisation of the transfer.
 
 4. **Finalise deposit to Near**
 Call deposit in Near blockchain to finalise the deposit transaction with the given `TX_HASH`. You can find `TX_HASH` in the output of the previous step.
 You will need to provide your `NEAR_ACCOUNT` AccountId which will be used to relay the ETH proof to the Near blockchain to mint appropriate amount of
 bridgedETH for the `NEAR_RECIPIENT` (this parameter is optional here and only serves for verbose purposes to show the balance of the recipient before and after) <br/>
-Run: `$ make eth-finalise-deposit-to-near TX_HASH=<DEPOSIT_TX_HASH_HERE> NEAR_ACCOUNT=<YOUR_NEAR_ACCOUNT_HERE> NEAR_RECIPIENT=<RECIPIENT_HERE>`
+Run: `$ make near-finalise-deposit-from-eth TX_HASH=<DEPOSIT_TX_HASH_HERE> NEAR_ACCOUNT=<YOUR_NEAR_ACCOUNT_HERE> NEAR_RECIPIENT=<RECIPIENT_HERE>`
 
 ## Near -> Ethereum transfer (bridgedETH -> ETH)
 1. Go to _eth-custodian_ directory: `$ cd eth-custodian`.
@@ -84,7 +82,7 @@ Run: `$ make eth-finalise-deposit-to-near TX_HASH=<DEPOSIT_TX_HASH_HERE> NEAR_AC
 Send a `withdraw` transaction to the bridgedETH contract to withdraw `AMOUNT` bridgedETH (wei) from the `NEAR_ACCOUNT` and
 transfer the appropriate amount of ETH (wei) to `ETH_RECIPIENT` (Specify without '0x' prefix).
 During the execution, the contract will issue an execution outcome, which would be used during finalisation step to contruct the proof for the EthCustodian in Ethereum. <br/>
-Run: `$ make near-withdraw-to-eth NEAR_ACCOUNT=<YOUR_NEAR_ACCOUNT_HERE> ETH_RECIPIENT=<ETH_ADDRESS_OF_RECIPIENT_HERE> AMOUNT=<WITHDRAW_AMOUNT_HERE>` FEE=<WITHDRAW_FEE_HERE>
+Run: `$ make near-withdraw-to-eth NEAR_ACCOUNT=<YOUR_NEAR_ACCOUNT_HERE> ETH_RECIPIENT=<ETH_ADDRESS_OF_RECIPIENT_HERE> AMOUNT=<WITHDRAW_AMOUNT_HERE> FEE=<WITHDRAW_FEE_HERE>`
 
 3. **Wait sufficiently long**
 This approximately takes 10 minutes for the Ropsten bridge deployment.
@@ -92,12 +90,29 @@ This is needed to relay NEAR block with the height higher than the block with tr
 The status of syncing of the bridge can be observed [here](http://35.235.76.186:8001/metrics).
 First metric `near_bridge_near2eth_client_height` should become higher than the block height displayed in console during the previous step.
 4. **Finalise withdraw to Eth**
-Call withdraw in Near blockchain to finalise the deposit transaction with the given `TX_HASH`. You can find `TX_HASH` in the output of the previous step.
+Call withdraw in Near blockchain to finalise the deposit transaction with the given `RECEIPT_ID`. You can find `RECEIPT_ID` in the output of the previous step.
 Send a `withdraw` transaction to the EthCustodian contract. After bridge syncing we are able to prove the fact of withdrawal transaction on NEAR to the EthCustodian contract. <br/>
-Run: `$ make near-finalise-withdraw-to-eth TX_HASH=<WITHDRAW_TX_HASH_HERE>`
+Run: `$ make eth-finalise-withdraw-from-near RECEIPT_ID=<RECEIPT_ID_FROM_STEP_2_HERE> NEAR_ACCOUNT=<YOUR_NEAR_ACCOUNT_HERE>`
 
 ## Ethereum -> Near transfer (ETH -> nETH (native ETH in Near-EVM))
-WIP
+1. Go to _eth-custodian_ directory: `$ cd eth-custodian`.
+
+2. **Transfer ETH to EthCustodian**.
+Send `depositToEVM` transaction to EthCustodian contract.  This will transfer `AMOUNT` (wei) from your account
+and deposit `AMOUNT` (wei) having `FEE` (wei) to `NEAR_RECIPIENT` account on Near. <br/>
+Run: `$ make eth-deposit-to-evm ETH_RECIPIENT=<ETH_ADDRESS_OF_RECIPIENT_IN_EVM_HERE> AMOUNT=<DEPOSIT_AMOUNT_HERE> FEE=<DEPOSIT_FEE_HERE>`.
+
+3. **Wait sufficiently long**
+You need to wait for 3 confirmations for Ropsten blockchain. This is needed to achieve finality of Ropsten block, including locking transaction.
+The status of syncing of the bridge can be observed [here](http://35.235.76.186:8002/metrics).
+First metric (`near_bridge_eth2near_client_block_number`) should become more than the height of a block with transaction from the step 2 at least by 3,
+for successfull finalisation of the transfer.
+
+4. **Finalise deposit to Near**
+Call deposit in Near blockchain to finalise the deposit transaction with the given `TX_HASH`. You can find `TX_HASH` in the output of the previous step.
+You will need to provide your `NEAR_ACCOUNT` AccountId which will be used to relay the ETH proof to the Near blockchain to mint appropriate amount of
+bridgedETH for the `NEAR_RECIPIENT` (this parameter is optional here and only serves for verbose purposes to show the balance of the recipient before and after) <br/>
+Run: `$ make near-finalise-deposit-from-eth-to-evm TX_HASH=<DEPOSIT_TX_HASH_HERE> NEAR_ACCOUNT=<YOUR_NEAR_ACCOUNT_HERE> NEAR_RECIPIENT=<RECIPIENT_HERE>`
 
 ## Near -> Ethereum transfer (nETH -> ETH)
 WIP

@@ -42,7 +42,10 @@ eth-finalise-withdraw-from-near:
 	yarn hardhat --network ${NETWORK} eth-finalise-withdraw-from-near --receipt-id ${RECEIPT_ID} --near-account ${NEAR_ACCOUNT}
 
 near-finalise-deposit-from-eth:
-	yarn hardhat --network ${NETWORK} near-finalise-deposit-from-eth --tx-hash ${TX_HASH} --near-account ${NEAR_ACCOUNT} --near-recipient ${NEAR_RECIPIENT}
+	yarn hardhat --network ${NETWORK} near-finalise-deposit-from-eth --tx-hash ${TX_HASH} --near-account ${NEAR_ACCOUNT} --near-recipient ${NEAR_RECIPIENT} --deposited-to-near true
+
+near-finalise-deposit-from-eth-to-evm:
+	yarn hardhat --network ${NETWORK} near-finalise-deposit-from-eth --tx-hash ${TX_HASH} --near-account ${NEAR_ACCOUNT}
 
 near-ft-balance-of:
 	yarn hardhat near-ft-balance-of --near-account ${NEAR_ACCOUNT}
