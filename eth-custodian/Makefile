@@ -11,7 +11,6 @@ FEE=0
 PROOF=
 TX_HASH=
 RECEIPT_ID=
-NO_STD=false
 
 NEAR_RECIPIENT=${NEAR_ACCOUNT}
 
@@ -39,34 +38,37 @@ eth-withdraw:
 eth-generate-deposit-proof:
 	mkdir -p build/proofs && yarn hardhat --network ${NETWORK} eth-generate-deposit-proof --tx-hash ${TX_HASH}
 
-eth-finalise-deposit-to-near:
-	yarn hardhat --network ${NETWORK} eth-finalise-deposit-to-near --tx-hash ${TX_HASH} --near-account ${NEAR_ACCOUNT}
+eth-finalise-withdraw-from-near:
+	yarn hardhat --network ${NETWORK} eth-finalise-withdraw-from-near --receipt-id ${RECEIPT_ID} --near-account ${NEAR_ACCOUNT}
 
-near-get-balance-of:
-	near view ${NEAR_EVM_ACCOUNT} ft_balance_of '{ "account_id": "${NEAR_ACCOUNT}" }'
+near-finalise-deposit-from-eth:
+	yarn hardhat --network ${NETWORK} near-finalise-deposit-from-eth --tx-hash ${TX_HASH} --near-account ${NEAR_ACCOUNT} --near-recipient ${NEAR_RECIPIENT}
 
-near-call-withdraw-from:
-	near call ${NEAR_EVM_ACCOUNT} withdraw --account-id ${NEAR_ACCOUNT} \
-		'{ "recipient_id": "${ETH_RECIPIENT}", "amount": "${AMOUNT}" }'
+near-ft-balance-of:
+	yarn hardhat near-ft-balance-of --near-account ${NEAR_ACCOUNT}
 
-near-withdraw-to-eth:
-	yarn hardhat --network ${NETWORK} near-withdraw-to-eth \
-		--near-account ${NEAR_ACCOUNT} --eth-recipient ${ETH_RECIPIENT} --amount ${AMOUNT} --fee ${FEE} --no-std ${NO_STD}
+near-ft-balance-of-eth:
+	yarn hardhat near-ft-balance-of-eth --near-account ${NEAR_ACCOUNT} --eth-address ${ETH_RECIPIENT}
 
-near-finalise-withdraw-to-eth:
-	yarn hardhat --network ${NETWORK} near-finalise-withdraw-to-eth --receipt-id ${RECEIPT_ID} --near-account ${NEAR_ACCOUNT}
+near-withdraw-bridged-eth:
+	yarn hardhat --network ${NETWORK} near-withdraw-bridged-eth \
+		--near-account ${NEAR_ACCOUNT} --eth-recipient ${ETH_RECIPIENT} --amount ${AMOUNT} --fee ${FEE}
 
 near-get-tx-status:
 	/usr/bin/http post ${RPC_ENDPOINT} jsonrpc=2.0 method=EXPERIMENTAL_tx_status \
 		params:='["${TX_HASH}", "${NEAR_ACCOUNT}"]' id=dontcare
 
-near-deposit:
+_near-deposit:
 	near call ${NEAR_EVM_ACCOUNT} deposit --account-id ${NEAR_ACCOUNT} --gas 300000000000000 '{"proof": ${PROOF}}'
 
-near-deposit-to-nostd:
+_near-deposit-to-nostd:
 	near call ${NEAR_EVM_ACCOUNT} deposit '${PROOF}' --account-id ${NEAR_ACCOUNT} --gas 300000000000000
 
-near-call-withdraw-from-nostd:
+_near-call-withdraw-from:
+	near call ${NEAR_EVM_ACCOUNT} withdraw --account-id ${NEAR_ACCOUNT} \
+		'{ "recipient_id": "${ETH_RECIPIENT}", "amount": "${AMOUNT}" }'
+
+_near-call-withdraw-from-nostd:
 	near call ${NEAR_EVM_ACCOUNT} withdraw --account-id ${NEAR_ACCOUNT} \
 		'{ "recipient_id": "${ETH_RECIPIENT}", "amount": ${AMOUNT} }'
 
