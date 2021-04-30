@@ -91,7 +91,7 @@ async function findProof (depositTxHash, shouldBorshifyProof=false) {
         const serializedProof = serializeBorsh(proofBorshSchema, formattedProof);
 
         const borshFile = Path.join(path, `${filenamePrefix}_${args.receipt_index}_${args.log_index}_${depositTxHash}.borsh`)
-        await fs.writeFile(file, serializedProof);
+        await fs.writeFile(borshFile, serializedProof);
         console.log(`Borsh-serialized proof has been successfully generated and saved at ${borshFile}`);
 
         return serializedProof;
