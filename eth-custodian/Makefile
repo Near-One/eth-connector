@@ -45,7 +45,7 @@ near-finalise-deposit-from-eth:
 	yarn hardhat --network ${NETWORK} near-finalise-deposit-from-eth --tx-hash ${TX_HASH} --near-account ${NEAR_ACCOUNT} --near-recipient ${NEAR_RECIPIENT} --deposited-to-near true
 
 near-finalise-deposit-from-eth-to-evm:
-	yarn hardhat --network ${NETWORK} near-finalise-deposit-from-eth --tx-hash ${TX_HASH} --near-account ${NEAR_ACCOUNT}
+	yarn hardhat --network ${NETWORK} near-finalise-deposit-from-eth --tx-hash ${TX_HASH} --near-account ${NEAR_ACCOUNT} --eth-recipient ${ETH_RECIPIENT}
 
 near-ft-balance-of:
 	yarn hardhat near-ft-balance-of --near-account ${NEAR_ACCOUNT}

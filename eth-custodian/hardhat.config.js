@@ -50,11 +50,12 @@ task('near-finalise-deposit-from-eth', 'Generates the deposit proof for the give
     .addParam('nearAccount', 'Near account that will submit the deposit transaction to Near')
     .addOptionalParam('depositedToNear', 'Set this if you are depositing to Near NEP-14. Used only for balance information (default: false)', false, types.boolean)
     .addOptionalParam('nearRecipient', 'Near account that will receive the transferred amount (Used for verbose purposes to get detailed information)', undefined)
+    .addOptionalParam('ethRecipient', 'Aurora ETH account that will receive the transferred amount (Used for verbose purposes to get detailed information)', undefined)
     .addOptionalParam('nearJsonRpc', 'Near JSON RPC address (default: "https://rpc.testnet.near.org/"', 'https://rpc.testnet.near.org/')
     .addOptionalParam('nearNetwork', 'Near network (default: default)', 'default')
     .setAction(async taskArgs => {
         const { nearFinaliseDepositFromEth } = require('./scripts/near_finalise_deposit_from_eth');
-        await nearFinaliseDepositFromEth(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork, taskArgs.depositedToNear, taskArgs.txHash, taskArgs.nearRecipient);
+        await nearFinaliseDepositFromEth(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork, taskArgs.depositedToNear, taskArgs.txHash, taskArgs.nearRecipient, taskArgs.ethRecipient);
     });
 
 task('near-withdraw-bridged-eth', 'Withdraws the provided `amount` (bridgedWei) having `fee` (bridgedWei) from `nearAccount` to `ethRecipient` to transfer it to Ethereum')
@@ -103,7 +104,7 @@ task('near-ft-balance-of-eth', 'Returns the current balance of nETH for the prov
     .setAction(async taskArgs => {
         const { nearFtBalanceOfEth } = require('./scripts/near_utils');
         const ethBalance = await nearFtBalanceOfEth(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork, taskArgs.ethAddress);
-        console.log(`Account balance of ${ethAddress}: ${hre.ethers.utils.formatEther(ethBalance)} nETH (${ethBalance} nWei)`);
+        console.log(`Account balance of ${taskArgs.ethAddress}: ${hre.ethers.utils.formatEther(ethBalance)} nETH (${ethBalance} nWei)`);
     });
 
 task('aurora-init-eth-connector', 'Initializes the Eth connector in the Aurora contract')

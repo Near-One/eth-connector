@@ -6,8 +6,6 @@ const { ethers } = require('hardhat');
 const nearAPI = require('near-api-js');
 const { serialize: serializeBorsh } = require('near-api-js/lib/utils/serialize');
 
-const { hexToBytes } = require('./misc_utils');
-
 const NEAR_KEY_STORE_PATH = process.env.NEAR_KEY_STORE_PATH;
 const keyStore = new nearAPI.keyStores.UnencryptedFileSystemKeyStore(NEAR_KEY_STORE_PATH);
 
@@ -23,15 +21,6 @@ const ftBalanceOfSchema = new Map([
     kind: 'struct',
     fields: [
       ['account_id', 'string'],
-    ]
-  }]
-]);
-
-const ftBalanceOfEthSchema = new Map([
-  [BorshArgs, {
-    kind: 'struct',
-    fields: [
-      ['address', ['u8']],
     ]
   }]
 ]);
@@ -84,15 +73,9 @@ async function nearFtBalanceOfEth(nearAccount, nearJsonRpc, nearNetwork, ethAddr
         }
     );
 
-    //console.log(`Address in bytes: ${hexToBytes(ethAddress)} len: ${hexToBytes(ethAddress).length}`);
-    const args = new BorshArgs({
-        address: hexToBytes(ethAddress.replace('0x', ''))
-    });
+    const address = ethers.utils.arrayify(ethers.utils.getAddress(ethAddress));
 
-    const serializedArgs = serializeBorsh(ftBalanceOfEthSchema, args);
-    //console.log(`Serialized args: ${serializedArgs} len: ${serializedArgs.length}`);
-
-    const accountBalance = await nearEvmContract.ft_balance_of_eth(serializedArgs);
+    const accountBalance = await nearEvmContract.ft_balance_of_eth(address);
     return Number(accountBalance);
 }
 
