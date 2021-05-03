@@ -6,6 +6,7 @@ NEAR_EVM_ACCOUNT=${VERSION}.kconnector.testnet
 NEAR_ACCOUNT=
 RPC_ENDPOINT=https://rpc.testnet.near.org
 ETH_RECIPIENT=
+ETH_ADDRESS=
 AMOUNT=0
 FEE=0
 PROOF=
@@ -51,7 +52,7 @@ near-ft-balance-of:
 	yarn hardhat near-ft-balance-of --near-account ${NEAR_ACCOUNT}
 
 near-ft-balance-of-eth:
-	yarn hardhat near-ft-balance-of-eth --near-account ${NEAR_ACCOUNT} --eth-address ${ETH_RECIPIENT}
+	yarn hardhat near-ft-balance-of-eth --near-account ${NEAR_ACCOUNT} --eth-address ${ETH_ADDRESS}
 
 near-withdraw-bridged-eth:
 	yarn hardhat --network ${NETWORK} near-withdraw-bridged-eth \

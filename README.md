@@ -55,6 +55,13 @@ and `/Users/<user>/.near-credentials` on MacOS: <br/>
 7. Compile Ethereum contracts with: <br/>
 `$ make compile`
 
+## Utilities
+To get the balance of bridgedETH (NEP-141):
+`$ make near-ft-balance-of NEAR_ACCOUNT=<YOUR_NEAR_ACCOUNT_HERE>`
+
+To get the balance of nETH (native ETH in Aurora-EVM):
+`$ make near-ft-balance-of-eth NEAR_ACCOUNT=<YOUR_NEAR_ACCOUNT_HERE> ETH_ADDRESS=<ETH_ADDRESS_OF_ACCOUNT_IN_EVM_HERE>`
+
 ## Ethereum -> Near transfer (ETH -> bridgedETH (NEP-141))
 1. Go to _eth-custodian_ directory: `$ cd eth-custodian`.
 
@@ -94,7 +101,7 @@ Call withdraw in Near blockchain to finalise the deposit transaction with the gi
 Send a `withdraw` transaction to the EthCustodian contract. After bridge syncing we are able to prove the fact of withdrawal transaction on NEAR to the EthCustodian contract. <br/>
 Run: `$ make eth-finalise-withdraw-from-near RECEIPT_ID=<RECEIPT_ID_FROM_STEP_2_HERE> NEAR_ACCOUNT=<YOUR_NEAR_ACCOUNT_HERE>`
 
-## Ethereum -> Near transfer (ETH -> nETH (native ETH in Near-EVM))
+## Ethereum -> Near transfer (ETH -> nETH (native ETH in Aurora-EVM))
 1. Go to _eth-custodian_ directory: `$ cd eth-custodian`.
 
 2. **Transfer ETH to EthCustodian**.
