@@ -109,7 +109,7 @@ describe('EthCustodian contract', () => {
                 .revertedWith('The fee cannot be bigger than the transferred amount');
         });
 
-        it('Should change the balance of the custodian and emit the DepositedToEVM event', async () => {
+        it('Should change the balance of the custodian when calling depositToEVM and emit the Deposited event', async () => {
             const fee = 100;  // wei
             let unsigned_tx = await ethCustodian
                 .connect(walletUser1)
@@ -121,13 +121,15 @@ describe('EthCustodian contract', () => {
 
             const balanceBefore = ethers.BigNumber.from(await ethers.provider.getBalance(ethCustodian.address));
 
+            // The protocol is `<nearAccount>:<ethRecipientOnNear>`
+            const protocolMessage = nearEvmAccount + ':' + String(ethRecipientOnNear.address);
             const signed_tx = await walletUser1.signTransaction(unsigned_tx);
             await expect(
                 ethers.provider.sendTransaction(signed_tx)
             )
                 .to
-                .emit(ethCustodian, 'DepositedToEVM')
-                .withArgs(walletUser1.address, ethRecipientOnNear.address, unsigned_tx.value, fee);
+                .emit(ethCustodian, 'Deposited')
+                .withArgs(walletUser1.address, protocolMessage, unsigned_tx.value, fee);
 
             const balanceAfter = ethers.BigNumber.from(await ethers.provider.getBalance(ethCustodian.address));
             const balanceDiff = balanceAfter.sub(balanceBefore);
@@ -138,7 +140,7 @@ describe('EthCustodian contract', () => {
                 .equal(unsigned_tx.value);
         });
 
-        it('Should change the balance of the custodian and emit the DepositedToNear event', async () => {
+        it('Should change the balance of the custodian when calling depositToNear and emit the Deposited event', async () => {
             const nearRecipientAccountId = 'recipient.near';
 
             const fee = 100;  // wei
@@ -157,7 +159,7 @@ describe('EthCustodian contract', () => {
                 ethers.provider.sendTransaction(signed_tx)
             )
                 .to
-                .emit(ethCustodian, 'DepositedToNear')
+                .emit(ethCustodian, 'Deposited')
                 .withArgs(walletUser1.address, nearRecipientAccountId, unsigned_tx.value, fee);
 
             const balanceAfter = ethers.BigNumber.from(await ethers.provider.getBalance(ethCustodian.address));

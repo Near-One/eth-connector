@@ -12,6 +12,7 @@
         "eth-util-lite": "near/eth-util-lite#master",
         "hardhat": "^2.0.8",
         "hardhat-gas-reporter": "^1.0.4",
+        "near-api-js": "^0.40.0",
         "rainbow-bridge": "https://github.com/near/rainbow-bridge",
         "rainbow-bridge-lib": "https://github.com/near/rainbow-bridge-lib"
     },

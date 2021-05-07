@@ -18,7 +18,7 @@ const NEAR_KEY_STORE_PATH = process.env.NEAR_KEY_STORE_PATH;
 const nearAPI = require('near-api-js');
 const keyStore = new nearAPI.keyStores.UnencryptedFileSystemKeyStore(NEAR_KEY_STORE_PATH);
 
-async function nearFinaliseWithdrawToEth(provider, nearAccount, nearJsonRpc, nearNetwork, receiptId) {
+async function ethFinaliseWithdrawFromNear(provider, nearAccount, nearJsonRpc, nearNetwork, receiptId) {
     console.log(`Finalising withdraw having receipt: ${receiptId}`);
     console.log(`--------------------------------------------------------------------------------`)
     console.log(`Eth Custodian address: ${ethereumConfig.ethConnectorAddress}`);
@@ -73,7 +73,7 @@ async function nearFinaliseWithdrawToEth(provider, nearAccount, nearJsonRpc, nea
     // Send the 'withdraw' transaction
     let withdrawTx;
     try {
-        let options = { gasPrice: 1000000000, gasLimit: 400000 };
+        let options = { gasPrice: 1000000000, gasLimit: 700000 };
         withdrawTx = await ethCustodian.withdraw(borshProof, clientHeight, options);
     }
     catch (e) {
@@ -93,4 +93,4 @@ async function nearFinaliseWithdrawToEth(provider, nearAccount, nearJsonRpc, nea
                 + ` (${accountBalanceAfter} wei)`);
 }
 
-exports.nearFinaliseWithdrawToEth = nearFinaliseWithdrawToEth;
+exports.ethFinaliseWithdrawFromNear = ethFinaliseWithdrawFromNear;
