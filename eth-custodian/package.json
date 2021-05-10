@@ -13,7 +13,7 @@
         "hardhat": "^2.0.8",
         "hardhat-gas-reporter": "^1.0.4",
         "near-api-js": "^0.40.0",
-        "rainbow-bridge": "https://github.com/near/rainbow-bridge#4826f4573a9039e0ee2f43ba964f709989c0906f",
+        "rainbow-bridge": "https://github.com/near/rainbow-bridge#ede62fcb3614e28e8c5406300381319fec846100",
         "rainbow-bridge-lib": "https://github.com/near/rainbow-bridge-lib"
     },
     "devDependencies": {
