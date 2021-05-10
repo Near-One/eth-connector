@@ -9084,9 +9084,9 @@ queue-microtask@^1.2.2:
     tweetnacl "^1.0.3"
     web3 "=1.2.6"
 
-"rainbow-bridge@https://github.com/near/rainbow-bridge":
+"rainbow-bridge@https://github.com/near/rainbow-bridge#4826f4573a9039e0ee2f43ba964f709989c0906f":
   version "1.0.0"
-  resolved "https://github.com/near/rainbow-bridge#e5c3e54fdab0ba212da9dae6569215e3a3a077bf"
+  resolved "https://github.com/near/rainbow-bridge#4826f4573a9039e0ee2f43ba964f709989c0906f"
 
 randomatic@^3.0.0:
   version "3.1.1"

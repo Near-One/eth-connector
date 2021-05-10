@@ -14,6 +14,11 @@ const SCHEMA = {
   }
 };
 
+const UNPAUSED_ALL = 0;
+const PAUSED_DEPOSIT_TO_EVM = 1 << 0;
+const PAUSED_DEPOSIT_TO_NEAR = 1 << 1;
+const PAUSED_WITHDRAW = 1 << 2;
+
 describe('EthCustodian contract', () => {
     let nearProverMockContractFactory;
     let nearProver;
@@ -45,7 +50,8 @@ describe('EthCustodian contract', () => {
             nearEvmAccount,
             nearProver.address,
             minBlockAcceptanceHeight,
-            adminAccount.address);
+            adminAccount.address,
+            UNPAUSED_ALL);
 
         const hardhatTestMnemonic = 'test test test test test test test test test test test junk';
         const derivationPathUser1 = 'm/44\'/60\'/0\'/0/5';
@@ -59,7 +65,8 @@ describe('EthCustodian contract', () => {
                     nearEvmAccount,
                     ethers.constants.AddressZero,
                     minBlockAcceptanceHeight,
-                    adminAccount.address)
+                    adminAccount.address,
+                    UNPAUSED_ALL)
             )
                 .to
                 .be
@@ -72,7 +79,8 @@ describe('EthCustodian contract', () => {
                     Buffer.from(''),
                     nearProver.address,
                     minBlockAcceptanceHeight,
-                    adminAccount.address)
+                    adminAccount.address,
+                    UNPAUSED_ALL)
             )
                 .to
                 .be
