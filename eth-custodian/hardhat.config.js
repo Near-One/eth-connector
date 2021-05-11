@@ -120,6 +120,16 @@ task('aurora-init-eth-connector', 'Initializes the Eth connector in the Aurora c
         await auroraInitEthConnector(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork);
     });
 
+task('aurora-register-relayer', 'Register the relayer in the Aurora contract')
+    .addParam('nearAccount', 'Near account that will submit the deposit transaction to Near')
+    .addParam('relayerAddressInAurora', 'Aurora Eth address of the relayer')
+    .addOptionalParam('nearJsonRpc', 'Near JSON RPC address (default: "https://rpc.testnet.near.org/"', 'https://rpc.testnet.near.org/')
+    .addOptionalParam('nearNetwork', 'Near network (default: default)', 'default')
+    .setAction(async taskArgs => {
+        const { auroraRegisterRelayer } = require('./scripts/aurora_utils');
+        await auroraRegisterRelayer(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork, taskArgs.relayerAddressInAurora);
+    });
+
 module.exports = {
   paths: {
     sources: "./contracts",
