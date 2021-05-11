@@ -6,6 +6,9 @@ const ethereumConfig = require('./json/ethereum-config.json');
 
 
 async function ethDeposit(provider, depositToNear, recipient, amountToTransfer, fee) {
+    amountToTransfer = ethers.BigNumber.from(amountToTransfer);
+    recipient = ethers.utils.getAddress(recipient);
+
     [deployerAccount] = await hre.ethers.getSigners();
 
     console.log(`Call deposit with the account: ${deployerAccount.address}`);
@@ -35,7 +38,7 @@ async function ethDeposit(provider, depositToNear, recipient, amountToTransfer, 
     }
 
     unsignedTx.nonce = await provider.getTransactionCount(deployerWallet.address);
-    unsignedTx.value = Number(amountToTransfer);
+    unsignedTx.value = amountToTransfer;
 
     if (network.name == 'ropsten') {
         unsignedTx.gasLimit = 800000;

@@ -11,7 +11,7 @@ const { nearFtBalanceOf, nearFtBalanceOfEth } = require('./near_utils');
 const NEAR_KEY_STORE_PATH = process.env.NEAR_KEY_STORE_PATH;
 const keyStore = new nearAPI.keyStores.UnencryptedFileSystemKeyStore(NEAR_KEY_STORE_PATH);
 
-async function nearFinaliseDepositFromEth (nearAccount, nearJsonRpc, nearNetwork, depositedToNear, depositTxHash, nearRecipient, ethRecipient) {
+async function nearFinalizeDepositFromEth (nearAccount, nearJsonRpc, nearNetwork, depositedToNear, depositTxHash, nearRecipient, ethRecipient) {
     const shouldBorshifyProof = true;
     const proof = await Proof.findProof(depositTxHash, shouldBorshifyProof);
     console.log(`The proof was successfully found for txHash=${depositTxHash}`);
@@ -37,10 +37,10 @@ async function nearFinaliseDepositFromEth (nearAccount, nearJsonRpc, nearNetwork
 
     if (nearRecipient && depositedToNear) {
         const initialBalance = await nearFtBalanceOf(nearRecipient, nearJsonRpc, nearNetwork);
-        console.log(`Bridged ETH balance of ${nearRecipient} before finalisation of the deposit: ${initialBalance} yoctoNEAR`);
+        console.log(`Bridged ETH balance of ${nearRecipient} before finalization of the deposit: ${initialBalance} yoctoNEAR`);
     } else if (ethRecipient && !depositedToNear) {
         const initialBalance = await nearFtBalanceOfEth(nearAccount, nearJsonRpc, nearNetwork, ethRecipient);
-        console.log(`Aurora nETH balance of ${ethRecipient} before finalisation of the deposit: {ethers.utils.formatEther(initialBalance)} nETH (${initialBalance} nWei)`);
+        console.log(`Aurora nETH balance of ${ethRecipient} before finalization of the deposit: {ethers.utils.formatEther(initialBalance)} nETH (${initialBalance} nWei)`);
     }
 
     const gas_limit = new BN('300000000000000'); // Gas limit
@@ -50,11 +50,11 @@ async function nearFinaliseDepositFromEth (nearAccount, nearJsonRpc, nearNetwork
 
     if (nearRecipient && depositedToNear) {
         const finalBalance = await nearFtBalanceOf(nearRecipient, nearJsonRpc, nearNetwork);
-        console.log(`Bridged ETH balance of ${nearRecipient} after finalisation of the deposit: ${finalBalance} yoctoNEAR`);
+        console.log(`Bridged ETH balance of ${nearRecipient} after finalization of the deposit: ${finalBalance} yoctoNEAR`);
     } else if (ethRecipient && !depositedToNear) {
         const finalBalance = await nearFtBalanceOfEth(nearAccount, nearJsonRpc, nearNetwork, ethRecipient);
-        console.log(`Aurora nETH balance of ${ethRecipient} after finalisation of the deposit: {ethers.utils.formatEther(finalBalance)} nETH (${finalBalance} nWei)`);
+        console.log(`Aurora nETH balance of ${ethRecipient} after finalization of the deposit: {ethers.utils.formatEther(finalBalance)} nETH (${finalBalance} nWei)`);
     }
 }
 
-exports.nearFinaliseDepositFromEth = nearFinaliseDepositFromEth;
+exports.nearFinalizeDepositFromEth = nearFinalizeDepositFromEth;
