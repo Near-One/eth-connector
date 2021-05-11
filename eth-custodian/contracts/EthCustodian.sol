@@ -3,7 +3,6 @@ pragma solidity ^0.6.12;
 import "rainbow-bridge/contracts/eth/nearbridge/contracts/AdminControlled.sol";
 import "rainbow-bridge/contracts/eth/nearbridge/contracts/Borsh.sol";
 import "rainbow-bridge/contracts/eth/nearprover/contracts/ProofDecoder.sol";
-
 import { INearProver, ProofKeeper } from "./ProofKeeper.sol";
 
 contract EthCustodian is ProofKeeper, AdminControlled {
@@ -50,7 +49,7 @@ contract EthCustodian is ProofKeeper, AdminControlled {
     function depositToEVM(string memory ethRecipientOnNear, uint256 fee)
         external
         payable
-        pausable (PAUSED_DEPOSIT_TO_EVM)
+        pausable(PAUSED_DEPOSIT_TO_EVM)
     {
         require(fee < msg.value, "The fee cannot be bigger than the transferred amount.");
 
@@ -66,7 +65,7 @@ contract EthCustodian is ProofKeeper, AdminControlled {
     function depositToNear(string memory nearRecipientAccountId, uint256 fee)
         external
         payable
-        pausable (PAUSED_DEPOSIT_TO_NEAR)
+        pausable(PAUSED_DEPOSIT_TO_NEAR)
     {
         require(fee < msg.value, "The fee cannot be bigger than the transferred amount.");
         emit Deposited(msg.sender, nearRecipientAccountId, msg.value, fee);
@@ -75,7 +74,7 @@ contract EthCustodian is ProofKeeper, AdminControlled {
     /// Withdraws the appropriate amount of ETH which is encoded in `proofData`
     function withdraw(bytes calldata proofData, uint64 proofBlockHeight)
         external
-        pausable (PAUSED_WITHDRAW)
+        pausable(PAUSED_WITHDRAW)
     {
         ProofDecoder.ExecutionStatus memory status = _parseAndConsumeProof(proofData, proofBlockHeight);
         BurnResult memory result = _decodeBurnResult(status.successValue);
