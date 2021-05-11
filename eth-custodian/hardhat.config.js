@@ -6,7 +6,8 @@ require('@nomiclabs/hardhat-waffle');
 require('hardhat-gas-reporter');
 
 const WEB3_RPC_ENDPOINT = process.env.WEB3_RPC_ENDPOINT;
-const ROPSTEN_PRIVATE_KEY = process.env.ROPSTEN_PRIVATE_KEY;
+// Hardhat workaround to specify some random private key so this won't fail in CI
+const ROPSTEN_PRIVATE_KEY = process.env.ROPSTEN_PRIVATE_KEY ? process.env.ROPSTEN_PRIVATE_KEY : "00";
 
 task('eth-deposit-to-near', 'Deposits the provided `amount` (wei) having `fee`(wei) to ETH Custodian to transfer it to Near')
     .addParam('nearRecipient', 'AccountID of recipient on Near')
