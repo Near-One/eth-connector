@@ -7,7 +7,6 @@ const ethereumConfig = require('./json/ethereum-config.json');
 
 async function ethDeposit(provider, depositToNear, recipient, amountToTransfer, fee) {
     amountToTransfer = ethers.BigNumber.from(amountToTransfer);
-    recipient = ethers.utils.getAddress(recipient);
 
     [deployerAccount] = await hre.ethers.getSigners();
 
@@ -31,6 +30,7 @@ async function ethDeposit(provider, depositToNear, recipient, amountToTransfer, 
             .populateTransaction
             .depositToNear(recipient, fee);
     } else {
+        recipient = ethers.utils.getAddress(recipient);
         unsignedTx = await ethCustodian
             .connect(deployerWallet)
             .populateTransaction
