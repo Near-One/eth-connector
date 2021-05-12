@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.6.12;
 
-import "rainbow-bridge/contracts/eth/nearbridge/contracts/AdminControlled.sol";
-import "rainbow-bridge/contracts/eth/nearbridge/contracts/Borsh.sol";
-import "rainbow-bridge/contracts/eth/nearprover/contracts/ProofDecoder.sol";
-import { INearProver, ProofKeeper } from "./ProofKeeper.sol";
+import 'rainbow-bridge/contracts/eth/nearbridge/contracts/AdminControlled.sol';
+import 'rainbow-bridge/contracts/eth/nearbridge/contracts/Borsh.sol';
+import 'rainbow-bridge/contracts/eth/nearprover/contracts/ProofDecoder.sol';
+import { INearProver, ProofKeeper } from './ProofKeeper.sol';
 
 contract EthCustodian is ProofKeeper, AdminControlled {
 
@@ -60,10 +60,10 @@ contract EthCustodian is ProofKeeper, AdminControlled {
     {
         require(
             fee < msg.value,
-            "The fee cannot be bigger than the transferred amount."
+            'The fee cannot be bigger than the transferred amount.'
         );
 
-        string memory separator = ":";
+        string memory separator = ':';
         string memory protocolMessage = string(
             abi.encodePacked(
                 string(nearProofProducerAccount_),
@@ -92,7 +92,7 @@ contract EthCustodian is ProofKeeper, AdminControlled {
     {
         require(
             fee < msg.value,
-            "The fee cannot be bigger than the transferred amount."
+            'The fee cannot be bigger than the transferred amount.'
         );
 
         emit Deposited(
@@ -111,11 +111,13 @@ contract EthCustodian is ProofKeeper, AdminControlled {
         external
         pausable(PAUSED_WITHDRAW)
     {
-        ProofDecoder.ExecutionStatus memory status = _parseAndConsumeProof(proofData, proofBlockHeight);
+        ProofDecoder.ExecutionStatus memory status = 
+        _parseAndConsumeProof(proofData, proofBlockHeight);
+
         BurnResult memory result = _decodeBurnResult(status.successValue);
         require(
             result.ethCustodian == address(this),
-            "Can only withdraw coins that were expected for the current contract"
+            'Can only withdraw coins that were expected for the current contract'
         );
         payable(result.recipient).transfer(result.amount);
         emit Withdrawn(

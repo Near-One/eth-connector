@@ -2,6 +2,7 @@
 
 // File rainbow-bridge/contracts/eth/nearprover/contracts/INearProver.sol@v1.0.0
 
+pragma solidity ^0.6.12;
 pragma solidity ^0.6;
 
 interface INearProver {
@@ -11,7 +12,7 @@ interface INearProver {
 
 // File contracts/test/NearProverMock.sol
 
-pragma solidity ^0.6.12;
+
 
 contract NearProverMock is INearProver {
     function proveOutcome(bytes memory proofData, uint64 blockHeight) override public view returns(bool) {
