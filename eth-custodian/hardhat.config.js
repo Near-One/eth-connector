@@ -13,33 +13,19 @@ task('eth-deposit-to-near', 'Deposits the provided `amount` (wei) having `fee`(w
     .addParam('amount', 'Amount (wei) to transfer',)
     .addParam('fee', 'Fee (wei) for the transfer',)
     .setAction(async taskArgs => {
-        const amount = ethers.BigNumber.from(taskArgs.amount);
-        const fee = ethers.BigNumber.from(taskArgs.fee);
-        if (amount.lte(ethers.constants.Zero) || fee.gt(amount)) {
-            throw new Error(
-                'The amount to transfer should be greater than 0 and bigger than fee'
-            );
-        }
         const { ethDeposit } = require('./scripts/eth_deposit');
         const depositToNear = true;
-        await ethDeposit(hre.ethers.provider, depositToNear, taskArgs.nearRecipient, amount, fee);
+        await ethDeposit(hre.ethers.provider, depositToNear, taskArgs.nearRecipient, taskArgs.amount, taskArgs.fee);
     });
 
 task('eth-deposit-to-evm', 'Deposits the provided `amount` (wei) having `fee`(wei) to ETH Custodian to transfer it to Near EVM')
-    .addParam('ethRecipientOnNear', 'AccountID of recipient on Near')
+    .addParam('ethRecipientOnNear', 'Eth address of recipient on Near Aurora')
     .addParam('amount', 'Amount (wei) to transfer')
     .addParam('fee', 'Fee (wei) for the transfer')
     .setAction(async taskArgs => {
-        const amount = ethers.BigNumber.from(taskArgs.amount);
-        const fee = ethers.BigNumber.from(taskArgs.fee);
-        if (amount.lte(ethers.constants.Zero) || fee.gt(amount)) {
-            throw new Error(
-                'The amount to transfer should be greater than 0 and bigger than fee'
-            );
-        }
         const { ethDeposit } = require('./scripts/eth_deposit');
         const depositToNear = false;
-        await ethDeposit(hre.ethers.provider, depositToNear, taskArgs.ethRecipientOnNear, amount, fee);
+        await ethDeposit(hre.ethers.provider, depositToNear, taskArgs.ethRecipientOnNear, taskArgs.amount, taskArgs.fee);
     });
 
 task('eth-generate-deposit-proof', 'Generates deposit proof for the given TX hash')
@@ -71,11 +57,6 @@ task('near-withdraw-bridged-eth', 'Withdraws the provided `amount` (bridgedWei) 
     .addOptionalParam('nearJsonRpc', 'Near JSON RPC address (default: "https://rpc.testnet.near.org/"', 'https://rpc.testnet.near.org/')
     .addOptionalParam('nearNetwork', 'Near network (default: default)', 'default')
     .setAction(async taskArgs => {
-        if (taskArgs.amount <= 0 || taskArgs.fee > taskArgs.amount) {
-            throw new Error(
-                'The amount to transfer should be greater than 0 and bigger than fee'
-            );
-        }
         const { nearWithdrawBridgedEth } = require('./scripts/near_withdraw_to_eth');
         await nearWithdrawBridgedEth(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork, taskArgs.ethRecipient, taskArgs.amount, taskArgs.fee);
     });

@@ -51,7 +51,7 @@ async function nearFtBalanceOf(nearAccount, nearJsonRpc, nearNetwork) {
     const serializedArgs = serializeBorsh(ftBalanceOfSchema, args);
 
     const accountBalance = await nearEvmContract.ft_balance_of(serializedArgs);
-    return Number(accountBalance);
+    return ethers.BigNumber.from(accountBalance.toString());
 }
 
 async function nearFtBalanceOfEth(nearAccount, nearJsonRpc, nearNetwork, ethAddress) {
@@ -76,7 +76,7 @@ async function nearFtBalanceOfEth(nearAccount, nearJsonRpc, nearNetwork, ethAddr
     const address = ethers.utils.arrayify(ethers.utils.getAddress(ethAddress));
 
     const accountBalance = await nearEvmContract.ft_balance_of_eth(address);
-    return Number(accountBalance);
+    return ethers.BigNumber.from(accountBalance.toString());
 }
 
 exports.nearFtBalanceOf = nearFtBalanceOf;

@@ -7,6 +7,13 @@ const ethereumConfig = require('./json/ethereum-config.json');
 
 async function ethDeposit(provider, depositToNear, recipient, amountToTransfer, fee) {
     amountToTransfer = ethers.BigNumber.from(amountToTransfer);
+    fee = ethers.BigNumber.from(fee);
+
+    if (amountToTransfer.lte(ethers.constants.Zero) || fee.gt(amountToTransfer)) {
+        throw new Error(
+            'The amount to transfer should be greater than 0 and bigger than fee'
+        );
+    }
 
     [deployerAccount] = await hre.ethers.getSigners();
 
@@ -30,7 +37,7 @@ async function ethDeposit(provider, depositToNear, recipient, amountToTransfer, 
             .populateTransaction
             .depositToNear(recipient, fee);
     } else {
-        recipient = ethers.utils.getAddress(recipient);
+        recipient = ethers.utils.getAddress(recipient).replace('0x', '');
         unsignedTx = await ethCustodian
             .connect(deployerWallet)
             .populateTransaction

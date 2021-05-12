@@ -22,7 +22,7 @@ const withdrawCallArgsSchema = new Map([
   [BorshWithdrawArgs, {
     kind: 'struct',
     fields: [
-      ['recipient_id', 'string'],
+      ['recipient_id', [20]],
       ['amount', 'u128']
     //TODO
     //['fee', 'u128']
@@ -31,8 +31,17 @@ const withdrawCallArgsSchema = new Map([
 ]);
 
 async function nearWithdrawBridgedEth(nearAccount, nearJsonRpc, nearNetwork, ethRecipient, amount, fee) {
+    amount = ethers.BigNumber.from(amount);
+    fee = ethers.BigNumber.from(fee);
+
     console.log(`Starting the withdrawal. ETH recipient: ${ethRecipient}; amount: ${amount} wei; fee: ${fee} wei`);
     console.log(`--------------------------------------------------------------------------------`);
+
+    if (amount.lte(ethers.constants.Zero) || fee.gt(amount)) {
+        throw new Error(
+            'The amount to withdraw should be greater than 0 and bigger than fee'
+        );
+    }
 
     const near = await nearAPI.connect({
         deps: {
@@ -55,9 +64,9 @@ async function nearWithdrawBridgedEth(nearAccount, nearJsonRpc, nearNetwork, eth
                 + ` (${accountBalanceBefore} bridgedWei)`);
 
     const args = new BorshWithdrawArgs({
-        recipient_id: ethRecipient.replace('0x', ''),
-        amount: amount,
-        //fee: fee,
+        recipient_id: ethers.utils.arrayify(ethers.utils.getAddress(ethRecipient)),
+        amount: amount.toString(),
+        //fee: fee.toString(),
     });
 
     const serializedArgs = serializeBorsh(withdrawCallArgsSchema, args);
