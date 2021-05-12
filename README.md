@@ -9,7 +9,7 @@
 
 | Version        | Description            | Status      | Ethereum Connector Address                 | NEAR Connector Account |
 |----------------|------------------------|-------------|--------------------------------------------|------------------------|
-|   aurora-v0.1  | NEAR testnet - Ropsten | [Working](https://explorer.testnet.near.org/accounts/v01.kconnector.testnet)   | 0x4D8C60b494f02D76CC9D41F835029eC7Ff1A4881 | a01.kconnector.testnet |
+|   aurora-v0.2  | NEAR testnet - Ropsten | [Working](https://explorer.testnet.near.org/accounts/aurora)   | 0x3fF9ae5d16624Ff5Df58186847d00b0b0A1dBe40 |          aurora        |
 
 # Step-by-step testing guide
 
@@ -123,3 +123,17 @@ Run: `$ make near-finalize-deposit-from-eth-to-evm TX_HASH=<DEPOSIT_TX_HASH_HERE
 
 ## Near -> Ethereum transfer (nETH -> ETH)
 WIP
+
+## Advanced
+
+For more advanced usage, please examine the `hardhat.config.js` file which contains a lot of scripts that are performed
+in this step-by-step guide via more simplified `make` commands. You can see the list of available tasks by running:
+<br/>
+`$ yarn hardhat`
+
+To show the arguments and help on how to use the specific task from the task list, use the following command structure:
+`$ yarn hardhat <TASK_NAME> --help` <br/>
+
+e.g.:
+
+`$ yarn hardhat eth-deposit-to-evm --help`
