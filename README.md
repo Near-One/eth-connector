@@ -9,7 +9,7 @@
 
 | Version        | Description            | Status      | Ethereum Connector Address                 | NEAR Connector Account |
 |----------------|------------------------|-------------|--------------------------------------------|------------------------|
-|   aurora-v0.2  | NEAR testnet - Ropsten | [Working](https://explorer.testnet.near.org/accounts/aurora)   | 0x3fF9ae5d16624Ff5Df58186847d00b0b0A1dBe40 |          aurora        |
+| develop.aurora | NEAR testnet - Ropsten | [Working](https://explorer.testnet.near.org/accounts/develop.aurora)   | 0x4a8FfD609122b80E1da0d95e51a31667804eA890 |          develop.aurora        |
 
 # Step-by-step testing guide
 
