@@ -1,11 +1,11 @@
 pragma solidity ^0.6.12;
 
-import "rainbow-bridge/contracts/eth/nearprover/contracts/ProofDecoder.sol";
+import "rainbow-bridge/contracts/eth/nearbridge/contracts/AdminControlled.sol";
 import "rainbow-bridge/contracts/eth/nearbridge/contracts/Borsh.sol";
-
+import "rainbow-bridge/contracts/eth/nearprover/contracts/ProofDecoder.sol";
 import { INearProver, ProofKeeper } from "./ProofKeeper.sol";
 
-contract EthCustodian is ProofKeeper {
+contract EthCustodian is ProofKeeper, AdminControlled {
     event Deposited (
         address indexed sender,
         string recipient,
@@ -25,13 +25,22 @@ contract EthCustodian is ProofKeeper {
         address ethCustodian;
     }
 
+    uint constant UNPAUSED_ALL = 0;
+    uint constant PAUSED_DEPOSIT_TO_EVM = 1 << 0;
+    uint constant PAUSED_DEPOSIT_TO_NEAR = 1 << 1;
+    uint constant PAUSED_WITHDRAW = 1 << 2;
+
     /// EthCustodian is linked to the EVM on NEAR side.
     /// It also links to the prover that it uses to withdraw the tokens.
-    constructor(bytes memory nearEvm, INearProver prover, uint64 minBlockAcceptanceHeight, address _admin)
+    constructor(bytes memory nearEvm,
+                INearProver prover,
+                uint64 minBlockAcceptanceHeight,
+                address _admin,
+                uint pausedFlags)
+        AdminControlled(_admin, pausedFlags)
         ProofKeeper(nearEvm, prover, minBlockAcceptanceHeight)
         public
     {
-        admin = _admin;
     }
 
     /// Deposits the specified amount of provided ETH (except from the relayer's fee) into the smart contract.
@@ -40,6 +49,7 @@ contract EthCustodian is ProofKeeper {
     function depositToEVM(string memory ethRecipientOnNear, uint256 fee)
         external
         payable
+        pausable(PAUSED_DEPOSIT_TO_EVM)
     {
         require(fee < msg.value, "The fee cannot be bigger than the transferred amount.");
 
@@ -55,13 +65,16 @@ contract EthCustodian is ProofKeeper {
     function depositToNear(string memory nearRecipientAccountId, uint256 fee)
         external
         payable
+        pausable(PAUSED_DEPOSIT_TO_NEAR)
     {
         require(fee < msg.value, "The fee cannot be bigger than the transferred amount.");
         emit Deposited(msg.sender, nearRecipientAccountId, msg.value, fee);
     }
 
     /// Withdraws the appropriate amount of ETH which is encoded in `proofData`
-    function withdraw(bytes calldata proofData, uint64 proofBlockHeight) external
+    function withdraw(bytes calldata proofData, uint64 proofBlockHeight)
+        external
+        pausable(PAUSED_WITHDRAW)
     {
         ProofDecoder.ExecutionStatus memory status = _parseAndConsumeProof(proofData, proofBlockHeight);
         BurnResult memory result = _decodeBurnResult(status.successValue);
@@ -82,29 +95,5 @@ contract EthCustodian is ProofKeeper {
         result.recipient = address(uint160(recipient));
         bytes20 ethCustodian = borshData.decodeBytes20();
         result.ethCustodian = address(uint160(ethCustodian));
-    }
-
-    address public admin;
-
-    modifier onlyAdmin {
-        require(msg.sender == admin);
-        _;
-    }
-
-    function adminTransfer(address payable destination, uint amount)
-        public
-        onlyAdmin
-    {
-        destination.transfer(amount);
-    }
-
-    function adminDelegatecall(address target, bytes memory data)
-        public
-        onlyAdmin
-        returns (bytes memory)
-    {
-        (bool success, bytes memory rdata) = target.delegatecall(data);
-        require(success);
-        return rdata;
     }
 }
