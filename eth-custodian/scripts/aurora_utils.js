@@ -55,4 +55,31 @@ async function auroraInitEthConnector (nearAccount, nearJsonRpc, nearNetwork) {
     await aurora.new_eth_connector(borshCallArgs);
 }
 
+async function auroraRegisterRelayer (nearAccount, nearJsonRpc, nearNetwork, relayerAddressInAurora) {
+    relayerAddressInAurora = ethers.utils.getAddress(relayerAddressInAurora);
+
+    // Init NEAR API
+    const near = await nearAPI.connect({
+        deps: {
+            keyStore,
+        },
+        nodeUrl: nearJsonRpc,
+        networkId: nearNetwork
+    });
+
+    const account = await near.account(nearAccount);
+
+    const aurora = new nearAPI.Contract(
+        account,
+        ethereumConfig.nearEvmAccount,
+        {
+            changeMethods: ['register_relayer']
+        }
+    );
+
+    const args = ethers.utils.arrayify(relayerAddressInAurora);
+    await aurora.register_relayer(args);
+}
+
 exports.auroraInitEthConnector = auroraInitEthConnector;
+exports.auroraRegisterRelayer = auroraRegisterRelayer;

@@ -2,6 +2,7 @@ const hre = require('hardhat');
 
 const ethereumConfig = require('./json/ethereum-config.json');
 
+const UNPAUSED_ALL = 0;
 
 async function main() {
     [deployerAccount] = await ethers.getSigners();
@@ -32,7 +33,8 @@ async function main() {
         nearEvmAccount,
         ethereumConfig.proverAddress,
         minBlockAcceptanceHeight,
-        adminAccount.address);
+        adminAccount.address,
+        UNPAUSED_ALL);
 
     await ethCustodian.deployed();
 

@@ -1,9 +1,9 @@
 .PHONY: compile test
 
 NETWORK=ropsten
-VERSION=a01
-NEAR_EVM_ACCOUNT=${VERSION}.kconnector.testnet
+NEAR_EVM_ACCOUNT=develop.aurora
 NEAR_ACCOUNT=
+QUERY_NEAR_ACCOUNT=${NEAR_ACCOUNT}
 RPC_ENDPOINT=https://rpc.testnet.near.org
 ETH_RECIPIENT=
 ETH_ADDRESS=
@@ -12,11 +12,13 @@ FEE=0
 PROOF=
 TX_HASH=
 RECEIPT_ID=
+RELAYER_NEAR_ADDRESS=
+RELAYER_ADDRESS_IN_AURORA=
 
 NEAR_RECIPIENT=${NEAR_ACCOUNT}
 
 compile:
-	yarn hardhat compile
+	mkdir -p build/proofs && yarn hardhat compile
 
 test:
 	yarn hardhat test
@@ -39,17 +41,17 @@ eth-withdraw:
 eth-generate-deposit-proof:
 	mkdir -p build/proofs && yarn hardhat --network ${NETWORK} eth-generate-deposit-proof --tx-hash ${TX_HASH}
 
-eth-finalise-withdraw-from-near:
-	yarn hardhat --network ${NETWORK} eth-finalise-withdraw-from-near --receipt-id ${RECEIPT_ID} --near-account ${NEAR_ACCOUNT}
+eth-finalize-withdraw-from-near:
+	yarn hardhat --network ${NETWORK} eth-finalize-withdraw-from-near --receipt-id ${RECEIPT_ID} --near-account ${NEAR_ACCOUNT}
 
-near-finalise-deposit-from-eth:
-	yarn hardhat --network ${NETWORK} near-finalise-deposit-from-eth --tx-hash ${TX_HASH} --near-account ${NEAR_ACCOUNT} --near-recipient ${NEAR_RECIPIENT} --deposited-to-near true
+near-finalize-deposit-from-eth:
+	yarn hardhat --network ${NETWORK} near-finalize-deposit-from-eth --tx-hash ${TX_HASH} --near-account ${NEAR_ACCOUNT} --near-recipient ${NEAR_RECIPIENT} --deposited-to-near true
 
-near-finalise-deposit-from-eth-to-evm:
-	yarn hardhat --network ${NETWORK} near-finalise-deposit-from-eth --tx-hash ${TX_HASH} --near-account ${NEAR_ACCOUNT} --eth-recipient ${ETH_RECIPIENT}
+near-finalize-deposit-from-eth-to-evm:
+	yarn hardhat --network ${NETWORK} near-finalize-deposit-from-eth --tx-hash ${TX_HASH} --near-account ${NEAR_ACCOUNT} --eth-recipient ${ETH_RECIPIENT}
 
 near-ft-balance-of:
-	yarn hardhat near-ft-balance-of --near-account ${NEAR_ACCOUNT}
+	yarn hardhat near-ft-balance-of --near-account ${NEAR_ACCOUNT} --query-near-account ${QUERY_NEAR_ACCOUNT}
 
 near-ft-balance-of-eth:
 	yarn hardhat near-ft-balance-of-eth --near-account ${NEAR_ACCOUNT} --eth-address ${ETH_ADDRESS}
@@ -77,4 +79,7 @@ _near-call-withdraw-from-nostd:
 		'{ "recipient_id": "${ETH_RECIPIENT}", "amount": ${AMOUNT} }'
 
 aurora-init-eth-connector:
-	yarn hardhat --network ${NETWORK} aurora-init-eth-connector --near-account ${NEAR_ACCOUNT}
+	yarn hardhat aurora-init-eth-connector --near-account ${NEAR_ACCOUNT}
+
+aurora-register-relayer:
+	yarn hardhat aurora-register-relayer --near-account ${RELAYER_NEAR_ADDRESS} --relayer-address-in-aurora ${RELAYER_ADDRESS_IN_AURORA}

@@ -7,7 +7,7 @@ const BN = require('bn.js');
 const nearAPI = require('near-api-js');
 const { serialize: serializeBorsh } = require('near-api-js/lib/utils/serialize');
 
-const { nearFtBalanceOf, nearFtBalanceOfEth } = require('./near_utils');
+const { nearFtBalanceOf } = require('./near_utils');
 
 const NEAR_KEY_STORE_PATH = process.env.NEAR_KEY_STORE_PATH;
 const keyStore = new nearAPI.keyStores.UnencryptedFileSystemKeyStore(NEAR_KEY_STORE_PATH);
@@ -22,7 +22,7 @@ const withdrawCallArgsSchema = new Map([
   [BorshWithdrawArgs, {
     kind: 'struct',
     fields: [
-      ['recipient_id', 'string'],
+      ['recipient_id', [20]],
       ['amount', 'u128']
     //TODO
     //['fee', 'u128']
@@ -31,8 +31,17 @@ const withdrawCallArgsSchema = new Map([
 ]);
 
 async function nearWithdrawBridgedEth(nearAccount, nearJsonRpc, nearNetwork, ethRecipient, amount, fee) {
+    amount = ethers.BigNumber.from(amount);
+    fee = ethers.BigNumber.from(fee);
+
     console.log(`Starting the withdrawal. ETH recipient: ${ethRecipient}; amount: ${amount} wei; fee: ${fee} wei`);
     console.log(`--------------------------------------------------------------------------------`);
+
+    if (amount.lte(ethers.constants.Zero) || fee.gt(amount)) {
+        throw new Error(
+            'The amount to withdraw should be greater than 0 and bigger than fee'
+        );
+    }
 
     const near = await nearAPI.connect({
         deps: {
@@ -50,14 +59,14 @@ async function nearWithdrawBridgedEth(nearAccount, nearJsonRpc, nearNetwork, eth
             changeMethods: ['withdraw'],
         }
     );
-    const accountBalanceBefore = await nearFtBalanceOf(nearAccount, nearJsonRpc, nearNetwork);
+    const accountBalanceBefore = await nearFtBalanceOf(nearAccount, nearJsonRpc, nearNetwork, nearAccount);
     console.log(`Account ${nearAccount} balance before: ${ethers.utils.formatEther(accountBalanceBefore)} bridgedETH`
                 + ` (${accountBalanceBefore} bridgedWei)`);
 
     const args = new BorshWithdrawArgs({
-        recipient_id: ethRecipient.replace('0x', ''),
-        amount: amount,
-        //fee: fee,
+        recipient_id: ethers.utils.arrayify(ethers.utils.getAddress(ethRecipient)),
+        amount: amount.toString(),
+        //fee: fee.toString(),
     });
 
     const serializedArgs = serializeBorsh(withdrawCallArgsSchema, args);
@@ -79,7 +88,7 @@ async function nearWithdrawBridgedEth(nearAccount, nearJsonRpc, nearNetwork, eth
     }
 
     console.log(`Withdraw transaction succeeded. Hash: ${withdrawTx.transaction.hash}`);
-    const accountBalanceAfter = await nearFtBalanceOf(nearAccount, nearJsonRpc, nearNetwork);
+    const accountBalanceAfter = await nearFtBalanceOf(nearAccount, nearJsonRpc, nearNetwork, nearAccount);
     console.log(`Account ${nearAccount} balance after: ${ethers.utils.formatEther(accountBalanceAfter)} bridgedETH`
                 + ` (${accountBalanceAfter} bridgedWei)`);
 
