@@ -25,7 +25,7 @@ const ftBalanceOfSchema = new Map([
   }]
 ]);
 
-async function nearFtBalanceOf(nearAccount, nearJsonRpc, nearNetwork) {
+async function nearFtBalanceOf(nearAccount, nearJsonRpc, nearNetwork, queryNearAccount) {
     const near = await nearAPI.connect({
         deps: {
             keyStore
@@ -45,7 +45,7 @@ async function nearFtBalanceOf(nearAccount, nearJsonRpc, nearNetwork) {
     );
 
     const args = new BorshArgs({
-        account_id: nearAccount.toString()
+        account_id: queryNearAccount.toString()
     });
 
     const serializedArgs = serializeBorsh(ftBalanceOfSchema, args);

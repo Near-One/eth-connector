@@ -36,11 +36,11 @@ async function nearFinalizeDepositFromEth (nearAccount, nearJsonRpc, nearNetwork
     );
 
     if (nearRecipient && depositedToNear) {
-        const initialBalance = await nearFtBalanceOf(nearRecipient, nearJsonRpc, nearNetwork);
+        const initialBalance = await nearFtBalanceOf(nearAccount, nearJsonRpc, nearNetwork, nearRecipient);
         console.log(`Bridged ETH balance of ${nearRecipient} before finalization of the deposit: ${initialBalance} yoctoNEAR`);
     } else if (ethRecipient && !depositedToNear) {
         const initialBalance = await nearFtBalanceOfEth(nearAccount, nearJsonRpc, nearNetwork, ethRecipient);
-        console.log(`Aurora nETH balance of ${ethRecipient} before finalization of the deposit: {ethers.utils.formatEther(initialBalance)} nETH (${initialBalance} nWei)`);
+        console.log(`Aurora nETH balance of ${ethRecipient} before finalization of the deposit: ${ethers.utils.formatEther(initialBalance)} nETH (${initialBalance} nWei)`);
     }
 
     const gas_limit = new BN('300000000000000'); // Gas limit
@@ -49,11 +49,11 @@ async function nearFinalizeDepositFromEth (nearAccount, nearJsonRpc, nearNetwork
     await connector.deposit(proof, gas_limit, payment_for_storage);
 
     if (nearRecipient && depositedToNear) {
-        const finalBalance = await nearFtBalanceOf(nearRecipient, nearJsonRpc, nearNetwork);
+        const finalBalance = await nearFtBalanceOf(nearAccount, nearJsonRpc, nearNetwork, nearRecipient);
         console.log(`Bridged ETH balance of ${nearRecipient} after finalization of the deposit: ${finalBalance} yoctoNEAR`);
     } else if (ethRecipient && !depositedToNear) {
         const finalBalance = await nearFtBalanceOfEth(nearAccount, nearJsonRpc, nearNetwork, ethRecipient);
-        console.log(`Aurora nETH balance of ${ethRecipient} after finalization of the deposit: {ethers.utils.formatEther(finalBalance)} nETH (${finalBalance} nWei)`);
+        console.log(`Aurora nETH balance of ${ethRecipient} after finalization of the deposit: ${ethers.utils.formatEther(finalBalance)} nETH (${finalBalance} nWei)`);
     }
 }
 

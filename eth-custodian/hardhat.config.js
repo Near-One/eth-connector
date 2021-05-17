@@ -73,12 +73,13 @@ task('eth-finalize-withdraw-from-near', 'Generates the receipt proof for the giv
     });
 
 task('near-ft-balance-of', 'Returns the current balance of bridged ETH for the provided Near account')
-    .addParam('nearAccount', 'Near account that owns bridged ETH')
+    .addParam('nearAccount', 'Near account that submits the transaction')
+    .addParam('queryNearAccount', 'Near account that owns bridged ETH')
     .addOptionalParam('nearJsonRpc', 'Near JSON RPC address (default: "https://rpc.testnet.near.org/"', 'https://rpc.testnet.near.org/')
     .addOptionalParam('nearNetwork', 'Near network (default: default)', 'default')
     .setAction(async taskArgs => {
         const { nearFtBalanceOf } = require('./scripts/near_utils');
-        const accountBalance = await nearFtBalanceOf(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork);
+        const accountBalance = await nearFtBalanceOf(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork, taskArgs.queryNearAccount);
         console.log(`Account balance of ${taskArgs.nearAccount}: ${accountBalance} yoctoNEAR`);
     });
 
@@ -98,7 +99,7 @@ task('aurora-init-eth-connector', 'Initializes the Eth connector in the Aurora c
     .addOptionalParam('nearJsonRpc', 'Near JSON RPC address (default: "https://rpc.testnet.near.org/"', 'https://rpc.testnet.near.org/')
     .addOptionalParam('nearNetwork', 'Near network (default: default)', 'default')
     .setAction(async taskArgs => {
-        const { auroraInitEthConnector } = require('./scripts/aurora_init_eth_connector');
+        const { auroraInitEthConnector } = require('./scripts/aurora_utils');
         await auroraInitEthConnector(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork);
     });
 

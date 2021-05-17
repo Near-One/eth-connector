@@ -1,8 +1,9 @@
 .PHONY: compile test
 
 NETWORK=ropsten
-NEAR_EVM_ACCOUNT=aurora
+NEAR_EVM_ACCOUNT=develop.aurora
 NEAR_ACCOUNT=
+QUERY_NEAR_ACCOUNT=${NEAR_ACCOUNT}
 RPC_ENDPOINT=https://rpc.testnet.near.org
 ETH_RECIPIENT=
 ETH_ADDRESS=
@@ -50,7 +51,7 @@ near-finalize-deposit-from-eth-to-evm:
 	yarn hardhat --network ${NETWORK} near-finalize-deposit-from-eth --tx-hash ${TX_HASH} --near-account ${NEAR_ACCOUNT} --eth-recipient ${ETH_RECIPIENT}
 
 near-ft-balance-of:
-	yarn hardhat near-ft-balance-of --near-account ${NEAR_ACCOUNT}
+	yarn hardhat near-ft-balance-of --near-account ${NEAR_ACCOUNT} --query-near-account ${QUERY_NEAR_ACCOUNT}
 
 near-ft-balance-of-eth:
 	yarn hardhat near-ft-balance-of-eth --near-account ${NEAR_ACCOUNT} --eth-address ${ETH_ADDRESS}
