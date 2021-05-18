@@ -11,7 +11,8 @@ contract NearProverMock is INearProver {
         public
         view
         override 
-    returns(bool) {
+    returns(bool) 
+    {
         return true;
     }
 }
@@ -24,7 +25,8 @@ contract NearNegativeProverMock is INearProver {
         public
         view
         override 
-    returns(bool) {
+    returns(bool) 
+    {
         return false;
     }
 }

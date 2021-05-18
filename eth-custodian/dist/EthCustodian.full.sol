@@ -2,7 +2,6 @@
 
 // File rainbow-bridge/contracts/eth/nearbridge/contracts/AdminControlled.sol@v1.0.0
 
-pragma solidity >=0.6.0 <0.8.0;
 pragma solidity ^0.6;
 
 contract AdminControlled {
@@ -61,8 +60,9 @@ contract AdminControlled {
 
 // File @openzeppelin/contracts/math/SafeMath.sol@v3.4.1
 
+// SPDX-License-Identifier: MIT
 
-
+pragma solidity >=0.6.0 <0.8.0;
 
 /**
  * @dev Wrappers over Solidity's arithmetic operations with added overflow
@@ -146,7 +146,7 @@ library SafeMath {
      */
     function add(uint256 a, uint256 b) internal pure returns (uint256) {
         uint256 c = a + b;
-        require(c >= a, 'SafeMath: addition overflow');
+        require(c >= a, "SafeMath: addition overflow");
         return c;
     }
 
@@ -161,7 +161,7 @@ library SafeMath {
      * - Subtraction cannot overflow.
      */
     function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        require(b <= a, 'SafeMath: subtraction overflow');
+        require(b <= a, "SafeMath: subtraction overflow");
         return a - b;
     }
 
@@ -178,7 +178,7 @@ library SafeMath {
     function mul(uint256 a, uint256 b) internal pure returns (uint256) {
         if (a == 0) return 0;
         uint256 c = a * b;
-        require(c / a == b, 'SafeMath: multiplication overflow');
+        require(c / a == b, "SafeMath: multiplication overflow");
         return c;
     }
 
@@ -195,7 +195,7 @@ library SafeMath {
      * - The divisor cannot be zero.
      */
     function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        require(b > 0, 'SafeMath: division by zero');
+        require(b > 0, "SafeMath: division by zero");
         return a / b;
     }
 
@@ -212,7 +212,7 @@ library SafeMath {
      * - The divisor cannot be zero.
      */
     function mod(uint256 a, uint256 b) internal pure returns (uint256) {
-        require(b > 0, 'SafeMath: modulo by zero');
+        require(b > 0, "SafeMath: modulo by zero");
         return a % b;
     }
 
@@ -293,7 +293,7 @@ library Borsh {
     }
 
     modifier shift(Data memory data, uint256 size) {
-        require(data.raw.length >= data.offset + size, 'Borsh: Out of range');
+        require(data.raw.length >= data.offset + size, "Borsh: Out of range");
         _;
         data.offset += size;
     }
@@ -486,7 +486,7 @@ library NearDecoder {
         } else if (key.enumIndex == 1) {
             key.secp256k1 = data.decodeSECP256K1PublicKey();
         } else {
-            revert('NearBridge: Only ED25519 and SECP256K1 public keys are supported');
+            revert("NearBridge: Only ED25519 and SECP256K1 public keys are supported");
         }
     }
 
@@ -543,7 +543,7 @@ library NearDecoder {
         } else if (sig.enumIndex == 1) {
             sig.secp256k1 = data.decodeSECP256K1Signature();
         } else {
-            revert('NearBridge: Only ED25519 and SECP256K1 signatures are supported');
+            revert("NearBridge: Only ED25519 and SECP256K1 signatures are supported");
         }
     }
 
@@ -707,7 +707,7 @@ library ProofDecoder {
         } else if (executionStatus.enumIndex == 3) {
             executionStatus.successReceiptId = data.decodeBytes32();
         } else {
-            revert('NearDecoder: decodeExecutionStatus index out of range');
+            revert("NearDecoder: decodeExecutionStatus index out of range");
         }
     }
 
@@ -782,7 +782,7 @@ library ProofDecoder {
     function decodeMerklePathItem(Borsh.Data memory data) internal pure returns (MerklePathItem memory item) {
         item.hash = data.decodeBytes32();
         item.direction = data.decodeU8();
-        require(item.direction < 2, 'ProofDecoder: MerklePathItem direction should be 0 or 1');
+        require(item.direction < 2, "ProofDecoder: MerklePathItem direction should be 0 or 1");
     }
 
     struct MerklePath {
@@ -825,6 +825,7 @@ interface INearProver {
 
 // File contracts/ProofKeeper.sol
 
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.6.12;
 
 
@@ -843,9 +844,21 @@ contract ProofKeeper {
     // OutcomeReciptId -> Used
     mapping(bytes32 => bool) public usedEvents_;
 
-    constructor(bytes memory nearProofProducerAccount, INearProver prover, uint64 minBlockAcceptanceHeight) public {
-        require(nearProofProducerAccount.length > 0, 'Invalid Near ProofProducer address');
-        require(address(prover) != address(0), 'Invalid Near prover address');
+    constructor(
+        bytes memory nearProofProducerAccount,
+        INearProver prover,
+        uint64 minBlockAcceptanceHeight
+    ) 
+        public 
+    {
+        require(
+            nearProofProducerAccount.length > 0,
+            'Invalid Near ProofProducer address'
+        );
+        require(
+            address(prover) != address(0),
+            'Invalid Near prover address'
+        );
 
         nearProofProducerAccount_ = nearProofProducerAccount;
         prover_ = prover;
@@ -854,40 +867,76 @@ contract ProofKeeper {
 
     /// Parses the provided proof and consumes it if it's not already used.
     /// The consumed event cannot be reused for future calls.
-    function _parseAndConsumeProof(bytes memory proofData, uint64 proofBlockHeight)
+    function _parseAndConsumeProof(
+        bytes memory proofData, 
+        uint64 proofBlockHeight
+    )
         internal
-        returns (ProofDecoder.ExecutionStatus memory result)
+        returns(ProofDecoder.ExecutionStatus memory result)
     {
-        require(proofBlockHeight >= minBlockAcceptanceHeight_, 'Proof is from the ancient block');
-        require(prover_.proveOutcome(proofData, proofBlockHeight), 'Proof should be valid');
+        require(
+            proofBlockHeight >= minBlockAcceptanceHeight_,
+            'Proof is from the ancient block'
+        );
+        require(
+            prover_.proveOutcome(proofData,proofBlockHeight),
+            'Proof should be valid'
+        );
 
         // Unpack the proof and extract the execution outcome.
         Borsh.Data memory borshData = Borsh.from(proofData);
-        ProofDecoder.FullOutcomeProof memory fullOutcomeProof = borshData.decodeFullOutcomeProof();
-        require(borshData.finished(), 'Argument should be exact borsh serialization');
 
-        bytes32 receiptId = fullOutcomeProof.outcome_proof.outcome_with_id.outcome.receipt_ids[0];
-        require(!usedEvents_[receiptId], 'The burn event cannot be reused');
+        ProofDecoder.FullOutcomeProof memory fullOutcomeProof = 
+        borshData.decodeFullOutcomeProof();
+        
+        require(
+            borshData.finished(),
+            'Argument should be exact borsh serialization'
+        );
+
+        bytes32 receiptId = 
+        fullOutcomeProof.outcome_proof.outcome_with_id.outcome.receipt_ids[0];
+
+        require(
+            !usedEvents_[receiptId],
+            'The burn event cannot be reused'
+        );
         usedEvents_[receiptId] = true;
 
-        require(keccak256(fullOutcomeProof.outcome_proof.outcome_with_id.outcome.executor_id)
-                == keccak256(nearProofProducerAccount_),
-                'Can only withdraw coins from the linked proof producer on Near blockchain');
+        require(
+            keccak256(fullOutcomeProof.outcome_proof.outcome_with_id.outcome.executor_id) == 
+            keccak256(nearProofProducerAccount_),
+            'Can only withdraw coins from the linked proof producer on Near blockchain'
+        );
 
         result = fullOutcomeProof.outcome_proof.outcome_with_id.outcome.status;
-        require(!result.failed, 'Cannot use failed execution outcome for unlocking the tokens');
-        require(!result.unknown, 'Cannot use unknown execution outcome for unlocking the tokens');
+        require(
+            !result.failed, 
+            'Cannot use failed execution outcome for unlocking the tokens'
+        );
+        require(
+            !result.unknown,
+            'Cannot use unknown execution outcome for unlocking the tokens'
+        );
     }
 }
 
 
 // File contracts/EthCustodian.sol
 
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.6.12;
 
 
 
+
 contract EthCustodian is ProofKeeper, AdminControlled {
+
+    uint constant UNPAUSED_ALL = 0;
+    uint constant PAUSED_DEPOSIT_TO_EVM = 1 << 0;
+    uint constant PAUSED_DEPOSIT_TO_NEAR = 1 << 1;
+    uint constant PAUSED_WITHDRAW = 1 << 2;
+
     event Deposited (
         address indexed sender,
         string recipient,
@@ -907,18 +956,15 @@ contract EthCustodian is ProofKeeper, AdminControlled {
         address ethCustodian;
     }
 
-    uint constant UNPAUSED_ALL = 0;
-    uint constant PAUSED_DEPOSIT_TO_EVM = 1 << 0;
-    uint constant PAUSED_DEPOSIT_TO_NEAR = 1 << 1;
-    uint constant PAUSED_WITHDRAW = 1 << 2;
-
     /// EthCustodian is linked to the EVM on NEAR side.
     /// It also links to the prover that it uses to withdraw the tokens.
-    constructor(bytes memory nearEvm,
-                INearProver prover,
-                uint64 minBlockAcceptanceHeight,
-                address _admin,
-                uint pausedFlags)
+    constructor(
+        bytes memory nearEvm,
+        INearProver prover,
+        uint64 minBlockAcceptanceHeight,
+        address _admin,
+        uint pausedFlags
+    )
         AdminControlled(_admin, pausedFlags)
         ProofKeeper(nearEvm, prover, minBlockAcceptanceHeight)
         public
@@ -928,42 +974,80 @@ contract EthCustodian is ProofKeeper, AdminControlled {
     /// Deposits the specified amount of provided ETH (except from the relayer's fee) into the smart contract.
     /// `ethRecipientOnNear` - the ETH address of the recipient in NEAR EVM
     /// `fee` - the amount of fee that will be paid to the near-relayer in nETH.
-    function depositToEVM(string memory ethRecipientOnNear, uint256 fee)
+    function depositToEVM(
+        string memory ethRecipientOnNear, 
+        uint256 fee
+    )
         external
         payable
-        pausable (PAUSED_DEPOSIT_TO_EVM)
+        pausable(PAUSED_DEPOSIT_TO_EVM)
     {
-        require(fee < msg.value, 'The fee cannot be bigger than the transferred amount.');
+        require(
+            fee < msg.value,
+            'The fee cannot be bigger than the transferred amount.'
+        );
 
         string memory separator = ':';
-        string memory protocolMessage = string(abi.encodePacked(string(nearProofProducerAccount_), separator, ethRecipientOnNear));
+        string memory protocolMessage = string(
+            abi.encodePacked(
+                string(nearProofProducerAccount_),
+                separator, ethRecipientOnNear
+            )
+        );
 
-        emit Deposited(msg.sender, protocolMessage, msg.value, fee);
+        emit Deposited(
+            msg.sender, 
+            protocolMessage, 
+            msg.value, 
+            fee
+        );
     }
 
     /// Deposits the specified amount of provided ETH (except from the relayer's fee) into the smart contract.
     /// `nearRecipientAccountId` - the AccountID of the recipient in NEAR
     /// `fee` - the amount of fee that will be paid to the near-relayer in nETH.
-    function depositToNear(string memory nearRecipientAccountId, uint256 fee)
+    function depositToNear(
+        string memory nearRecipientAccountId, 
+        uint256 fee
+    )
         external
         payable
-        pausable (PAUSED_DEPOSIT_TO_NEAR)
+        pausable(PAUSED_DEPOSIT_TO_NEAR)
     {
-        require(fee < msg.value, 'The fee cannot be bigger than the transferred amount.');
-        emit Deposited(msg.sender, nearRecipientAccountId, msg.value, fee);
+        require(
+            fee < msg.value,
+            'The fee cannot be bigger than the transferred amount.'
+        );
+
+        emit Deposited(
+            msg.sender, 
+            nearRecipientAccountId, 
+            msg.value, 
+            fee
+        );
     }
 
     /// Withdraws the appropriate amount of ETH which is encoded in `proofData`
-    function withdraw(bytes calldata proofData, uint64 proofBlockHeight)
+    function withdraw(
+        bytes calldata proofData, 
+        uint64 proofBlockHeight
+    )
         external
-        pausable (PAUSED_WITHDRAW)
+        pausable(PAUSED_WITHDRAW)
     {
-        ProofDecoder.ExecutionStatus memory status = _parseAndConsumeProof(proofData, proofBlockHeight);
+        ProofDecoder.ExecutionStatus memory status = 
+        _parseAndConsumeProof(proofData, proofBlockHeight);
+
         BurnResult memory result = _decodeBurnResult(status.successValue);
-        require(result.ethCustodian == address(this),
-                'Can only withdraw coins that were expected for the current contract');
+        require(
+            result.ethCustodian == address(this),
+            'Can only withdraw coins that were expected for the current contract'
+        );
         payable(result.recipient).transfer(result.amount);
-        emit Withdrawn(result.recipient, result.amount);
+        emit Withdrawn(
+            result.recipient,
+            result.amount
+        );
     }
 
     function _decodeBurnResult(bytes memory data)

@@ -111,8 +111,7 @@ contract EthCustodian is ProofKeeper, AdminControlled {
         external
         pausable(PAUSED_WITHDRAW)
     {
-        ProofDecoder.ExecutionStatus memory status = 
-        _parseAndConsumeProof(proofData, proofBlockHeight);
+        ProofDecoder.ExecutionStatus memory status = _parseAndConsumeProof(proofData, proofBlockHeight);
 
         BurnResult memory result = _decodeBurnResult(status.successValue);
         require(
