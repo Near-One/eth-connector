@@ -7,7 +7,7 @@
       "quotes": ["error", "single"],
       "indentation": ["error", 4],
       "security/no-tx-origin": ["warning"],
-      "max-len": ["error", 95],
+      "max-len": ["error", 120],
       "no-trailing-whitespace": "off"
     }
   }
