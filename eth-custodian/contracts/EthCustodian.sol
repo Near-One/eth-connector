@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity ^0.6.12;
+pragma solidity ^0.8;
 
 import 'rainbow-bridge/contracts/eth/nearbridge/contracts/AdminControlled.sol';
 import 'rainbow-bridge/contracts/eth/nearbridge/contracts/Borsh.sol';
@@ -7,6 +7,7 @@ import 'rainbow-bridge/contracts/eth/nearprover/contracts/ProofDecoder.sol';
 import { INearProver, ProofKeeper } from './ProofKeeper.sol';
 
 contract EthCustodian is ProofKeeper, AdminControlled {
+    using Borsh for Borsh.Data;
 
     uint constant UNPAUSED_ALL = 0;
     uint constant PAUSED_DEPOSIT_TO_EVM = 1 << 0;
@@ -43,7 +44,6 @@ contract EthCustodian is ProofKeeper, AdminControlled {
     )
         AdminControlled(_admin, pausedFlags)
         ProofKeeper(nearEvm, prover, minBlockAcceptanceHeight)
-        public
     {
     }
 
@@ -96,16 +96,16 @@ contract EthCustodian is ProofKeeper, AdminControlled {
         );
 
         emit Deposited(
-            msg.sender, 
-            nearRecipientAccountId, 
-            msg.value, 
+            msg.sender,
+            nearRecipientAccountId,
+            msg.value,
             fee
         );
     }
 
     /// Withdraws the appropriate amount of ETH which is encoded in `proofData`
     function withdraw(
-        bytes calldata proofData, 
+        bytes calldata proofData,
         uint64 proofBlockHeight
     )
         external
@@ -130,11 +130,11 @@ contract EthCustodian is ProofKeeper, AdminControlled {
         pure
         returns (BurnResult memory result)
     {
-        Borsh.Data memory borshData = Borsh.from(data);
-        result.amount = borshData.decodeU128();
-        bytes20 recipient = borshData.decodeBytes20();
+        Borsh.Data memory borsh = Borsh.from(data);
+        result.amount = borsh.decodeU128();
+        bytes20 recipient = borsh.decodeBytes20();
         result.recipient = address(uint160(recipient));
-        bytes20 ethCustodian = borshData.decodeBytes20();
+        bytes20 ethCustodian = borsh.decodeBytes20();
         result.ethCustodian = address(uint160(ethCustodian));
     }
 }

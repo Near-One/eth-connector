@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity ^0.6.12;
+pragma solidity ^0.8;
 
 import 'rainbow-bridge/contracts/eth/nearprover/contracts/INearProver.sol';
 import 'rainbow-bridge/contracts/eth/nearprover/contracts/ProofDecoder.sol';
@@ -23,8 +23,7 @@ contract ProofKeeper {
         bytes memory nearProofProducerAccount,
         INearProver prover,
         uint64 minBlockAcceptanceHeight
-    ) 
-        public 
+    )
     {
         require(
             nearProofProducerAccount.length > 0,
@@ -43,7 +42,7 @@ contract ProofKeeper {
     /// Parses the provided proof and consumes it if it's not already used.
     /// The consumed event cannot be reused for future calls.
     function _parseAndConsumeProof(
-        bytes memory proofData, 
+        bytes memory proofData,
         uint64 proofBlockHeight
     )
         internal
@@ -61,16 +60,13 @@ contract ProofKeeper {
         // Unpack the proof and extract the execution outcome.
         Borsh.Data memory borshData = Borsh.from(proofData);
 
-        ProofDecoder.FullOutcomeProof memory fullOutcomeProof = 
+        ProofDecoder.FullOutcomeProof memory fullOutcomeProof =
         borshData.decodeFullOutcomeProof();
-        
-        require(
-            borshData.finished(),
-            'Argument should be exact borsh serialization'
-        );
 
-        bytes32 receiptId = 
-        fullOutcomeProof.outcome_proof.outcome_with_id.outcome.receipt_ids[0];
+        borshData.done();
+
+        bytes32 receiptId =
+            fullOutcomeProof.outcome_proof.outcome_with_id.outcome.receipt_ids[0];
 
         require(
             !usedEvents_[receiptId],
@@ -79,14 +75,14 @@ contract ProofKeeper {
         usedEvents_[receiptId] = true;
 
         require(
-            keccak256(fullOutcomeProof.outcome_proof.outcome_with_id.outcome.executor_id) == 
+            keccak256(fullOutcomeProof.outcome_proof.outcome_with_id.outcome.executor_id) ==
             keccak256(nearProofProducerAccount_),
             'Can only withdraw coins from the linked proof producer on Near blockchain'
         );
 
         result = fullOutcomeProof.outcome_proof.outcome_with_id.outcome.status;
         require(
-            !result.failed, 
+            !result.failed,
             'Cannot use failed execution outcome for unlocking the tokens'
         );
         require(
