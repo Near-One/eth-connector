@@ -33,6 +33,8 @@
         "ethers": "^5.0.31",
         "ganache-cli": "^6.9.1",
         "hardhat-deploy-ethers": "^0.3.0-beta.7",
+        "patch-package": "^6.4.7",
+        "postinstall-postinstall": "^2.1.0",
         "solc": "^0.8",
         "solidity-coverage": "^0.7.5",
         "solium": "^1.2.5",
