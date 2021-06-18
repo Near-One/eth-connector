@@ -10,6 +10,7 @@
 | Version        | Description            | Status      | Ethereum Connector Address                 | NEAR Connector Account |
 |----------------|------------------------|-------------|--------------------------------------------|------------------------|
 | develop.aurora | NEAR testnet - Ropsten | [Working](https://explorer.testnet.near.org/accounts/develop.aurora)   | 0x4a8FfD609122b80E1da0d95e51a31667804eA890 |          develop.aurora        |
+|     aurora     | NEAR testnet - Ropsten | [Working](https://explorer.testnet.near.org/accounts/aurora)   | 0x9006a6D7d08A388Eeea0112cc1b6b6B15a4289AF |              aurora            |
 
 # Step-by-step testing guide
 
@@ -35,21 +36,21 @@
 9. Log in to the NEAR Wallet from the CLI: `$ near login`. The browser should pop up and a NEAR Wallet should ask for a permission for adding a full access key.
 
 ### Configuration
-1. Copy `test-ethereum-config.json` to `ethereum-config.json` with `$ cp eth-custodian/scripts/json/test-ethereum-config.json eth-custodian/scripts/json/ethereum-config.json`.
+1. Go to _eth-custodian_ directory: `$ cd eth-custodian`.
 
-2. Update `ethereum-config.json` with the actual data on the addresses.
+2. (Optional) Update `scripts/json/ethereum-config.json` with the actual data on the addresses.
 
 3. Create `.env` file inside `eth-custodian` directory: `$ touch .env`.
 
 4. Add to the file your RPC endpoint (with or without API key):
 `$ echo "WEB3_RPC_ENDPOINT=YOUR_WEB3_RPC_ENDPOINT_HERE" >> .env` <br/>
-RPC access can be easily gained from [Alchemy](https://www.alchemyapi.io/).
+(Optional) RPC access can be easily gained from [Alchemy](https://www.alchemyapi.io/).
 
 5. Add to the file Ropsten Private key:
 `$ echo "ROPSTEN_PRIVATE_KEY=YOUR_ROPSTEN_PRIVATE_KEY_HERE" >> .env`
 
 6. Add path to the Near credentials (e.g. this usually will be at `/home/<YOUR_USER_NAME>/.near-credentials` on Linux <br/>
-and `/Users/<user>/.near-credentials` on MacOS: <br/>
+and `$HOME/.near-credentials` on MacOS: <br/>
 `$ echo "NEAR_KEY_STORE_PATH=PATH_TO_YOUR_NEAR_CREDENTIALS_HERE" >> .env`
 
 7. Compile Ethereum contracts with: <br/>
@@ -62,7 +63,7 @@ To get the balance of bridgedETH (NEP-141):
 To get the balance of nETH (native ETH in Aurora-EVM):
 `$ make near-ft-balance-of-eth NEAR_ACCOUNT=<YOUR_NEAR_ACCOUNT_HERE> ETH_ADDRESS=<ETH_ADDRESS_OF_ACCOUNT_IN_EVM_HERE>`
 
-## Ethereum -> Near transfer (ETH -> bridgedETH (NEP-141))
+## Ethereum -> Near transfer (ETH -> nETH (NEP-141))
 1. Go to _eth-custodian_ directory: `$ cd eth-custodian`.
 
 2. **Transfer ETH to EthCustodian**.
@@ -82,7 +83,7 @@ You will need to provide your `NEAR_ACCOUNT` AccountId which will be used to rel
 bridgedETH for the `NEAR_RECIPIENT` (this parameter is optional here and only serves for verbose purposes to show the balance of the recipient before and after) <br/>
 Run: `$ make near-finalize-deposit-from-eth TX_HASH=<DEPOSIT_TX_HASH_HERE> NEAR_ACCOUNT=<YOUR_NEAR_ACCOUNT_HERE> NEAR_RECIPIENT=<RECIPIENT_HERE>`
 
-## Near -> Ethereum transfer (bridgedETH -> ETH)
+## Near -> Ethereum transfer (nETH -> ETH)
 1. Go to _eth-custodian_ directory: `$ cd eth-custodian`.
 
 2. **Begin withdraw**
@@ -101,7 +102,7 @@ Call withdraw in Near blockchain to finalize the deposit transaction with the gi
 Send a `withdraw` transaction to the EthCustodian contract. After bridge syncing we are able to prove the fact of withdrawal transaction on NEAR to the EthCustodian contract. <br/>
 Run: `$ make eth-finalize-withdraw-from-near RECEIPT_ID=<RECEIPT_ID_FROM_STEP_2_HERE> NEAR_ACCOUNT=<YOUR_NEAR_ACCOUNT_HERE>`
 
-## Ethereum -> Near transfer (ETH -> nETH (native ETH in Aurora-EVM))
+## Ethereum -> Near transfer (ETH -> ETH (native ETH in Aurora-EVM))
 1. Go to _eth-custodian_ directory: `$ cd eth-custodian`.
 
 2. **Transfer ETH to EthCustodian**.
@@ -119,19 +120,32 @@ for a successfull finalization of the transfer.
 Call deposit in Near blockchain to finalize the deposit transaction with the given `TX_HASH`. You can find `TX_HASH` in the output of the previous step.
 You will need to provide your `NEAR_ACCOUNT` AccountId which will be used to relay the ETH proof to the Near blockchain to mint appropriate amount of
 bridgedETH for the `NEAR_RECIPIENT` (this parameter is optional here and only serves for verbose purposes to show the balance of the recipient before and after) <br/>
-Run: `$ make near-finalize-deposit-from-eth-to-evm TX_HASH=<DEPOSIT_TX_HASH_HERE> NEAR_ACCOUNT=<YOUR_NEAR_ACCOUNT_HERE> NEAR_RECIPIENT=<RECIPIENT_HERE>`
+Run: `$ make near-finalize-deposit-from-eth-to-evm TX_HASH=<DEPOSIT_TX_HASH_HERE> NEAR_ACCOUNT=<YOUR_NEAR_ACCOUNT_HERE> ETH_RECIPIENT=<ETH_RECIPIENT_HERE>`
 
-## Near -> Ethereum transfer (nETH -> ETH)
+## Near -> Ethereum transfer (ETH -> ETH)
 WIP
 
 ## Advanced
+
+### Contract deployment
+
+To deploy the contract, you need at least _proverAddress_ and _nearEvmAccount_ addresses to be configured in
+`ethereum-config.json` prior to the deployment.
+
+After that call: <br />
+`$ make eth-deploy-contracts`
+
+As a result of the function call you will get the address of the freshly deployed `EthCustodian` that you can put in
+your `ethereum-config.json` file in the `ethConnectorAddress` field.
+
+### Other scripts
 
 For more advanced usage, please examine the `hardhat.config.js` file which contains a lot of scripts that are performed
 in this step-by-step guide via more simplified `make` commands. You can see the list of available tasks by running:
 <br/>
 `$ yarn hardhat`
 
-To show the arguments and help on how to use the specific task from the task list, use the following command structure:
+To show help and required arguments on how to use the specific task from the task list, use the following command structure:
 `$ yarn hardhat <TASK_NAME> --help` <br/>
 
 e.g.:

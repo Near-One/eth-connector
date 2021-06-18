@@ -10,21 +10,6 @@ const NEAR_KEY_STORE_PATH = process.env.NEAR_KEY_STORE_PATH;
 const keyStore = new nearAPI.keyStores.UnencryptedFileSystemKeyStore(NEAR_KEY_STORE_PATH);
 
 
-class BorshArgs {
-  constructor (args) {
-    Object.assign(this, args)
-  }
-};
-
-const ftBalanceOfSchema = new Map([
-  [BorshArgs, {
-    kind: 'struct',
-    fields: [
-      ['account_id', 'string'],
-    ]
-  }]
-]);
-
 async function nearFtBalanceOf(nearAccount, nearJsonRpc, nearNetwork, queryNearAccount) {
     const near = await nearAPI.connect({
         deps: {
@@ -40,17 +25,11 @@ async function nearFtBalanceOf(nearAccount, nearJsonRpc, nearNetwork, queryNearA
         account,
         ethereumConfig.nearEvmAccount,
         {
-            changeMethods: ['ft_balance_of'],
+            viewMethods: ['ft_balance_of'],
         }
     );
 
-    const args = new BorshArgs({
-        account_id: queryNearAccount.toString()
-    });
-
-    const serializedArgs = serializeBorsh(ftBalanceOfSchema, args);
-
-    const accountBalance = await nearEvmContract.ft_balance_of(serializedArgs);
+    const accountBalance = await nearEvmContract.ft_balance_of({ account_id: queryNearAccount.toString() });
     return ethers.BigNumber.from(accountBalance.toString());
 }
 
