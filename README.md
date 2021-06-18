@@ -44,13 +44,13 @@
 
 4. Add to the file your RPC endpoint (with or without API key):
 `$ echo "WEB3_RPC_ENDPOINT=YOUR_WEB3_RPC_ENDPOINT_HERE" >> .env` <br/>
-RPC access can be easily gained from [Alchemy](https://www.alchemyapi.io/).
+(Optional) RPC access can be easily gained from [Alchemy](https://www.alchemyapi.io/).
 
 5. Add to the file Ropsten Private key:
 `$ echo "ROPSTEN_PRIVATE_KEY=YOUR_ROPSTEN_PRIVATE_KEY_HERE" >> .env`
 
 6. Add path to the Near credentials (e.g. this usually will be at `/home/<YOUR_USER_NAME>/.near-credentials` on Linux <br/>
-and `/Users/<user>/.near-credentials` on MacOS: <br/>
+and `$HOME/.near-credentials` on MacOS: <br/>
 `$ echo "NEAR_KEY_STORE_PATH=PATH_TO_YOUR_NEAR_CREDENTIALS_HERE" >> .env`
 
 7. Compile Ethereum contracts with: <br/>
@@ -120,7 +120,7 @@ for a successfull finalization of the transfer.
 Call deposit in Near blockchain to finalize the deposit transaction with the given `TX_HASH`. You can find `TX_HASH` in the output of the previous step.
 You will need to provide your `NEAR_ACCOUNT` AccountId which will be used to relay the ETH proof to the Near blockchain to mint appropriate amount of
 bridgedETH for the `NEAR_RECIPIENT` (this parameter is optional here and only serves for verbose purposes to show the balance of the recipient before and after) <br/>
-Run: `$ make near-finalize-deposit-from-eth-to-evm TX_HASH=<DEPOSIT_TX_HASH_HERE> NEAR_ACCOUNT=<YOUR_NEAR_ACCOUNT_HERE> NEAR_RECIPIENT=<RECIPIENT_HERE>`
+Run: `$ make near-finalize-deposit-from-eth-to-evm TX_HASH=<DEPOSIT_TX_HASH_HERE> NEAR_ACCOUNT=<YOUR_NEAR_ACCOUNT_HERE> ETH_RECIPIENT=<ETH_RECIPIENT_HERE>`
 
 ## Near -> Ethereum transfer (ETH -> ETH)
 WIP
