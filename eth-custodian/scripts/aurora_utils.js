@@ -8,7 +8,6 @@ const NEAR_KEY_STORE_PATH = process.env.NEAR_KEY_STORE_PATH;
 // NEAR keystore init
 const keyStore = new nearAPI.keyStores.UnencryptedFileSystemKeyStore(NEAR_KEY_STORE_PATH);
 
-const PROVER_ACCOUNT_TESTNET = 'prover.ropsten.testnet';
 
 class BorshInitEthConnectorArgs {
   constructor (initArgs) {
@@ -26,7 +25,10 @@ const initEthConnectorArgsBorshSchema = new Map([
   }]
 ]);
 
-async function auroraInitEthConnector (nearAccount, nearJsonRpc, nearNetwork) {
+async function auroraInitEthConnector (nearAccount, nearJsonRpc, nearNetwork, proverAccount) {
+    console.log(`Aurora-engine: ${ethereumConfig.nearEvmAccount}. Initializing ETH-connector with following values:\
+                \nProver account: ${proverAccount}; EthCustodian address: ${ethereumConfig.ethConnectorAddress}.`);
+
     // Init NEAR API
     const near = await nearAPI.connect({
         deps: {
@@ -47,7 +49,7 @@ async function auroraInitEthConnector (nearAccount, nearJsonRpc, nearNetwork) {
     );
 
     const formattedArgs = new BorshInitEthConnectorArgs({
-        prover_account: PROVER_ACCOUNT_TESTNET,
+        prover_account: proverAccount,
         eth_custodian_address: ethereumConfig.ethConnectorAddress.replace('0x', ''),
     });
     const borshCallArgs = serializeBorsh(initEthConnectorArgsBorshSchema, formattedArgs);

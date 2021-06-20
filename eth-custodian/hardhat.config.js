@@ -9,6 +9,9 @@ const WEB3_RPC_ENDPOINT = process.env.WEB3_RPC_ENDPOINT;
 // Hardhat workaround to specify some random private key so this won't fail in CI
 const ROPSTEN_PRIVATE_KEY = process.env.ROPSTEN_PRIVATE_KEY ? process.env.ROPSTEN_PRIVATE_KEY : "00";
 
+const PROVER_ACCOUNT_MAINNET = 'prover.bridge.near';
+const PROVER_ACCOUNT_TESTNET = 'prover.ropsten.testnet';
+
 task('eth-deposit-to-near', 'Deposits the provided `amount` (wei) having `fee`(wei) to ETH Custodian to transfer it to Near')
     .addParam('nearRecipient', 'AccountID of recipient on Near')
     .addParam('amount', 'Amount (wei) to transfer',)
@@ -100,7 +103,8 @@ task('aurora-init-eth-connector', 'Initializes the Eth connector in the Aurora c
     .addOptionalParam('nearNetwork', 'Near network (default: default)', 'default')
     .setAction(async taskArgs => {
         const { auroraInitEthConnector } = require('./scripts/aurora_utils');
-        await auroraInitEthConnector(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork);
+        const proverAccount = taskArgs.nearNetwork === 'mainnet' ? PROVER_ACCOUNT_MAINNET : PROVER_ACCOUNT_TESTNET;
+        await auroraInitEthConnector(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork, proverAccount);
     });
 
 task('aurora-register-relayer', 'Register the relayer in the Aurora contract')
