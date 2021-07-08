@@ -221,7 +221,7 @@ task('aurora-bridge-erc20-token-and-metadata', 'Gets ERC-20 token from Ethereum 
         const metadata = await getErc20TokenMetadata(hre.ethers.provider, taskArgs.erc20TokenAddressInEthereum);
         console.log(`Metadata for ERC-20 token at ${taskArgs.erc20TokenAddressInEthereum}:\n ${JSON.stringify(metadata)}`);
         const {name, symbol, decimals} = metadata;
-        console.log(`Metadata unwrap: ${name}, ${symbol}, ${decimals}`);
+        console.log(`Metadata unwrapped: ${name}, ${symbol}, ${decimals}`);
 
         // Get NEP-141 account for ERC-20 token
         const { nearGetBridgedTokenAccountId } = require('./scripts/near_utils.js');
@@ -247,6 +247,10 @@ task('aurora-bridge-erc20-token-and-metadata', 'Gets ERC-20 token from Ethereum 
         await auroraSetErc20Metadata(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork,
                                      erc20TokenAddressInAurora,
                                      name, symbol, decimals);
+
+        const auroraProvider = hre.ethers.getDefaultProvider(AURORA_WEB3_RPC_ENDPOINT);
+        const metadataInAurora = await getErc20TokenMetadata(auroraProvider, erc20TokenAddressInAurora);
+        console.log(`Metadata for ERC-20 token in Aurora at ${erc20TokenAddressInAurora}:\n ${JSON.stringify(metadata)}`);
     });
 
 
