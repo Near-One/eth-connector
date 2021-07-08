@@ -5,9 +5,13 @@ require('dotenv').config();
 require('@nomiclabs/hardhat-waffle');
 require('hardhat-gas-reporter');
 
-const WEB3_RPC_ENDPOINT = process.env.WEB3_RPC_ENDPOINT;
+const ROPSTEN_WEB3_RPC_ENDPOINT = process.env.ROPSTEN_WEB3_RPC_ENDPOINT;
+const MAINNET_WEB3_RPC_ENDPOINT = process.env.MAINNET_WEB3_RPC_ENDPOINT;
+const AURORA_WEB3_RPC_ENDPOINT = process.env.AURORA_WEB3_RPC_ENDPOINT;
 // Hardhat workaround to specify some random private key so this won't fail in CI
 const ROPSTEN_PRIVATE_KEY = process.env.ROPSTEN_PRIVATE_KEY ? process.env.ROPSTEN_PRIVATE_KEY : "00";
+const MAINNET_PRIVATE_KEY = process.env.MAINNET_PRIVATE_KEY ? process.env.MAINNET_PRIVATE_KEY : "00";
+const AURORA_PRIVATE_KEY = process.env.AURORA_PRIVATE_KEY ? process.env.AURORA_PRIVATE_KEY : "00";
 
 const PROVER_ACCOUNT_MAINNET = 'prover.bridge.near';
 const PROVER_ACCOUNT_TESTNET = 'prover.ropsten.testnet';
@@ -37,6 +41,39 @@ task('eth-generate-deposit-proof', 'Generates deposit proof for the given TX has
     .setAction(async taskArgs => {
         const Proof = require('./scripts/eth_generate_proof');
         await Proof.findProof(taskArgs.txHash);
+    });
+
+task('eth-get-erc20-metadata', 'Gets ERC-20 token metadata at the provided address')
+    .addParam('address', 'ERC-20 token address')
+    .setAction(async taskArgs => {
+        const { getErc20TokenMetadata } = require('./scripts/eth_utils');
+        const metadata = await getErc20TokenMetadata(hre.ethers.provider, taskArgs.address);
+        console.log(`Metadata for ERC-20 token at ${taskArgs.address}:\n ${JSON.stringify(metadata)}`);
+    });
+
+task('near-check-proof-exists', 'Checks whether deposit proof exists for the given TX hash')
+    .addParam('nearAccount', 'Near account that submits the transaction')
+    .addParam('txHash', 'transaction hash')
+    .addOptionalParam('nearJsonRpc', 'Near JSON RPC address (default: "https://rpc.testnet.near.org/"', 'https://rpc.testnet.near.org/')
+    .addOptionalParam('nearNetwork', 'Near network (default: default)', 'default')
+    .setAction(async taskArgs => {
+        const Proof = require('./scripts/eth_generate_proof');
+        const shouldBorshifyProof = true;
+        const proof = await Proof.findProof(taskArgs.txHash, shouldBorshifyProof);
+
+        const { nearCheckIfProofExists } = require('./scripts/near_utils.js');
+        const proofExists = await nearCheckIfProofExists(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork, proof);
+        console.log(`Proof for TX ${taskArgs.txHash} exists: ${proofExists}`);
+    });
+
+task('near-set-paused-flags', 'Sets paused flags')
+    .addParam('nearAccount', 'Near account that submits the transaction')
+    .addParam('pausedFlags', 'paused flags')
+    .addOptionalParam('nearJsonRpc', 'Near JSON RPC address (default: "https://rpc.testnet.near.org/"', 'https://rpc.testnet.near.org/')
+    .addOptionalParam('nearNetwork', 'Near network (default: default)', 'default')
+    .setAction(async taskArgs => {
+        const { nearSetPausedFlags } = require('./scripts/near_utils.js');
+        await nearSetPausedFlags(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork, taskArgs.pausedFlags);
     });
 
 task('near-finalize-deposit-from-eth', 'Generates the deposit proof for the given Ethereum TX hash and submits it to Near to finalize the deposit')
@@ -117,6 +154,65 @@ task('aurora-register-relayer', 'Register the relayer in the Aurora contract')
         await auroraRegisterRelayer(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork, taskArgs.relayerAddressInAurora);
     });
 
+task('aurora-deploy-erc20-token', 'Deploys ERC-20 token mapped to the provided NEP141-token with the given account ID')
+    .addParam('nearAccount', 'Near account that submits the transaction')
+    .addParam('tokenAccountId', 'NEP-141 Near account that owns bridged ETH')
+    .addOptionalParam('nearJsonRpc', 'Near JSON RPC address (default: "https://rpc.testnet.near.org/"', 'https://rpc.testnet.near.org/')
+    .addOptionalParam('nearNetwork', 'Near network (default: default)', 'default')
+    .setAction(async taskArgs => {
+        const { auroraDeployErc20Token } = require('./scripts/aurora_utils');
+        const tokenAddressInAurora = await auroraDeployErc20Token(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork, taskArgs.tokenAccountId);
+        console.log(`Deployed ERC-20 token for ${taskArgs.tokenAccountId} to Aurora at: ${tokenAddressInAurora}`);
+    });
+
+task('aurora-get-erc20-from-nep141', 'Gets the ERC-20 token mapped to the provided NEP141-token with the given account ID')
+    .addParam('nearAccount', 'Near account that submits the transaction')
+    .addParam('tokenAccountId', 'NEP-141 Near account that owns bridged ETH')
+    .addOptionalParam('nearJsonRpc', 'Near JSON RPC address (default: "https://rpc.testnet.near.org/"', 'https://rpc.testnet.near.org/')
+    .addOptionalParam('nearNetwork', 'Near network (default: default)', 'default')
+    .setAction(async taskArgs => {
+        const { auroraGetErc20FromNep141 } = require('./scripts/aurora_utils');
+
+        const tokenAddressInAurora = await auroraGetErc20FromNep141(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork, taskArgs.tokenAccountId);
+        console.log(`ERC-20 token for ${taskArgs.tokenAccountId} in Aurora: ${tokenAddressInAurora}`);
+    });
+
+task('aurora-get-nep141-from-erc20', 'Gets the NEP-141 token account ID for the provided ERC-20 token address in Aurora')
+    .addParam('nearAccount', 'Near account that submits the transaction')
+    .addParam('erc20TokenAddressInAurora', 'ERC-20 token address in Aurora')
+    .addOptionalParam('nearJsonRpc', 'Near JSON RPC address (default: "https://rpc.testnet.near.org/"', 'https://rpc.testnet.near.org/')
+    .addOptionalParam('nearNetwork', 'Near network (default: default)', 'default')
+    .setAction(async taskArgs => {
+        const { auroraGetNep141FromErc20 } = require('./scripts/aurora_utils');
+
+        const nep141Address = await auroraGetNep141FromErc20(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork, taskArgs.erc20TokenAddressInAurora);
+        console.log(`NEP-141 account Id for ${taskArgs.erc20TokenAddressInAurora} in Aurora: ${nep141Address}`);
+    });
+
+task('aurora-set-erc20-metadata', 'Sets metadata for the given Aurora ERC-20 token in Aurora')
+    .addParam('nearAccount', 'Near account that submits the transaction')
+    .addParam('erc20TokenAddressInAurora', 'ERC-20 token address in Aurora')
+    .addParam('name', 'ERC-20 Metadata: name')
+    .addParam('symbol', 'ERC-20 Metadata: symbol')
+    .addParam('decimals', 'ERC-20 Metadata: decimals')
+    .addOptionalParam('nearJsonRpc', 'Near JSON RPC address (default: "https://rpc.testnet.near.org/"', 'https://rpc.testnet.near.org/')
+    .addOptionalParam('nearNetwork', 'Near network (default: default)', 'default')
+    .setAction(async taskArgs => {
+        const { auroraSetErc20Metadata } = require('./scripts/aurora_utils');
+
+        await auroraSetErc20Metadata(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork, taskArgs.erc20TokenAddressInAurora, taskArgs.name, taskArgs.symbol, taskArgs.decimals);
+    });
+
+task('aurora-bridge-erc20-token-metadata', 'Gets ERC-20 token metadata from Ethereum and bridges it to the appropriate Aurora ERC-20 token')
+    .addParam('nearAccount', 'Near account that submits the transaction')
+    .addParam('erc20TokenAddressInEthereum', 'ERC-20 token address in Ethereum')
+    .addOptionalParam('nearJsonRpc', 'Near JSON RPC address (default: "https://rpc.testnet.near.org/"', 'https://rpc.testnet.near.org/')
+    .addOptionalParam('nearNetwork', 'Near network (default: default)', 'default')
+    .setAction(async taskArgs => {
+        //TODO
+    });
+
+
 module.exports = {
   paths: {
     sources: "./contracts",
@@ -137,9 +233,18 @@ module.exports = {
   },
   networks: {
     ropsten: {
-      url: `${WEB3_RPC_ENDPOINT}`,
+      url: `${ROPSTEN_WEB3_RPC_ENDPOINT}`,
       accounts: [`0x${ROPSTEN_PRIVATE_KEY}`]
-    }
+    },
+    mainnet: {
+      url: `${MAINNET_WEB3_RPC_ENDPOINT}`,
+      accounts: [`0x${MAINNET_PRIVATE_KEY}`]
+    },
+    developAurora: {
+      url: `${AURORA_WEB3_RPC_ENDPOINT}`,
+      chain_id: 1313161555,
+      accounts: [`0x${AURORA_PRIVATE_KEY}`]
+    },
   },
   gasReporter: {
     currency: 'USD',
