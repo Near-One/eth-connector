@@ -286,6 +286,16 @@ module.exports = {
       chain_id: 1313161555,
       accounts: [`0x${AURORA_PRIVATE_KEY}`]
     },
+    testnetAurora: {
+      url: `${AURORA_WEB3_RPC_ENDPOINT}`,
+      chain_id: 1313161555,
+      accounts: [`0x${AURORA_PRIVATE_KEY}`]
+    },
+    mainnetAurora: {
+      url: `${AURORA_WEB3_RPC_ENDPOINT}`,
+      chain_id: 1313161554,
+      accounts: [`0x${AURORA_PRIVATE_KEY}`]
+    },
   },
   gasReporter: {
     currency: 'USD',
