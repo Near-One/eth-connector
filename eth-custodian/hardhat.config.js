@@ -156,24 +156,31 @@ task('aurora-register-relayer', 'Register the relayer in the Aurora contract')
 
 task('aurora-deploy-erc20-token', 'Deploys ERC-20 token mapped to the provided NEP141-token with the given account ID')
     .addParam('nearAccount', 'Near account that submits the transaction')
-    .addParam('tokenAccountId', 'NEP-141 Near account that owns bridged ETH')
+    .addParam('tokenAccountId', 'ERC-20 prefix of NEP-141 Near account')
     .addOptionalParam('nearJsonRpc', 'Near JSON RPC address (default: "https://rpc.testnet.near.org/"', 'https://rpc.testnet.near.org/')
     .addOptionalParam('nearNetwork', 'Near network (default: default)', 'default')
     .setAction(async taskArgs => {
         const { auroraDeployErc20Token } = require('./scripts/aurora_utils');
-        const tokenAddressInAurora = await auroraDeployErc20Token(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork, taskArgs.tokenAccountId);
+        const { nearGetBridgedTokenAccountId } = require('./scripts/near_utils.js');
+        const nep141AccountId = nearGetBridgedTokenAccountId(taskArgs.tokenAccountId);
+        console.log(`NEP-141 address for ${taskArgs.tokenAccountId}: ${nep141AccountId}`);
+
+        const tokenAddressInAurora = await auroraDeployErc20Token(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork, nep141AccountId);
         console.log(`Deployed ERC-20 token for ${taskArgs.tokenAccountId} to Aurora at: ${tokenAddressInAurora}`);
     });
 
 task('aurora-get-erc20-from-nep141', 'Gets the ERC-20 token mapped to the provided NEP141-token with the given account ID')
     .addParam('nearAccount', 'Near account that submits the transaction')
-    .addParam('tokenAccountId', 'NEP-141 Near account that owns bridged ETH')
+    .addParam('tokenAccountId', 'ERC-20 prefix of NEP-141 Near account')
     .addOptionalParam('nearJsonRpc', 'Near JSON RPC address (default: "https://rpc.testnet.near.org/"', 'https://rpc.testnet.near.org/')
     .addOptionalParam('nearNetwork', 'Near network (default: default)', 'default')
     .setAction(async taskArgs => {
         const { auroraGetErc20FromNep141 } = require('./scripts/aurora_utils');
+        const { nearGetBridgedTokenAccountId } = require('./scripts/near_utils.js');
+        const nep141AccountId = nearGetBridgedTokenAccountId(taskArgs.tokenAccountId);
+        console.log(`NEP-141 address for ${taskArgs.tokenAccountId}: ${nep141AccountId}`);
 
-        const tokenAddressInAurora = await auroraGetErc20FromNep141(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork, taskArgs.tokenAccountId);
+        const tokenAddressInAurora = await auroraGetErc20FromNep141(taskArgs.nearAccount, taskArgs.nearJsonRpc, taskArgs.nearNetwork, nep141AccountId);
         console.log(`ERC-20 token for ${taskArgs.tokenAccountId} in Aurora: ${tokenAddressInAurora}`);
     });
 

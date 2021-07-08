@@ -2,7 +2,7 @@
 
 NETWORK=ropsten
 NEAR_NETWORK=testnet
-NEAR_EVM_ACCOUNT=develop.aurora
+NEAR_EVM_ACCOUNT=aurora
 NEAR_ACCOUNT=
 QUERY_NEAR_ACCOUNT=${NEAR_ACCOUNT}
 NEAR_JSON_RPC_MAINNET=https://archival-rpc.mainnet.near.org/
@@ -10,8 +10,8 @@ NEAR_JSON_RPC_TESTNET=https://rpc.testnet.near.org
 NEAR_JSON_RPC=${NEAR_JSON_RPC_TESTNET}
 ETH_RECIPIENT=
 ETH_ADDRESS=
-AMOUNT=
-FEE=
+AMOUNT=0
+FEE=0
 PROOF=
 TX_HASH=
 RECEIPT_ID=
@@ -19,9 +19,7 @@ RELAYER_NEAR_ADDRESS=
 RELAYER_ADDRESS_IN_AURORA=
 
 ERC20_TOKEN_ADDRESS=
-BRIDGED_TOKEN_ADDRESS=${ERC20_TOKEN_ADDRESS}.f.ropsten.testnet
 AURORA_ERC20_TOKEN_ADDRESS=
-
 ERC20_NAME=
 ERC20_SYMBOL=
 ERC20_DECIMALS=
@@ -110,10 +108,10 @@ aurora-make-it-rain:
 	yarn hardhat aurora-make-it-rain --near-account ${RELAYER_NEAR_ADDRESS} --rain-receiver-address ${ETH_RECIPIENT}
 
 aurora-deploy-erc20-token:
-	yarn hardhat aurora-deploy-erc20-token --near-account ${NEAR_ACCOUNT} --near-network ${NEAR_NETWORK} --near-json-rpc ${NEAR_JSON_RPC} --token-account-id ${BRIDGED_TOKEN_ADDRESS}
+	yarn hardhat aurora-deploy-erc20-token --near-account ${NEAR_ACCOUNT} --near-network ${NEAR_NETWORK} --near-json-rpc ${NEAR_JSON_RPC} --token-account-id ${ERC20_TOKEN_ADDRESS}
 
 aurora-get-erc20-from-nep141:
-	yarn hardhat aurora-get-erc20-from-nep141 --near-account ${NEAR_ACCOUNT} --near-network ${NEAR_NETWORK} --near-json-rpc ${NEAR_JSON_RPC} --token-account-id ${BRIDGED_TOKEN_ADDRESS}
+	yarn hardhat aurora-get-erc20-from-nep141 --near-account ${NEAR_ACCOUNT} --near-network ${NEAR_NETWORK} --near-json-rpc ${NEAR_JSON_RPC} --token-account-id ${ERC20_TOKEN_ADDRESS}
 
 aurora-get-nep141-from-erc20:
 	yarn hardhat aurora-get-nep141-from-erc20 --near-account ${NEAR_ACCOUNT} --near-network ${NEAR_NETWORK} --near-json-rpc ${NEAR_JSON_RPC} --erc20-token-address-in-aurora ${AURORA_ERC20_TOKEN_ADDRESS}

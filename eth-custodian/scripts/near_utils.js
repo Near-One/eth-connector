@@ -138,8 +138,16 @@ async function nearCheckIfProofExists(nearAccount, nearJsonRpc, nearNetwork, pro
     console.log(`Res: ${JSON.stringify(res)}`);
 }
 
+function nearGetBridgedTokenAccountId(erc20TokenAddress) {
+    return [
+        erc20TokenAddress.replace('0x', ''),
+        ethereumConfig.bridgeFactoryAccount
+    ].join('.');
+}
+
 
 exports.nearFtBalanceOf = nearFtBalanceOf;
 exports.nearFtBalanceOfEth = nearFtBalanceOfEth;
 exports.nearSetPausedFlags = nearSetPausedFlags;
 exports.nearCheckIfProofExists = nearCheckIfProofExists;
+exports.nearGetBridgedTokenAccountId = nearGetBridgedTokenAccountId;
