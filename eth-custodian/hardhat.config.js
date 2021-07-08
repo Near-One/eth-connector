@@ -250,7 +250,7 @@ task('aurora-bridge-erc20-token-and-metadata', 'Gets ERC-20 token from Ethereum 
 
         const auroraProvider = hre.ethers.getDefaultProvider(AURORA_WEB3_RPC_ENDPOINT);
         const metadataInAurora = await getErc20TokenMetadata(auroraProvider, erc20TokenAddressInAurora);
-        console.log(`Metadata for ERC-20 token in Aurora at ${erc20TokenAddressInAurora}:\n ${JSON.stringify(metadata)}`);
+        console.log(`Metadata for ERC-20 token in Aurora at ${erc20TokenAddressInAurora}:\n ${JSON.stringify(metadataInAurora)}`);
     });
 
 
