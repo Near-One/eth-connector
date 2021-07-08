@@ -177,7 +177,7 @@ async function auroraDeployErc20Token(nearAccount, nearJsonRpc, nearNetwork, bri
     const payment_for_storage = new BN('0'); // Attached payment to pay for the storage
     await nearEvmContract.deploy_erc20_token(borshCallArgs, gas_limit, payment_for_storage);
 
-    const tokenAddressInAurora = auroraGetErc20FromNep141(nearAccount, nearJsonRpc, nearNetwork, bridgedTokenAccountId);
+    const tokenAddressInAurora = await auroraGetErc20FromNep141(nearAccount, nearJsonRpc, nearNetwork, bridgedTokenAccountId);
 
     return tokenAddressInAurora;
 }
@@ -269,7 +269,7 @@ async function auroraSetErc20Metadata(nearAccount, nearJsonRpc, nearNetwork, erc
         .populateTransaction
         .setMetadata(erc20Name, erc20Symbol, erc20Decimals);
 
-    console.log(`UnsignedTx: ${JSON.stringify(unsignedTx)}`);
+    console.log(`Prepared unsigned TX to set the metadata: ${JSON.stringify(unsignedTx)}`);
 
     const formattedArgs = new BorshArgs({
         contract: ethers.utils.arrayify(address),

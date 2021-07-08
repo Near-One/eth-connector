@@ -118,3 +118,6 @@ aurora-get-nep141-from-erc20:
 
 aurora-set-erc20-metadata:
 	yarn hardhat aurora-set-erc20-metadata --near-account ${NEAR_ACCOUNT} --near-network ${NEAR_NETWORK} --near-json-rpc ${NEAR_JSON_RPC} --erc20-token-address-in-aurora ${AURORA_ERC20_TOKEN_ADDRESS} --name ${ERC20_NAME} --symbol ${ERC20_SYMBOL} --decimals ${ERC20_DECIMALS}
+
+aurora-bridge-erc20-token-and-metadata:
+	yarn hardhat aurora-bridge-erc20-token-and-metadata --network ${NETWORK} --near-account ${NEAR_ACCOUNT} --near-network ${NEAR_NETWORK} --near-json-rpc ${NEAR_JSON_RPC} --erc20-token-address-in-ethereum ${ERC20_TOKEN_ADDRESS}

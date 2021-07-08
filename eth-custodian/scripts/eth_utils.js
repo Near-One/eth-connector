@@ -6,7 +6,7 @@ const handleError = () => {
   return undefined;
 };
 
-async function getErc20TokenMetadata(ethersProvider, erc20TokenAddress,) {
+async function getErc20TokenMetadata(ethersProvider, erc20TokenAddress) {
     const metadataAbi = [
         'function name() view returns (string name)',
         'function symbol() view returns (string symbol)',
@@ -22,7 +22,7 @@ async function getErc20TokenMetadata(ethersProvider, erc20TokenAddress,) {
         contract.decimals().catch(handleError),
     ]);
 
-    return { decimals, name, symbol };
+    return { name, symbol, decimals };
 }
 
 exports.getErc20TokenMetadata = getErc20TokenMetadata;
