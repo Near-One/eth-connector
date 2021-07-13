@@ -207,7 +207,7 @@ async function auroraGetErc20FromNep141(nearAccount, nearJsonRpc, nearNetwork, b
     const borshCallArgs = serializeBorsh(nep141TokenArgsBorshSchema, formattedArgs);
 
     const tokenAddressInAurora
-        = await nearEvmContract.get_erc20_from_nep141(borshCallArgs.slice(4), options = { parse: parseToHex });
+        = await nearEvmContract.get_erc20_from_nep141(borshCallArgs, options = { parse: parseToHex });
     return tokenAddressInAurora;
 }
 
