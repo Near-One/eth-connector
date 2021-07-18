@@ -9,6 +9,38 @@ const { serialize: serializeBorsh } = require('near-api-js/lib/utils/serialize')
 const NEAR_KEY_STORE_PATH = process.env.NEAR_KEY_STORE_PATH;
 const keyStore = new nearAPI.keyStores.UnencryptedFileSystemKeyStore(NEAR_KEY_STORE_PATH);
 
+class BorshObject {
+  constructor (obj) {
+    Object.assign(this, obj)
+  }
+};
+
+const logIndexBorshSchema = new Map([
+  [BorshObject, {
+    kind: 'struct',
+    fields: [
+      ['log_index', 'u64'],
+    ]
+  }]
+]);
+
+const receiptIndexBorshSchema = new Map([
+  [BorshObject, {
+    kind: 'struct',
+    fields: [
+      ['receipt_index', 'u64'],
+    ]
+  }]
+]);
+
+const pausedFlagsBorshSchema = new Map([
+  [BorshObject, {
+    kind: 'struct',
+    fields: [
+      ['paused', 'u8'],
+    ]
+  }]
+]);
 
 async function nearFtBalanceOf(nearAccount, nearJsonRpc, nearNetwork, queryNearAccount) {
     const near = await nearAPI.connect({
@@ -58,5 +90,64 @@ async function nearFtBalanceOfEth(nearAccount, nearJsonRpc, nearNetwork, ethAddr
     return ethers.BigNumber.from(accountBalance.toString());
 }
 
+async function nearSetPausedFlags(nearAccount, nearJsonRpc, nearNetwork, _pausedFlags) {
+    const near = await nearAPI.connect({
+        deps: {
+            keyStore
+        },
+        nodeUrl: nearJsonRpc,
+        networkId: nearNetwork
+    });
+
+    const account = await near.account(nearAccount);
+
+    const nearEvmContract = new nearAPI.Contract(
+        account,
+        ethereumConfig.nearEvmAccount,
+        {
+            changeMethods: ['set_paused_flags'],
+        }
+    );
+
+    const pausedFlags = new BorshObject({ paused: 0 });
+    await nearEvmContract.set_paused_flags(serializeBorsh(pausedFlagsBorshSchema, pausedFlags));
+
+    console.log(`Successfully set paused flags`);
+}
+
+async function nearCheckIfProofExists(nearAccount, nearJsonRpc, nearNetwork, proof) {
+    const near = await nearAPI.connect({
+        deps: {
+            keyStore
+        },
+        nodeUrl: nearJsonRpc,
+        networkId: nearNetwork
+    });
+
+    const account = await near.account(nearAccount);
+
+    const nearEvmContract = new nearAPI.Contract(
+        account,
+        ethereumConfig.nearEvmAccount,
+        {
+            changeMethods: ['is_used_proof'],
+        }
+    );
+
+    const res = await nearEvmContract.is_used_proof(proof);
+    console.log(`Res: ${JSON.stringify(res)}`);
+}
+
+function nearGetBridgedTokenAccountId(erc20TokenAddress) {
+    return [
+        erc20TokenAddress.replace('0x', ''),
+        ethereumConfig.bridgeFactoryAccount
+    ].join('.');
+}
+
+
 exports.nearFtBalanceOf = nearFtBalanceOf;
 exports.nearFtBalanceOfEth = nearFtBalanceOfEth;
+exports.nearSetPausedFlags = nearSetPausedFlags;
+exports.nearCheckIfProofExists = nearCheckIfProofExists;
+exports.nearGetBridgedTokenAccountId = nearGetBridgedTokenAccountId;

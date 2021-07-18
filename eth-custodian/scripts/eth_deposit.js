@@ -52,6 +52,11 @@ async function ethDeposit(provider, depositToNear, recipient, amountToTransfer, 
         unsignedTx.gasPrice = 100000000000;
         console.log(`We are on the Ropsten network, use custom ` +
                     `gasLimit=${unsignedTx.gasLimit}; gasPrice=${unsignedTx.gasPrice}`);
+    } else if (network.name == 'mainnet') {
+        unsignedTx.gasLimit = 900000;
+        unsignedTx.gasPrice = 40200000000;
+        console.log(`We currently can not estimate gas on Mainnet network, use custom ` +
+                    `gasLimit=${unsignedTx.gasLimit}; gasPrice=${unsignedTx.gasPrice}`);
     } else {
         if (depositToNear) {
             await ethCustodian
