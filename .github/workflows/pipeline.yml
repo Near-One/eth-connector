@@ -1,0 +1,12 @@
+---
+on: [push, pull_request]
+name: Tests
+jobs:
+  test:
+    name: Test eth-custodian
+    runs-on: self-hosted
+    steps:
+      - name: Clone the repository
+        uses: actions/checkout@v2
+      - run: yarn && make test
+        working-directory: eth-custodian
