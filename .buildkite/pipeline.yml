@@ -1,9 +1,0 @@
-steps:
-  - label: test eth-custodian
-    command: |
-      source ~/.nvm/nvm.sh
-      source ~/.yarn/yarn.sh
-      cd eth-custodian
-      yarn
-      make test
-    timeout: 5
