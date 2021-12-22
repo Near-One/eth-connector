@@ -13,6 +13,8 @@ contract EthCustodian is ProofKeeper, AdminControlled {
     uint constant PAUSED_DEPOSIT_TO_NEAR = 1 << 1;
     uint constant PAUSED_WITHDRAW = 1 << 2;
 
+    string constant MESSAGE_SEPARATOR = ':';
+
     event Deposited (
         address indexed sender,
         string recipient,
@@ -63,11 +65,10 @@ contract EthCustodian is ProofKeeper, AdminControlled {
             'The fee cannot be bigger than the transferred amount.'
         );
 
-        string memory separator = ':';
         string memory protocolMessage = string(
             abi.encodePacked(
                 string(nearProofProducerAccount_),
-                separator, ethRecipientOnNear
+                MESSAGE_SEPARATOR, ethRecipientOnNear
             )
         );
 
