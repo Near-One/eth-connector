@@ -137,5 +137,6 @@ contract EthCustodian is ProofKeeper, AdminControlled {
         result.recipient = address(uint160(recipient));
         bytes20 ethCustodian = borshData.decodeBytes20();
         result.ethCustodian = address(uint160(ethCustodian));
+        require(borshData.finished(), "Parse error: EOI expected");
     }
 }
