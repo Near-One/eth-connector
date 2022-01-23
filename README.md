@@ -75,7 +75,7 @@ Run: `$ make eth-deposit-to-near NEAR_RECIPIENT=<ACCOUNT_ID_OF_RECIPIENT_HERE> A
 You need to wait for 3 confirmations for Ropsten blockchain. This is needed to achieve finality of Ropsten block, including locking transaction.
 The status of syncing of the bridge can be observed [here](http://35.235.76.186:8002/metrics).
 First metric (`near_bridge_eth2near_client_block_number`) should become more than the height of a block with transaction from the step 2 at least by 3,
-for a successfull finalization of the transfer.
+for a successful finalization of the transfer.
 
 4. **Finalize deposit to Near**
 Call deposit in Near blockchain to finalize the deposit transaction with the given `TX_HASH`. You can find `TX_HASH` in the output of the previous step.
@@ -114,7 +114,7 @@ Run: `$ make eth-deposit-to-evm ETH_RECIPIENT=<ETH_ADDRESS_OF_RECIPIENT_IN_EVM_H
 You need to wait for 3 confirmations for Ropsten blockchain. This is needed to achieve finality of Ropsten block, including locking transaction.
 The status of syncing of the bridge can be observed [here](http://35.235.76.186:8002/metrics).
 First metric (`near_bridge_eth2near_client_block_number`) should become more than the height of a block with transaction from the step 2 at least by 3,
-for a successfull finalization of the transfer.
+for a successful finalization of the transfer.
 
 4. **Finalize deposit to Near**
 Call deposit in Near blockchain to finalize the deposit transaction with the given `TX_HASH`. You can find `TX_HASH` in the output of the previous step.
