@@ -76,7 +76,7 @@ describe('ProofKeeper contract', () => {
             serializedProof = borshifyOutcomeProof(proof);
         });
 
-        it('Should revert when the proof is coming from the ancient block', async () => {
+        it('Should revert when the proof is coming from an ancient block', async () => {
             proofBlockHeight = 999;
 
             await expect(
@@ -84,7 +84,7 @@ describe('ProofKeeper contract', () => {
             )
                 .to
                 .be
-                .revertedWith('Proof is from the ancient block');
+                .revertedWith('Proof is from an ancient block');
         });
 
         it('Should revert when the proof is invalid', async () => {
