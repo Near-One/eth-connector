@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.6.12;
 
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+
 import 'rainbow-bridge/contracts/eth/nearbridge/contracts/AdminControlled.sol';
 import 'rainbow-bridge/contracts/eth/nearbridge/contracts/Borsh.sol';
 import 'rainbow-bridge/contracts/eth/nearprover/contracts/ProofDecoder.sol';
 import { INearProver, ProofKeeper } from './ProofKeeper.sol';
 
-contract EthCustodian is ProofKeeper, AdminControlled {
+contract EthCustodian is ProofKeeper, AdminControlled, ReentrancyGuard {
 
     uint constant UNPAUSED_ALL = 0;
     uint constant PAUSED_DEPOSIT_TO_EVM = 1 << 0;
@@ -106,10 +108,11 @@ contract EthCustodian is ProofKeeper, AdminControlled {
 
     /// Withdraws the appropriate amount of ETH which is encoded in `proofData`
     function withdraw(
-        bytes calldata proofData, 
+        bytes calldata proofData,
         uint64 proofBlockHeight
     )
         external
+        nonReentrant
         pausable(PAUSED_WITHDRAW)
     {
         ProofDecoder.ExecutionStatus memory status = _parseAndConsumeProof(proofData, proofBlockHeight);
@@ -119,7 +122,7 @@ contract EthCustodian is ProofKeeper, AdminControlled {
             result.ethCustodian == address(this),
             'Can only withdraw coins that were expected for the current contract'
         );
-        payable(result.recipient).transfer(result.amount);
+        payable(result.recipient).call.value(result.amount)("");
         emit Withdrawn(
             result.recipient,
             result.amount
