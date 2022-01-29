@@ -23,8 +23,7 @@ contract ProofKeeper {
         bytes memory nearProofProducerAccount,
         INearProver prover,
         uint64 minBlockAcceptanceHeight
-    ) 
-        public 
+    )
     {
         require(
             nearProofProducerAccount.length > 0,

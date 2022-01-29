@@ -12,7 +12,6 @@ contract ProofKeeperInheritorMock is ProofKeeper {
         uint64 minBlockAcceptanceHeight
     )
         ProofKeeper(nearProofProducerAccount, prover, minBlockAcceptanceHeight)
-        public
     {
     }
 

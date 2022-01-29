@@ -46,7 +46,6 @@ contract EthCustodian is ProofKeeper, AdminControlled {
     )
         AdminControlled(_admin, pausedFlags)
         ProofKeeper(nearEvm, prover, minBlockAcceptanceHeight)
-        public
     {
     }
 
