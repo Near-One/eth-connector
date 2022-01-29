@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8;
 
-import 'rainbow-bridge/contracts/eth/nearprover/contracts/INearProver.sol';
+import 'rainbow-bridge-sol/nearprover/contracts/INearProver.sol';
 
 contract NearProverMock is INearProver {
     function proveOutcome(
