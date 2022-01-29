@@ -270,7 +270,7 @@ describe('EthCustodian contract', () => {
             )
                 .to
                 .be
-                .revertedWith('Proof is from the ancient block');
+                .revertedWith('Proof is from an ancient block');
         });
     });
 

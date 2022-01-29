@@ -50,7 +50,7 @@ contract ProofKeeper {
     {
         require(
             proofBlockHeight >= minBlockAcceptanceHeight_,
-            'Proof is from the ancient block'
+            'Proof is from an ancient block'
         );
         require(
             prover_.proveOutcome(proofData,proofBlockHeight),
@@ -60,12 +60,10 @@ contract ProofKeeper {
         // Unpack the proof and extract the execution outcome.
         Borsh.Data memory borshData = Borsh.from(proofData);
 
-        ProofDecoder.FullOutcomeProof memory fullOutcomeProof = 
-        borshData.decodeFullOutcomeProof();
+        ProofDecoder.FullOutcomeProof memory fullOutcomeProof = borshData.decodeFullOutcomeProof();
         borshData.done();
 
-        bytes32 receiptId = 
-        fullOutcomeProof.outcome_proof.outcome_with_id.outcome.receipt_ids[0];
+        bytes32 receiptId = fullOutcomeProof.outcome_proof.outcome_with_id.outcome.receipt_ids[0];
 
         require(
             !usedEvents_[receiptId],
