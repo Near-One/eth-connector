@@ -37,14 +37,14 @@ contract EthCustodian is ProofKeeper, AdminControlled {
     /// EthCustodian is linked to the EVM on NEAR side.
     /// It also links to the prover that it uses to withdraw the tokens.
     constructor(
-        bytes memory nearEvm,
-        INearProver prover,
-        uint64 minBlockAcceptanceHeight,
+        bytes memory _nearEvm,
+        INearProver _prover,
+        uint64 _minBlockAcceptanceHeight,
         address _admin,
-        uint pausedFlags
+        uint _pausedFlags
     )
-        AdminControlled(_admin, pausedFlags)
-        ProofKeeper(nearEvm, prover, minBlockAcceptanceHeight)
+        AdminControlled(_admin, _pausedFlags)
+        ProofKeeper(_nearEvm, _prover, _minBlockAcceptanceHeight)
         public
     {
     }
@@ -67,7 +67,7 @@ contract EthCustodian is ProofKeeper, AdminControlled {
 
         string memory protocolMessage = string(
             abi.encodePacked(
-                string(nearProofProducerAccount_),
+                string(nearProofProducerAccount),
                 MESSAGE_SEPARATOR, ethRecipientOnNear
             )
         );

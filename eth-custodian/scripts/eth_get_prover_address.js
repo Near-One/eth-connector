@@ -12,7 +12,7 @@ async function main() {
 
     // Connect to Erc20Connector to get the prover address
     const erc20Connector = new hre.ethers.Contract(erc20ConnectorAddress, erc20ConnectorAbi, deployerAccount);
-    const proverAddress = await erc20Connector.prover_();
+    const proverAddress = await erc20Connector.prover();
 
     console.log(`Prover address: ${proverAddress}`);
 }
