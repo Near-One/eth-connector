@@ -1,7 +1,7 @@
 const hre = require('hardhat');
 
 const erc20ConnectorAbi = require('./json/erc20-connector.json');
-const erc20ConnectorAddress = '0xc115851ca60aed2ccc6ee3d5343f590834e4a3ab';
+const erc20ConnectorAddress = '0xa5289b6d5dcc13e48f2cc6382256e51589849f86';
 
 
 // Gets the prover address from the deployed ERC20Connector with the provided address
