@@ -6,15 +6,17 @@ require('@nomiclabs/hardhat-waffle');
 require('hardhat-gas-reporter');
 
 const ROPSTEN_WEB3_RPC_ENDPOINT = process.env.ROPSTEN_WEB3_RPC_ENDPOINT;
+const GOERLI_WEB3_RPC_ENDPOINT = process.env.GOERLI_WEB3_RPC_ENDPOINT;
 const MAINNET_WEB3_RPC_ENDPOINT = process.env.MAINNET_WEB3_RPC_ENDPOINT;
 const AURORA_WEB3_RPC_ENDPOINT = process.env.AURORA_WEB3_RPC_ENDPOINT;
 // Hardhat workaround to specify some random private key so this won't fail in CI
 const ROPSTEN_PRIVATE_KEY = process.env.ROPSTEN_PRIVATE_KEY ? process.env.ROPSTEN_PRIVATE_KEY : "00";
+const GOERLI_PRIVATE_KEY = process.env.GOERLI_PRIVATE_KEY ? process.env.GOERLI_PRIVATE_KEY : "00";
 const MAINNET_PRIVATE_KEY = process.env.MAINNET_PRIVATE_KEY ? process.env.MAINNET_PRIVATE_KEY : "00";
 const AURORA_PRIVATE_KEY = process.env.AURORA_PRIVATE_KEY ? process.env.AURORA_PRIVATE_KEY : "00";
 
 const PROVER_ACCOUNT_MAINNET = 'prover.bridge.near';
-const PROVER_ACCOUNT_TESTNET = 'prover.ropsten.testnet';
+const PROVER_ACCOUNT_TESTNET = 'prover.goerli.testnet';
 
 task('eth-deposit-to-near', 'Deposits the provided `amount` (wei) having `fee`(wei) to ETH Custodian to transfer it to Near')
     .addParam('nearRecipient', 'AccountID of recipient on Near')
@@ -276,6 +278,10 @@ module.exports = {
     ropsten: {
       url: `${ROPSTEN_WEB3_RPC_ENDPOINT}`,
       accounts: [`0x${ROPSTEN_PRIVATE_KEY}`]
+    },
+    goerli: {
+      url: `${GOERLI_WEB3_RPC_ENDPOINT}`,
+      accounts: [`0x${GOERLI_PRIVATE_KEY}`]
     },
     mainnet: {
       url: `${MAINNET_WEB3_RPC_ENDPOINT}`,
