@@ -9,34 +9,34 @@ contract ProofKeeper {
     using Borsh for Borsh.Data;
     using ProofDecoder for Borsh.Data;
 
-    INearProver public prover_;
-    bytes public nearProofProducerAccount_;
+    INearProver public prover;
+    bytes public nearProofProducerAccount;
 
     /// Proofs from blocks that are below the acceptance height will be rejected.
-    // If `minBlockAcceptanceHeight_` value is zero - proofs from block with any height are accepted.
-    uint64 public minBlockAcceptanceHeight_;
+    // If `minBlockAcceptanceHeight` value is zero - proofs from block with any height are accepted.
+    uint64 public minBlockAcceptanceHeight;
 
     // OutcomeReciptId -> Used
-    mapping(bytes32 => bool) public usedEvents_;
+    mapping(bytes32 => bool) public usedEvents;
 
     constructor(
-        bytes memory nearProofProducerAccount,
-        INearProver prover,
-        uint64 minBlockAcceptanceHeight
+        bytes memory _nearProofProducerAccount,
+        INearProver _prover,
+        uint64 _minBlockAcceptanceHeight
     )
     {
         require(
-            nearProofProducerAccount.length > 0,
+            _nearProofProducerAccount.length > 0,
             'Invalid Near ProofProducer address'
         );
         require(
-            address(prover) != address(0),
+            address(_prover) != address(0),
             'Invalid Near prover address'
         );
 
-        nearProofProducerAccount_ = nearProofProducerAccount;
-        prover_ = prover;
-        minBlockAcceptanceHeight_ = minBlockAcceptanceHeight;
+        nearProofProducerAccount = _nearProofProducerAccount;
+        prover = _prover;
+        minBlockAcceptanceHeight = _minBlockAcceptanceHeight;
     }
 
     /// Parses the provided proof and consumes it if it's not already used.
@@ -49,11 +49,11 @@ contract ProofKeeper {
         returns(ProofDecoder.ExecutionStatus memory result)
     {
         require(
-            proofBlockHeight >= minBlockAcceptanceHeight_,
+            proofBlockHeight >= minBlockAcceptanceHeight,
             'Proof is from an ancient block'
         );
         require(
-            prover_.proveOutcome(proofData,proofBlockHeight),
+            prover.proveOutcome(proofData,proofBlockHeight),
             'Proof should be valid'
         );
 
@@ -66,14 +66,14 @@ contract ProofKeeper {
         bytes32 receiptId = fullOutcomeProof.outcome_proof.outcome_with_id.outcome.receipt_ids[0];
 
         require(
-            !usedEvents_[receiptId],
+            !usedEvents[receiptId],
             'The burn event cannot be reused'
         );
-        usedEvents_[receiptId] = true;
+        usedEvents[receiptId] = true;
 
         require(
             keccak256(fullOutcomeProof.outcome_proof.outcome_with_id.outcome.executor_id) == 
-            keccak256(nearProofProducerAccount_),
+            keccak256(nearProofProducerAccount),
             'Can only withdraw coins from the linked proof producer on Near blockchain'
         );
 

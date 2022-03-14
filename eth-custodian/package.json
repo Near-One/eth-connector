@@ -1,5 +1,5 @@
 {
-    "name": "erc20-connector",
+    "name": "rainbow-bridge-eth-connector",
     "version": "0.1.0",
     "description": "NEAR ETH bridge connector",
     "license": "MIT",
