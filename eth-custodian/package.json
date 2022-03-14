@@ -13,7 +13,7 @@
         "hardhat": "^2.8",
         "hardhat-gas-reporter": "^1.0.4",
         "near-api-js": "https://github.com/near/near-api-js#fef7f683fca86980f3509987226fbc7f63b455cb",
-        "rainbow-bridge-sol": "https://gitpkg.now.sh/aurora-is-near/rainbow-bridge/contracts/eth?99586f0940baeaf009822525d149af79945d9206",
+        "rainbow-bridge-sol": "https://gitpkg.now.sh/aurora-is-near/rainbow-bridge/contracts/eth?c80ff19c74a00ee2d08907668f95f4f99aee8356",
         "rainbow-bridge-lib": "https://github.com/near/rainbow-bridge-lib"
     },
     "devDependencies": {

@@ -9509,13 +9509,9 @@ queue-microtask@^1.2.2:
     tweetnacl "^1.0.3"
     web3 "=1.2.6"
 
-"rainbow-bridge-sol@https://gitpkg.now.sh/aurora-is-near/rainbow-bridge/contracts/eth?447d16fca48f4b0c41bce3804aa9d2b34a43e2a1":
+"rainbow-bridge-sol@https://gitpkg.now.sh/aurora-is-near/rainbow-bridge/contracts/eth?c80ff19c74a00ee2d08907668f95f4f99aee8356":
   version "2.0.1"
-  resolved "https://gitpkg.now.sh/aurora-is-near/rainbow-bridge/contracts/eth?447d16fca48f4b0c41bce3804aa9d2b34a43e2a1#34a2483d558cb074b1680366066757107480931c"
-
-"rainbow-bridge@https://github.com/aurora-is-near/rainbow-bridge#447d16fca48f4b0c41bce3804aa9d2b34a43e2a1":
-  version "1.0.0"
-  resolved "https://github.com/aurora-is-near/rainbow-bridge#447d16fca48f4b0c41bce3804aa9d2b34a43e2a1"
+  resolved "https://gitpkg.now.sh/aurora-is-near/rainbow-bridge/contracts/eth?c80ff19c74a00ee2d08907668f95f4f99aee8356#806863cccf1e4a35ee22d2ffd18d7b50f894dff7"
 
 randomatic@^3.0.0:
   version "3.1.1"
