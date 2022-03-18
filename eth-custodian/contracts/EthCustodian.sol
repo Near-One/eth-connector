@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity ^0.6.12;
+pragma solidity ^0.8;
 
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-import 'rainbow-bridge/contracts/eth/nearbridge/contracts/AdminControlled.sol';
-import 'rainbow-bridge/contracts/eth/nearbridge/contracts/Borsh.sol';
-import 'rainbow-bridge/contracts/eth/nearprover/contracts/ProofDecoder.sol';
+import 'rainbow-bridge-sol/nearbridge/contracts/AdminControlled.sol';
+import 'rainbow-bridge-sol/nearbridge/contracts/Borsh.sol';
+import 'rainbow-bridge-sol/nearprover/contracts/ProofDecoder.sol';
 import { INearProver, ProofKeeper } from './ProofKeeper.sol';
 
 contract EthCustodian is ProofKeeper, AdminControlled, ReentrancyGuard {
+    using Borsh for Borsh.Data;
 
     uint constant UNPAUSED_ALL = 0;
     uint constant PAUSED_DEPOSIT_TO_EVM = 1 << 0;
@@ -39,15 +40,14 @@ contract EthCustodian is ProofKeeper, AdminControlled, ReentrancyGuard {
     /// EthCustodian is linked to the EVM on NEAR side.
     /// It also links to the prover that it uses to withdraw the tokens.
     constructor(
-        bytes memory nearEvm,
-        INearProver prover,
-        uint64 minBlockAcceptanceHeight,
+        bytes memory _nearEvm,
+        INearProver _prover,
+        uint64 _minBlockAcceptanceHeight,
         address _admin,
-        uint pausedFlags
+        uint _pausedFlags
     )
-        AdminControlled(_admin, pausedFlags)
-        ProofKeeper(nearEvm, prover, minBlockAcceptanceHeight)
-        public
+        AdminControlled(_admin, _pausedFlags)
+        ProofKeeper(_nearEvm, _prover, _minBlockAcceptanceHeight)
     {
     }
 
@@ -69,7 +69,7 @@ contract EthCustodian is ProofKeeper, AdminControlled, ReentrancyGuard {
 
         string memory protocolMessage = string(
             abi.encodePacked(
-                string(nearProofProducerAccount_),
+                string(nearProofProducerAccount),
                 MESSAGE_SEPARATOR, ethRecipientOnNear
             )
         );
@@ -140,6 +140,6 @@ contract EthCustodian is ProofKeeper, AdminControlled, ReentrancyGuard {
         result.recipient = address(uint160(recipient));
         bytes20 ethCustodian = borshData.decodeBytes20();
         result.ethCustodian = address(uint160(ethCustodian));
-        require(borshData.finished(), "Parse error: EOI expected");
+        borshData.done();
     }
 }

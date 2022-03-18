@@ -10,10 +10,10 @@
         "dotenv": "^8.2.0",
         "eth-object": "https://github.com/near/eth-object",
         "eth-util-lite": "near/eth-util-lite#master",
-        "hardhat": "^2.0.8",
+        "hardhat": "^2.8",
         "hardhat-gas-reporter": "^1.0.4",
         "near-api-js": "https://github.com/near/near-api-js#fef7f683fca86980f3509987226fbc7f63b455cb",
-        "rainbow-bridge": "https://github.com/near/rainbow-bridge#ede62fcb3614e28e8c5406300381319fec846100",
+        "rainbow-bridge-sol": "https://gitpkg.now.sh/aurora-is-near/rainbow-bridge/contracts/eth?c80ff19c74a00ee2d08907668f95f4f99aee8356",
         "rainbow-bridge-lib": "https://github.com/near/rainbow-bridge-lib"
     },
     "devDependencies": {
