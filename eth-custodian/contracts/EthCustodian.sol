@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8;
 
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import 'rainbow-bridge-sol/nearbridge/contracts/AdminControlled.sol';
 import 'rainbow-bridge-sol/nearbridge/contracts/Borsh.sol';
@@ -122,7 +122,7 @@ contract EthCustodian is ProofKeeper, AdminControlled, ReentrancyGuard {
             result.ethCustodian == address(this),
             'Can only withdraw coins that were expected for the current contract'
         );
-        payable(result.recipient).call.value(result.amount)("");
+        payable(result.recipient).call{value: result.amount}("");
         emit Withdrawn(
             result.recipient,
             result.amount

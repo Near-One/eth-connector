@@ -5,7 +5,7 @@
     "license": "MIT",
     "dependencies": {
         "@nomiclabs/hardhat-solhint": "^2.0.0",
-        "@openzeppelin/contracts": "^3.4.0",
+        "@openzeppelin/contracts": "^4.5.0",
         "bs58": "^4.0.1",
         "dotenv": "^8.2.0",
         "eth-object": "https://github.com/near/eth-object",
