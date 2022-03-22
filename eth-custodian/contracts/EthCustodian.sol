@@ -106,7 +106,7 @@ contract EthCustodian is ProofKeeper, AdminControlled {
 
     /// Withdraws the appropriate amount of ETH which is encoded in `proofData`
     function withdraw(
-        bytes calldata proofData, 
+        bytes calldata proofData,
         uint64 proofBlockHeight
     )
         external
@@ -119,7 +119,10 @@ contract EthCustodian is ProofKeeper, AdminControlled {
             result.ethCustodian == address(this),
             'Can only withdraw coins that were expected for the current contract'
         );
-        payable(result.recipient).transfer(result.amount);
+
+        (bool success, ) = payable(result.recipient).call{value: result.amount}("");
+        require(success, 'The withdrawal attempt was unsuccessful');
+
         emit Withdrawn(
             result.recipient,
             result.amount
