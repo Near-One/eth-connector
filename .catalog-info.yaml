@@ -1,0 +1,23 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: eth-custodian
+  title: ETH Custodian
+  description: |-
+    ETH connector for Rainbow Bridge. Controls all ETH in Ethereum that are being sent to NEAR.
+  tags:
+    - contract
+    - ethereum
+  links: []
+  annotations:
+    aurora.dev/security-tier: "1"
+spec:
+  owner: bridge-team
+  type: contract
+  lifecycle: production
+  system: bridge-connectors
+  deployedAt:
+    - contract:ethereum/mainnet/0x6bfad42cfc4efc96f529d786d643ff4a8b89fa52
+  interactsWith: []
+  subcomponentOf: eth-connector
