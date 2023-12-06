@@ -4,7 +4,7 @@ name: Tests
 jobs:
   test:
     name: Test eth-custodian
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: Clone the repository
         uses: actions/checkout@v2
