@@ -152,6 +152,7 @@ contract EthCustodianProxy is
             .outcome
             .receipt_ids[0];
 
+        require(!ethCustodianImpl.usedEvents(receiptId), 'The burn event cannot be reused');
         require(!usedEvents[receiptId], 'The burn event cannot be reused');
         usedEvents[receiptId] = true;
 
