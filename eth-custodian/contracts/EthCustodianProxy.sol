@@ -102,7 +102,22 @@ contract EthCustodianProxy is
         ethCustodianImpl.withdraw(proofData, proofBlockHeight);
     }
 
-    function withdraw_pre_migration(
+    function withdraw_pre_migration_s1(
+        bytes calldata proofData,
+        uint64 proofBlockHeight
+    ) external whenNotPaused(PAUSED_WITHDRAW_PRE_MIGRATION) {
+        require(
+            proofBlockHeight < maxBlockAcceptanceHeight,
+            'Proof is from a post merge block'
+        );
+
+        bytes memory postMergeProducer = ethCustodianImpl.nearProofProducerAccount();
+        ethCustodianImpl.adminSstore(1, uint(bytes32(preMigrationProducerAccount)));
+        ethCustodianImpl.withdraw(proofData, proofBlockHeight);
+        ethCustodianImpl.adminSstore(1, uint(bytes32(postMergeProducer)));
+    }
+
+    function withdraw_pre_migration_s2(
         bytes calldata proofData,
         uint64 proofBlockHeight
     ) external whenNotPaused(PAUSED_WITHDRAW_PRE_MIGRATION) {
