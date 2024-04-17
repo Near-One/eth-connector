@@ -33,6 +33,8 @@ contract EthCustodianProxy is
 
     event Withdrawn(address indexed recipient, uint128 amount);
 
+    error AlreadyMigrated();
+
     struct BurnResult {
         uint128 amount;
         address recipient;
@@ -41,28 +43,18 @@ contract EthCustodianProxy is
 
     INearProver public prover;
     bytes public preMigrationProducerAccount;
-    uint64 public minBlockAcceptanceHeight;
-    uint64 public maxBlockAcceptanceHeight;
+    uint64 public migrationBlockHeight;
 
-    mapping(bytes32 => bool) public usedEvents;
     EthCustodian public ethCustodianImpl;
 
-    // // @custom:oz-upgrades-unsafe-allow constructor
-    // constructor() {
-    //     _disableInitializers();
-    // }
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
 
     function initialize(
-        bytes memory _preMigrationProducerAccount,
-        INearProver _prover,
-        uint64 _minBlockAcceptanceHeight,
-        uint64 _maxBlockAcceptanceHeight,
         EthCustodian _ethCustodianImpl
     ) public initializer {
-        preMigrationProducerAccount = _preMigrationProducerAccount;
-        prover = _prover;
-        minBlockAcceptanceHeight = _minBlockAcceptanceHeight;
-        maxBlockAcceptanceHeight = _maxBlockAcceptanceHeight;
         ethCustodianImpl = _ethCustodianImpl;
         __Pausable_init();
         __AccessControl_init();
@@ -70,6 +62,53 @@ contract EthCustodianProxy is
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _grantRole(PAUSABLE_ADMIN_ROLE, _msgSender());
         _grantRole(UNPAUSABLE_ADMIN_ROLE, _msgSender());
+    }
+
+    function depositToNear(
+        string memory nearRecipientAccountId
+    ) external payable whenNotPaused(PAUSED_DEPOSIT_TO_NEAR) {
+        ethCustodianImpl.depositToNear{value: msg.value}(nearRecipientAccountId, 0);
+    }
+
+    function depositToEVM(
+        string memory ethRecipientOnNear
+    ) external payable whenNotPaused(PAUSED_DEPOSIT_TO_EVM) {
+        ethCustodianImpl.depositToEVM{value: msg.value}(ethRecipientOnNear, 0);
+    }
+
+    function withdraw(
+        bytes calldata proofData,
+        uint64 proofBlockHeight
+    ) external whenNotPaused(PAUSED_WITHDRAW) {
+        ethCustodianImpl.withdraw(proofData, proofBlockHeight);
+    }
+
+    function withdrawPreMigration(
+        bytes calldata proofData,
+        uint64 proofBlockHeight
+    ) external whenNotPaused(PAUSED_WITHDRAW_PRE_MIGRATION) {
+        require(
+            proofBlockHeight < migrationBlockHeight,
+            'Proof is from a post merge block'
+        );
+
+        bytes memory postMigrationProducer = ethCustodianImpl.nearProofProducerAccount_();
+        ethCustodianImpl.adminSstore(1, uint(bytes32(preMigrationProducerAccount)));
+        ethCustodianImpl.withdraw(proofData, proofBlockHeight);
+        ethCustodianImpl.adminSstore(1, uint(bytes32(postMigrationProducer)));
+    }
+
+    function migrateToNewProofProducer(
+        bytes calldata newProducerAccount,
+        uint64 migrationBlockNumber
+    ) external onlyRole(UNPAUSABLE_ADMIN_ROLE) {
+        if (keccak256(preMigrationProducerAccount) != keccak256(hex"")) {
+            revert AlreadyMigrated();
+        }
+
+        migrationBlockHeight = migrationBlockNumber;
+        preMigrationProducerAccount = ethCustodianImpl.nearProofProducerAccount_();
+        ethCustodianImpl.adminSstore(1, uint(bytes32(newProducerAccount)));
     }
 
     function pauseAll() external onlyRole(PAUSABLE_ADMIN_ROLE) {
@@ -87,122 +126,6 @@ contract EthCustodianProxy is
 
     function pauseProxy(uint flags) external onlyRole(UNPAUSABLE_ADMIN_ROLE) {
         _pause(flags);
-    }
-
-    function depositToNear(
-        string memory nearRecipientAccountId
-    ) external payable whenNotPaused(PAUSED_DEPOSIT_TO_NEAR) {
-        ethCustodianImpl.depositToNear{value: msg.value}(nearRecipientAccountId, 0);
-    }
-
-    function withdraw(
-        bytes calldata proofData,
-        uint64 proofBlockHeight
-    ) external whenNotPaused(PAUSED_WITHDRAW) {
-        ethCustodianImpl.withdraw(proofData, proofBlockHeight);
-    }
-
-    function withdraw_pre_migration_s1(
-        bytes calldata proofData,
-        uint64 proofBlockHeight
-    ) external whenNotPaused(PAUSED_WITHDRAW_PRE_MIGRATION) {
-        require(
-            proofBlockHeight < maxBlockAcceptanceHeight,
-            'Proof is from a post merge block'
-        );
-
-        bytes memory postMergeProducer = ethCustodianImpl.nearProofProducerAccount_();
-        ethCustodianImpl.adminSstore(1, uint(bytes32(preMigrationProducerAccount)));
-        ethCustodianImpl.withdraw(proofData, proofBlockHeight);
-        ethCustodianImpl.adminSstore(1, uint(bytes32(postMergeProducer)));
-    }
-
-    function withdraw_pre_migration_s2(
-        bytes calldata proofData,
-        uint64 proofBlockHeight
-    ) external whenNotPaused(PAUSED_WITHDRAW_PRE_MIGRATION) {
-        ProofDecoder.ExecutionStatus memory status = _parseAndConsumeProof(
-            proofData,
-            proofBlockHeight
-        );
-
-        BurnResult memory result = _decodeBurnResult(status.successValue);
-        require(
-            result.ethCustodian == address(ethCustodianImpl),
-            'Can only withdraw coins that were expected for the custodian contract'
-        );
-
-        ethCustodianImpl.adminSendEth(payable(result.recipient), result.amount);
-
-        emit Withdrawn(result.recipient, result.amount);
-    }
-
-    function _parseAndConsumeProof(
-        bytes memory proofData,
-        uint64 proofBlockHeight
-    ) internal returns (ProofDecoder.ExecutionStatus memory result) {
-        require(
-            proofBlockHeight >= minBlockAcceptanceHeight,
-            'Proof is from an ancient block'
-        );
-        require(
-            proofBlockHeight < maxBlockAcceptanceHeight,
-            'Proof is from a recent block'
-        );
-        require(
-            prover.proveOutcome(proofData, proofBlockHeight),
-            'Proof should be valid'
-        );
-
-        // Unpack the proof and extract the execution outcome.
-        Borsh.Data memory borshData = Borsh.from(proofData);
-
-        ProofDecoder.FullOutcomeProof memory fullOutcomeProof = borshData
-            .decodeFullOutcomeProof();
-        borshData.done();
-
-        bytes32 receiptId = fullOutcomeProof
-            .outcome_proof
-            .outcome_with_id
-            .outcome
-            .receipt_ids[0];
-
-        require(!ethCustodianImpl.usedEvents_(receiptId), 'The burn event cannot be reused');
-        require(!usedEvents[receiptId], 'The burn event cannot be reused');
-        usedEvents[receiptId] = true;
-
-        require(
-            keccak256(
-                fullOutcomeProof
-                    .outcome_proof
-                    .outcome_with_id
-                    .outcome
-                    .executor_id
-            ) == keccak256(preMigrationProducerAccount),
-            'Can only withdraw coins from the linked proof producer on Near blockchain'
-        );
-
-        result = fullOutcomeProof.outcome_proof.outcome_with_id.outcome.status;
-        require(
-            !result.failed,
-            'Cannot use failed execution outcome for unlocking the tokens'
-        );
-        require(
-            !result.unknown,
-            'Cannot use unknown execution outcome for unlocking the tokens'
-        );
-    }
-
-    function _decodeBurnResult(
-        bytes memory data
-    ) internal pure returns (BurnResult memory result) {
-        Borsh.Data memory borshData = Borsh.from(data);
-        result.amount = borshData.decodeU128();
-        bytes20 recipient = borshData.decodeBytes20();
-        result.recipient = address(uint160(recipient));
-        bytes20 ethCustodian = borshData.decodeBytes20();
-        result.ethCustodian = address(uint160(ethCustodian));
-        borshData.done();
     }
 
     /**

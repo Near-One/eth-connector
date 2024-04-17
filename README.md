@@ -138,6 +138,12 @@ After that call: <br />
 As a result of the function call you will get the address of the freshly deployed `EthCustodian` that you can put in
 your `ethereum-config.json` file in the `ethConnectorAddress` field.
 
+After `ethConnectorAddress` is set, you can run
+
+`$ make eth-deploy-proxy`
+
+to deploy the proxy contract and make it the admin of `EthCustodian`.
+
 ### Other scripts
 
 For more advanced usage, please examine the `hardhat.config.js` file which contains a lot of scripts that are performed

@@ -38,6 +38,9 @@ eth-get-prover-address:
 eth-deploy-contracts:
 	yarn hardhat run --network ${NETWORK} scripts/eth_deploy_contracts.js
 
+eth-deploy-proxy:
+	yarn hardhat run --network ${NETWORK} scripts/eth_deploy_proxy.js
+
 eth-deposit-to-near:
 	yarn hardhat --network ${NETWORK} eth-deposit-to-near --near-recipient ${NEAR_RECIPIENT} --amount ${AMOUNT} --fee ${FEE}
 
