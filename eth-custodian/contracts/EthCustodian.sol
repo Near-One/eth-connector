@@ -67,7 +67,7 @@ contract EthCustodian is ProofKeeper, AdminControlled {
 
         string memory protocolMessage = string(
             abi.encodePacked(
-                string(nearProofProducerAccount),
+                string(nearProofProducerAccount_),
                 MESSAGE_SEPARATOR, ethRecipientOnNear
             )
         );

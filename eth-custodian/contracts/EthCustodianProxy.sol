@@ -47,10 +47,10 @@ contract EthCustodianProxy is
     mapping(bytes32 => bool) public usedEvents;
     EthCustodian public ethCustodianImpl;
 
-    // @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
+    // // @custom:oz-upgrades-unsafe-allow constructor
+    // constructor() {
+    //     _disableInitializers();
+    // }
 
     function initialize(
         bytes memory _preMigrationProducerAccount,
@@ -111,7 +111,7 @@ contract EthCustodianProxy is
             'Proof is from a post merge block'
         );
 
-        bytes memory postMergeProducer = ethCustodianImpl.nearProofProducerAccount();
+        bytes memory postMergeProducer = ethCustodianImpl.nearProofProducerAccount_();
         ethCustodianImpl.adminSstore(1, uint(bytes32(preMigrationProducerAccount)));
         ethCustodianImpl.withdraw(proofData, proofBlockHeight);
         ethCustodianImpl.adminSstore(1, uint(bytes32(postMergeProducer)));
@@ -167,7 +167,7 @@ contract EthCustodianProxy is
             .outcome
             .receipt_ids[0];
 
-        require(!ethCustodianImpl.usedEvents(receiptId), 'The burn event cannot be reused');
+        require(!ethCustodianImpl.usedEvents_(receiptId), 'The burn event cannot be reused');
         require(!usedEvents[receiptId], 'The burn event cannot be reused');
         usedEvents[receiptId] = true;
 
