@@ -34,6 +34,8 @@ contract EthCustodianProxy is
     event Withdrawn(address indexed recipient, uint128 amount);
 
     error AlreadyMigrated();
+    error ProducerAccountIdTooLong(bytes newProducerAccount);
+    error ProofFromPostMergeBlock();
 
     struct BurnResult {
         uint128 amount;
@@ -87,15 +89,14 @@ contract EthCustodianProxy is
         bytes calldata proofData,
         uint64 proofBlockHeight
     ) external whenNotPaused(PAUSED_WITHDRAW_PRE_MIGRATION) {
-        require(
-            proofBlockHeight < migrationBlockHeight,
-            'Proof is from a post merge block'
-        );
+        if (proofBlockHeight >= migrationBlockHeight) {
+            revert ProofFromPostMergeBlock();
+        }
 
         bytes memory postMigrationProducer = ethCustodianImpl.nearProofProducerAccount_();
-        ethCustodianImpl.adminSstore(1, uint(bytes32(preMigrationProducerAccount)));
+        writeProofProducerSlot(preMigrationProducerAccount);
         ethCustodianImpl.withdraw(proofData, proofBlockHeight);
-        ethCustodianImpl.adminSstore(1, uint(bytes32(postMigrationProducer)));
+        writeProofProducerSlot(postMigrationProducer);
     }
 
     function migrateToNewProofProducer(
@@ -106,9 +107,14 @@ contract EthCustodianProxy is
             revert AlreadyMigrated();
         }
 
+        // Needs to fit in one slot
+        if (newProducerAccount.length > 31) {
+            revert ProducerAccountIdTooLong(newProducerAccount);
+        }
+
         migrationBlockHeight = migrationBlockNumber;
         preMigrationProducerAccount = ethCustodianImpl.nearProofProducerAccount_();
-        ethCustodianImpl.adminSstore(1, uint(bytes32(newProducerAccount)));
+        writeProofProducerSlot(newProducerAccount);
     }
 
     function pauseAll() external onlyRole(PAUSABLE_ADMIN_ROLE) {
@@ -139,4 +145,9 @@ contract EthCustodianProxy is
     function _authorizeUpgrade(
         address newImplementation
     ) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
+
+    function writeProofProducerSlot(bytes memory proofProducer) private {
+        uint dataLength = proofProducer.length * 2;
+        ethCustodianImpl.adminSstore(1, uint(bytes32(proofProducer)) + dataLength);
+    }
 }
