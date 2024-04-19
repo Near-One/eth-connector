@@ -31,19 +31,10 @@ contract EthCustodianProxy is
     uint constant PAUSED_WITHDRAW = 1 << 2;
     uint constant PAUSED_WITHDRAW_PRE_MIGRATION = 1 << 3;
 
-    event Withdrawn(address indexed recipient, uint128 amount);
-
     error AlreadyMigrated();
     error ProducerAccountIdTooLong(bytes newProducerAccount);
     error ProofFromPostMergeBlock();
 
-    struct BurnResult {
-        uint128 amount;
-        address recipient;
-        address ethCustodian;
-    }
-
-    INearProver public prover;
     bytes public preMigrationProducerAccount;
     uint64 public migrationBlockHeight;
 
