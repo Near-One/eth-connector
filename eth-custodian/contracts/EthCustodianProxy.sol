@@ -61,22 +61,17 @@ contract EthCustodianProxy is
     function withdraw(
         bytes calldata proofData,
         uint64 proofBlockHeight
-    ) external whenNotPaused(PAUSED_WITHDRAW) {
-        ethCustodianImpl.withdraw(proofData, proofBlockHeight);
-    }
-
-    function withdrawPreMigration(
-        bytes calldata proofData,
-        uint64 proofBlockHeight
-    ) external whenNotPaused(PAUSED_WITHDRAW_PRE_MIGRATION) {
-        if (proofBlockHeight >= migrationBlockHeight) {
-            revert ProofFromPostMergeBlock();
+    ) external {
+        if (proofBlockHeight > migrationBlockHeight) {
+            _requireNotPaused(PAUSED_WITHDRAW);
+            ethCustodianImpl.withdraw(proofData, proofBlockHeight);
+        } else {
+            _requireNotPaused(PAUSED_WITHDRAW_PRE_MIGRATION);
+            bytes memory postMigrationProducer = ethCustodianImpl.nearProofProducerAccount_();
+            writeProofProducerSlot(preMigrationProducerAccount);
+            ethCustodianImpl.withdraw(proofData, proofBlockHeight);
+            writeProofProducerSlot(postMigrationProducer);
         }
-
-        bytes memory postMigrationProducer = ethCustodianImpl.nearProofProducerAccount_();
-        writeProofProducerSlot(preMigrationProducerAccount);
-        ethCustodianImpl.withdraw(proofData, proofBlockHeight);
-        writeProofProducerSlot(postMigrationProducer);
     }
 
     function migrateToNewProofProducer(
