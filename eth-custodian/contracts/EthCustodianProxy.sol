@@ -4,11 +4,6 @@ import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol'
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import 'rainbow-bridge-sol/nearprover/contracts/INearProver.sol';
-import 'rainbow-bridge-sol/nearprover/contracts/ProofDecoder.sol';
-import 'rainbow-bridge-sol/nearbridge/contracts/Borsh.sol';
 import {EthCustodian} from './EthCustodian.sol';
 import {SelectivePausableUpgradable} from './SelectivePausableUpgradable.sol';
 
@@ -18,12 +13,7 @@ contract EthCustodianProxy is
     AccessControlUpgradeable,
     SelectivePausableUpgradable
 {
-    using SafeERC20 for IERC20;
-    using Borsh for Borsh.Data;
-    using ProofDecoder for Borsh.Data;
-
     bytes32 public constant PAUSABLE_ADMIN_ROLE = keccak256('PAUSABLE_ADMIN_ROLE');
-    bytes32 public constant UNPAUSABLE_ADMIN_ROLE = keccak256('UNPAUSABLE_ADMIN_ROLE');
 
     uint constant UNPAUSED_ALL = 0;
     uint constant PAUSED_DEPOSIT_TO_EVM = 1 << 0;
@@ -54,7 +44,6 @@ contract EthCustodianProxy is
         __UUPSUpgradeable_init();
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _grantRole(PAUSABLE_ADMIN_ROLE, _msgSender());
-        _grantRole(UNPAUSABLE_ADMIN_ROLE, _msgSender());
     }
 
     function depositToNear(
@@ -93,7 +82,7 @@ contract EthCustodianProxy is
     function migrateToNewProofProducer(
         bytes calldata newProducerAccount,
         uint64 migrationBlockNumber
-    ) external onlyRole(UNPAUSABLE_ADMIN_ROLE) {
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (keccak256(preMigrationProducerAccount) != keccak256(hex"")) {
             revert AlreadyMigrated();
         }
@@ -117,11 +106,11 @@ contract EthCustodianProxy is
         _pause(flags);
     }
 
-    function pauseImpl(uint flags) external onlyRole(UNPAUSABLE_ADMIN_ROLE) {
+    function pauseImpl(uint flags) external onlyRole(DEFAULT_ADMIN_ROLE) {
         ethCustodianImpl.adminPause(flags);
     }
 
-    function pauseProxy(uint flags) external onlyRole(UNPAUSABLE_ADMIN_ROLE) {
+    function pauseProxy(uint flags) external onlyRole(DEFAULT_ADMIN_ROLE) {
         _pause(flags);
     }
 
