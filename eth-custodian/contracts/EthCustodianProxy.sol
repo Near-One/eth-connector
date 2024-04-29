@@ -68,9 +68,9 @@ contract EthCustodianProxy is
         } else {
             _requireNotPaused(PAUSED_WITHDRAW_PRE_MIGRATION);
             bytes memory postMigrationProducer = ethCustodianImpl.nearProofProducerAccount_();
-            writeProofProducerSlot(preMigrationProducerAccount);
+            _writeProofProducerSlot(preMigrationProducerAccount);
             ethCustodianImpl.withdraw(proofData, proofBlockHeight);
-            writeProofProducerSlot(postMigrationProducer);
+            _writeProofProducerSlot(postMigrationProducer);
         }
     }
 
@@ -89,7 +89,12 @@ contract EthCustodianProxy is
 
         migrationBlockHeight = migrationBlockNumber;
         preMigrationProducerAccount = ethCustodianImpl.nearProofProducerAccount_();
-        writeProofProducerSlot(newProducerAccount);
+        _writeProofProducerSlot(newProducerAccount);
+    }
+
+    function callImpl(bytes calldata data) external payable onlyRole(DEFAULT_ADMIN_ROLE) {
+        (bool success, ) = address(ethCustodianImpl).call{value: msg.value}(data);
+        require(success, 'EthCustodian call failed');
     }
 
     function pauseAll() external onlyRole(PAUSABLE_ADMIN_ROLE) {
@@ -121,7 +126,7 @@ contract EthCustodianProxy is
         address newImplementation
     ) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
 
-    function writeProofProducerSlot(bytes memory proofProducer) private {
+    function _writeProofProducerSlot(bytes memory proofProducer) private {
         uint dataLength = proofProducer.length * 2;
         ethCustodianImpl.adminSstore(1, uint(bytes32(proofProducer)) + dataLength);
     }

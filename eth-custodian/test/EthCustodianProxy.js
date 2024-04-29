@@ -263,4 +263,28 @@ describe('EthCustodianProxy contract', () => {
             expect(balanceDiff).to.equal(amount)
         });
     });
+
+    describe('callImpl', () => {
+        it('Should change the admin of the implementation', async () => {
+            const implInterface = new ethers.utils.Interface(['function nominateAdmin(address)', 'function acceptAdmin(address)']);
+            
+            const nominate = implInterface.encodeFunctionData('nominateAdmin', [user2.address]);
+            const nominateTx = await ethCustodianProxy.callImpl(nominate);
+            await nominateTx.wait();
+
+            const accept = implInterface.encodeFunctionData('acceptAdmin', [user2.address]);
+            const acceptTx = await ethCustodianProxy.callImpl(accept);
+            await acceptTx.wait();
+
+            expect(await ethCustodian.admin()).to.equal(user2.address);
+        });
+
+        it('Should fail when called by non-admin', async () => {
+            const implInterface = new ethers.utils.Interface(['function nominateAdmin(address)']);
+            
+            const nominate = implInterface.encodeFunctionData('nominateAdmin', [user2.address]);
+            await expect(ethCustodianProxy.connect(user2).callImpl(nominate))
+                .to.be.revertedWith('AccessControlUnauthorizedAccount');
+        });
+    });
 });
