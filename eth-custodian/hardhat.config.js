@@ -7,12 +7,12 @@ require('hardhat-gas-reporter');
 require('@openzeppelin/hardhat-upgrades');
 
 const ROPSTEN_WEB3_RPC_ENDPOINT = process.env.ROPSTEN_WEB3_RPC_ENDPOINT;
-const GOERLI_WEB3_RPC_ENDPOINT = process.env.GOERLI_WEB3_RPC_ENDPOINT;
+const SEPOLIA_WEB3_RPC_ENDPOINT = process.env.SEPOLIA_WEB3_RPC_ENDPOINT;
 const MAINNET_WEB3_RPC_ENDPOINT = process.env.MAINNET_WEB3_RPC_ENDPOINT;
 const AURORA_WEB3_RPC_ENDPOINT = process.env.AURORA_WEB3_RPC_ENDPOINT;
 // Hardhat workaround to specify some random private key so this won't fail in CI
 const ROPSTEN_PRIVATE_KEY = process.env.ROPSTEN_PRIVATE_KEY ? process.env.ROPSTEN_PRIVATE_KEY : "00".repeat(32);
-const GOERLI_PRIVATE_KEY = process.env.GOERLI_PRIVATE_KEY ? process.env.GOERLI_PRIVATE_KEY : "00".repeat(32);
+const SEPOLIA_PRIVATE_KEY = process.env.SEPOLIA_PRIVATE_KEY ? process.env.SEPOLIA_PRIVATE_KEY : "00".repeat(32);
 const MAINNET_PRIVATE_KEY = process.env.MAINNET_PRIVATE_KEY ? process.env.MAINNET_PRIVATE_KEY : "00".repeat(32);
 const AURORA_PRIVATE_KEY = process.env.AURORA_PRIVATE_KEY ? process.env.AURORA_PRIVATE_KEY : "00".repeat(32);
 
@@ -280,9 +280,9 @@ module.exports = {
       url: `${ROPSTEN_WEB3_RPC_ENDPOINT}`,
       accounts: [`0x${ROPSTEN_PRIVATE_KEY}`]
     },
-    goerli: {
-      url: `${GOERLI_WEB3_RPC_ENDPOINT}`,
-      accounts: [`0x${GOERLI_PRIVATE_KEY}`]
+    sepolia: {
+      url: `${SEPOLIA_WEB3_RPC_ENDPOINT}`,
+      accounts: [`0x${SEPOLIA_PRIVATE_KEY}`]
     },
     mainnet: {
       url: `${MAINNET_WEB3_RPC_ENDPOINT}`,
