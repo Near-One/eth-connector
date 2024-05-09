@@ -262,6 +262,23 @@ describe('EthCustodianProxy contract', () => {
 
             expect(balanceDiff).to.equal(amount)
         });
+
+        
+        it('Should successfully withdraw and emit the event at migration block', async () => {
+            const balanceBefore = ethers.BigNumber.from(await ethers.provider.getBalance(user2.address));
+            const migrationBlock = await ethCustodianProxy.migrationBlockHeight();
+
+            await expect(
+                ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), parseInt(migrationBlock))
+            )
+                .to.emit(ethCustodian, 'Withdrawn')
+                .withArgs(user2.address, amount);
+
+            const balanceAfter = ethers.BigNumber.from(await ethers.provider.getBalance(user2.address));
+            const balanceDiff = balanceAfter.sub(balanceBefore);
+
+            expect(balanceDiff).to.equal(amount)
+        });
     });
 
     describe('callImpl', () => {
