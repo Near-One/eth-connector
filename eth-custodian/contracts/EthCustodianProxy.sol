@@ -18,7 +18,7 @@ contract EthCustodianProxy is
     uint constant UNPAUSED_ALL = 0;
     uint constant PAUSED_DEPOSIT_TO_EVM = 1 << 0;
     uint constant PAUSED_DEPOSIT_TO_NEAR = 1 << 1;
-    uint constant PAUSED_WITHDRAW = 1 << 2;
+    uint constant PAUSED_WITHDRAW_POST_MIGRATION = 1 << 2;
     uint constant PAUSED_WITHDRAW_PRE_MIGRATION = 1 << 3;
 
     error AlreadyMigrated();
@@ -63,7 +63,7 @@ contract EthCustodianProxy is
         uint64 proofBlockHeight
     ) external {
         if (proofBlockHeight > migrationBlockHeight) {
-            _requireNotPaused(PAUSED_WITHDRAW);
+            _requireNotPaused(PAUSED_WITHDRAW_POST_MIGRATION);
             ethCustodianImpl.withdraw(proofData, proofBlockHeight);
         } else {
             _requireNotPaused(PAUSED_WITHDRAW_PRE_MIGRATION);
