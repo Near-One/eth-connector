@@ -11,7 +11,7 @@ const PAUSED_WITHDRAW_PRE_MIGRATION = 1 << 3;
 const PAUSED_ALL = PAUSED_DEPOSIT_TO_EVM | PAUSED_DEPOSIT_TO_NEAR | PAUSED_WITHDRAW | PAUSED_WITHDRAW_PRE_MIGRATION;
 
 const SCHEMA = {
-  'Withdrawn': {
+  'WithdrawResult': {
     kind: 'struct', fields: [
       ['amount', 'u128'],
       ['recipient', [20]],
@@ -218,7 +218,7 @@ describe('EthCustodianProxy contract', () => {
 
             await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, migrationBlock);
 
-            proof.outcome_proof.outcome.status.SuccessValue = serialize(SCHEMA, 'Withdrawn', {
+            proof.outcome_proof.outcome.status.SuccessValue = serialize(SCHEMA, 'WithdrawResult', {
                 amount: amount,
                 recipient: ethers.utils.arrayify(user2.address),
                 ethCustodian: ethers.utils.arrayify(ethCustodian.address),
