@@ -100,7 +100,7 @@ contract EthCustodianProxy is
     function pauseAll() external onlyRole(PAUSABLE_ADMIN_ROLE) {
         uint flags = PAUSED_DEPOSIT_TO_EVM |
             PAUSED_DEPOSIT_TO_NEAR |
-            PAUSED_WITHDRAW |
+            PAUSED_WITHDRAW_POST_MIGRATION |
             PAUSED_WITHDRAW_PRE_MIGRATION;
         ethCustodianImpl.adminPause(flags);
         _pause(flags);

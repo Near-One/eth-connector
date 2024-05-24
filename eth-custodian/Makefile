@@ -1,6 +1,6 @@
 .PHONY: compile test
 
-NETWORK=ropsten
+NETWORK=sepolia
 NEAR_NETWORK=testnet
 NEAR_EVM_ACCOUNT=aurora
 NEAR_ACCOUNT=
