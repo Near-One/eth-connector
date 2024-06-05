@@ -5,6 +5,7 @@ require('dotenv').config();
 require('@nomiclabs/hardhat-waffle');
 require('hardhat-gas-reporter');
 require('@openzeppelin/hardhat-upgrades');
+require("@nomiclabs/hardhat-etherscan");
 
 const ROPSTEN_WEB3_RPC_ENDPOINT = process.env.ROPSTEN_WEB3_RPC_ENDPOINT;
 const SEPOLIA_WEB3_RPC_ENDPOINT = process.env.SEPOLIA_WEB3_RPC_ENDPOINT;
@@ -15,6 +16,8 @@ const ROPSTEN_PRIVATE_KEY = process.env.ROPSTEN_PRIVATE_KEY ? process.env.ROPSTE
 const SEPOLIA_PRIVATE_KEY = process.env.SEPOLIA_PRIVATE_KEY ? process.env.SEPOLIA_PRIVATE_KEY : "00".repeat(32);
 const MAINNET_PRIVATE_KEY = process.env.MAINNET_PRIVATE_KEY ? process.env.MAINNET_PRIVATE_KEY : "00".repeat(32);
 const AURORA_PRIVATE_KEY = process.env.AURORA_PRIVATE_KEY ? process.env.AURORA_PRIVATE_KEY : "00".repeat(32);
+
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
 
 const PROVER_ACCOUNT_MAINNET = 'prover.bridge.near';
 const PROVER_ACCOUNT_TESTNET = 'prover.goerli.testnet';
@@ -307,5 +310,8 @@ module.exports = {
   gasReporter: {
     currency: 'USD',
     enabled: false
+  },
+  etherscan: {
+      apiKey: `${ETHERSCAN_API_KEY}`
   }
 };
