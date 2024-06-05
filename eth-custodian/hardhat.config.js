@@ -22,6 +22,20 @@ const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
 const PROVER_ACCOUNT_MAINNET = 'prover.bridge.near';
 const PROVER_ACCOUNT_TESTNET = 'prover.goerli.testnet';
 
+task('nominate-admin', 'Nominate new admin for Eth Custodian')
+    .addParam('newAdmin', 'Eth address of new admin')
+    .setAction(async taskArgs => {
+        const { nominateAdmin } = require('./scripts/update_admin');
+        await nominateAdmin(hre.ethers.provider, taskArgs.newAdmin);
+    });
+
+task('accept-admin', 'Accept new admin for Eth Custodian')
+    .addParam('newAdmin', 'Eth address of new admin')
+    .setAction(async taskArgs => {
+        const { acceptAdmin } = require('./scripts/update_admin');
+        await acceptAdmin(hre.ethers.provider, taskArgs.newAdmin);
+    });
+
 task('eth-deposit-to-near', 'Deposits the provided `amount` (wei) having `fee`(wei) to ETH Custodian to transfer it to Near')
     .addParam('nearRecipient', 'AccountID of recipient on Near')
     .addParam('amount', 'Amount (wei) to transfer',)

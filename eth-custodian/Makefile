@@ -41,6 +41,12 @@ eth-deploy-contracts:
 eth-deploy-proxy:
 	yarn hardhat run --network ${NETWORK} scripts/eth_deploy_proxy.js
 
+nominate-admin:
+	yarn hardhat --network ${NETWORK} nominate-admin --new-admin ${ETH_CUSTODIAN_PROXY}
+
+accept-admin:
+	yarn hardhat --network ${NETWORK} accept-admin --new-admin ${ETH_CUSTODIAN_PROXY}
+
 eth-deposit-to-near:
 	yarn hardhat --network ${NETWORK} eth-deposit-to-near --near-recipient ${NEAR_RECIPIENT} --amount ${AMOUNT} --fee ${FEE}
 
