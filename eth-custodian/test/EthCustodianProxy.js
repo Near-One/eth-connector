@@ -6,9 +6,9 @@ const { borshifyOutcomeProof } = require('rainbow-bridge-lib/rainbow/borshify-pr
 const UNPAUSED_ALL = 0;
 const PAUSED_DEPOSIT_TO_EVM = 1 << 0;
 const PAUSED_DEPOSIT_TO_NEAR = 1 << 1;
-const PAUSED_WITHDRAW = 1 << 2;
+const PAUSED_WITHDRAW_POST_MIGRATION = 1 << 2;
 const PAUSED_WITHDRAW_PRE_MIGRATION = 1 << 3;
-const PAUSED_ALL = PAUSED_DEPOSIT_TO_EVM | PAUSED_DEPOSIT_TO_NEAR | PAUSED_WITHDRAW | PAUSED_WITHDRAW_PRE_MIGRATION;
+const PAUSED_ALL = PAUSED_DEPOSIT_TO_EVM | PAUSED_DEPOSIT_TO_NEAR | PAUSED_WITHDRAW_POST_MIGRATION | PAUSED_WITHDRAW_PRE_MIGRATION;
 
 const SCHEMA = {
   'WithdrawResult': {
@@ -60,7 +60,7 @@ describe('EthCustodianProxy contract', () => {
 
         const nominateTx = await ethCustodian.nominateAdmin(ethCustodianProxy.address);
         await nominateTx.wait();
-    
+
         const acceptTx = await ethCustodian.acceptAdmin(ethCustodianProxy.address);
         await acceptTx.wait();
 
@@ -74,7 +74,7 @@ describe('EthCustodianProxy contract', () => {
 
             expect(paused & PAUSED_DEPOSIT_TO_EVM).to.not.equal(0);
             expect(paused & PAUSED_DEPOSIT_TO_NEAR).to.not.equal(0);
-            expect(paused & PAUSED_WITHDRAW).to.not.equal(0);
+            expect(paused & PAUSED_WITHDRAW_POST_MIGRATION).to.not.equal(0);
         });
     });
 
@@ -140,7 +140,7 @@ describe('EthCustodianProxy contract', () => {
 
         it('Should pause withdraw', async () => {
             await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, migrationBlock);
-            await ethCustodianProxy.pauseProxy(PAUSED_WITHDRAW);
+            await ethCustodianProxy.pauseProxy(PAUSED_WITHDRAW_POST_MIGRATION);
             const proof = require('./proof_template_from_testnet.json');
 
             await expect(ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), migrationBlock + 1))
@@ -194,12 +194,12 @@ describe('EthCustodianProxy contract', () => {
 
         it('Should fail when invoked for the second time', async () => {
             await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, migrationBlock);
-            
+
             await expect(ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, migrationBlock))
                 .to.be.revertedWith('AlreadyMigrated');
         });
 
-        it('Should fail when block producer id is too long', async () => {            
+        it('Should fail when block producer id is too long', async () => {
             await expect(
                 ethCustodianProxy.migrateToNewProofProducer(Buffer.from('new-loooooooong-producer.testnet'), migrationBlock)
             )
@@ -247,7 +247,7 @@ describe('EthCustodianProxy contract', () => {
             expect(proofProducerBefore).to.equal(proofProducerAfter);
             expect(balanceDiff).to.equal(amount)
         });
-        
+
         it('Should successfully withdraw and emit the event pre-migration', async () => {
             const balanceBefore = ethers.BigNumber.from(await ethers.provider.getBalance(user2.address));
 
@@ -263,7 +263,7 @@ describe('EthCustodianProxy contract', () => {
             expect(balanceDiff).to.equal(amount)
         });
 
-        
+
         it('Should successfully withdraw and emit the event at migration block', async () => {
             const balanceBefore = ethers.BigNumber.from(await ethers.provider.getBalance(user2.address));
             const migrationBlock = await ethCustodianProxy.migrationBlockHeight();
@@ -284,7 +284,7 @@ describe('EthCustodianProxy contract', () => {
     describe('callImpl', () => {
         it('Should change the admin of the implementation', async () => {
             const implInterface = new ethers.utils.Interface(['function nominateAdmin(address)', 'function acceptAdmin(address)']);
-            
+
             const nominate = implInterface.encodeFunctionData('nominateAdmin', [user2.address]);
             const nominateTx = await ethCustodianProxy.callImpl(nominate);
             await nominateTx.wait();
@@ -298,7 +298,7 @@ describe('EthCustodianProxy contract', () => {
 
         it('Should fail when called by non-admin', async () => {
             const implInterface = new ethers.utils.Interface(['function nominateAdmin(address)']);
-            
+
             const nominate = implInterface.encodeFunctionData('nominateAdmin', [user2.address]);
             await expect(ethCustodianProxy.connect(user2).callImpl(nominate))
                 .to.be.revertedWith('AccessControlUnauthorizedAccount');
