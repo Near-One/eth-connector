@@ -47,15 +47,17 @@ contract EthCustodianProxy is
     }
 
     function depositToNear(
-        string memory nearRecipientAccountId
+        string memory nearRecipientAccountId,
+        uint256 fee
     ) external payable whenNotPaused(PAUSED_DEPOSIT_TO_NEAR) {
-        ethCustodianImpl.depositToNear{value: msg.value}(nearRecipientAccountId, 0);
+        ethCustodianImpl.depositToNear{value: msg.value}(nearRecipientAccountId, fee);
     }
 
     function depositToEVM(
-        string memory ethRecipientOnNear
+        string memory ethRecipientOnNear,
+        uint256 fee
     ) external payable whenNotPaused(PAUSED_DEPOSIT_TO_EVM) {
-        ethCustodianImpl.depositToEVM{value: msg.value}(ethRecipientOnNear, 0);
+        ethCustodianImpl.depositToEVM{value: msg.value}(ethRecipientOnNear, fee);
     }
 
     function withdraw(

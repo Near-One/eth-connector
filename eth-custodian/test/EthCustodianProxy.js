@@ -89,7 +89,7 @@ describe('EthCustodianProxy contract', () => {
             await expect(
                 ethCustodianProxy
                     .connect(user1)
-                    .depositToEVM(ethRecipientOnNear.address, options)
+                    .depositToEVM(ethRecipientOnNear.address, 0, options)
             )
                 .to.emit(ethCustodian, 'Deposited')
                 .withArgs(ethCustodianProxy.address, protocolMessage, amountToTransfer, 0);
@@ -111,7 +111,7 @@ describe('EthCustodianProxy contract', () => {
             await expect(
                 ethCustodianProxy
                     .connect(user1)
-                    .depositToNear(nearRecipientAccountId, options)
+                    .depositToNear(nearRecipientAccountId, 0, options)
             )
                 .to.emit(ethCustodian, 'Deposited')
                 .withArgs(ethCustodianProxy.address, nearRecipientAccountId, amountToTransfer, 0);
@@ -127,14 +127,14 @@ describe('EthCustodianProxy contract', () => {
         it('Should pause deposit to NEAR', async () => {
             await ethCustodianProxy.pauseProxy(PAUSED_DEPOSIT_TO_NEAR);
 
-            await expect(ethCustodianProxy.depositToNear('recipient.near', { value: 50000 }))
+            await expect(ethCustodianProxy.depositToNear('recipient.near', 0, { value: 50000 }))
                 .to.be.revertedWith('Pausable: paused');
         });
 
         it('Should pause deposit to EVM', async () => {
             await ethCustodianProxy.pauseProxy(PAUSED_DEPOSIT_TO_EVM);
 
-            await expect(ethCustodianProxy.depositToEVM(ethRecipientOnNear.address, { value: 50000 }))
+            await expect(ethCustodianProxy.depositToEVM(ethRecipientOnNear.address, 0, { value: 50000 }))
                 .to.be.revertedWith('Pausable: paused');
         });
 
@@ -160,10 +160,10 @@ describe('EthCustodianProxy contract', () => {
             await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, migrationBlock);
             await ethCustodianProxy.pauseAll();
 
-            await expect(ethCustodianProxy.depositToNear('recipient.near', { value: 50000 }))
+            await expect(ethCustodianProxy.depositToNear('recipient.near', 0, { value: 50000 }))
                 .to.be.revertedWith('Pausable: paused');
 
-            await expect(ethCustodianProxy.depositToEVM(ethRecipientOnNear.address, { value: 50000 }))
+            await expect(ethCustodianProxy.depositToEVM(ethRecipientOnNear.address, 0, { value: 50000 }))
                 .to.be.revertedWith('Pausable: paused');
 
             const proof = require('./proof_template_from_testnet.json');
@@ -214,7 +214,7 @@ describe('EthCustodianProxy contract', () => {
         beforeEach(async () => {
             await ethCustodianProxy
                 .connect(user1)
-                .depositToEVM(ethRecipientOnNear.address, { value: 200000 });
+                .depositToEVM(ethRecipientOnNear.address, 0, { value: 200000 });
 
             await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, migrationBlock);
 
