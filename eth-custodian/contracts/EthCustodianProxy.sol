@@ -21,6 +21,8 @@ contract EthCustodianProxy is
     uint constant PAUSED_WITHDRAW_POST_MIGRATION = 1 << 2;
     uint constant PAUSED_WITHDRAW_PRE_MIGRATION = 1 << 3;
 
+    string constant MESSAGE_SEPARATOR = ':';
+
     error AlreadyMigrated();
     error ProducerAccountIdTooLong(bytes newProducerAccount);
     error ProofFromPostMergeBlock();
@@ -29,6 +31,13 @@ contract EthCustodianProxy is
     uint64 public migrationBlockHeight;
 
     EthCustodian public ethCustodianImpl;
+
+    event Deposited (
+        address indexed sender,
+        string recipient,
+        uint256 amount,
+        uint256 fee
+    );
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -51,6 +60,13 @@ contract EthCustodianProxy is
         uint256 fee
     ) external payable whenNotPaused(PAUSED_DEPOSIT_TO_NEAR) {
         ethCustodianImpl.depositToNear{value: msg.value}(nearRecipientAccountId, fee);
+
+        emit Deposited(
+            msg.sender,
+            nearRecipientAccountId,
+            msg.value,
+            fee
+        );
     }
 
     function depositToEVM(
@@ -58,6 +74,21 @@ contract EthCustodianProxy is
         uint256 fee
     ) external payable whenNotPaused(PAUSED_DEPOSIT_TO_EVM) {
         ethCustodianImpl.depositToEVM{value: msg.value}(ethRecipientOnNear, fee);
+
+        string memory protocolMessage = string(
+            abi.encodePacked(
+                string(ethCustodianImpl.nearProofProducerAccount_()),
+                MESSAGE_SEPARATOR,
+                ethRecipientOnNear
+            )
+        );
+
+        emit Deposited(
+            msg.sender,
+            protocolMessage,
+            msg.value,
+            fee
+        );
     }
 
     function withdraw(
