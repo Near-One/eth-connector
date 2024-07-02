@@ -5,9 +5,11 @@ import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import {EthCustodian} from './EthCustodian.sol';
+import {ProofKeeperGap} from './ProofKeeperGap.sol';
 import {SelectivePausableUpgradable} from './SelectivePausableUpgradable.sol';
 
 contract EthCustodianProxy is
+    ProofKeeperGap,
     Initializable,
     UUPSUpgradeable,
     AccessControlUpgradeable,
