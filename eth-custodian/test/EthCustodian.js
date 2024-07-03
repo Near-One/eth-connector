@@ -600,12 +600,13 @@ describe('EthCustodian contract', () => {
         });
 
         it('Admin receive eth and transfer eth', async () => {
-            const replenishBalanceValue = 1_500_000;
+            const replenishBalanceValue = BigInt(1_500_000);
 
             const options = { value: replenishBalanceValue };
-            await ethCustodian
+            await expect(ethCustodian
                 .connect(adminAccount)
-                .adminReceiveEth(options);
+                .adminReceiveEth(options))
+                .not.to.be.reverted;
 
             const recipientBalanceBefore = await ethers.provider.getBalance(user2.address);
             const contractBalanceBefore = await ethers.provider.getBalance(await ethCustodian.getAddress());
@@ -618,9 +619,10 @@ describe('EthCustodian contract', () => {
 
             // Send eth using admin access
             const amountToTransfer = BigInt(4000); // wei
-            await ethCustodian
+            await expect(ethCustodian
                 .connect(adminAccount)
-                .adminSendEth(user2.address, amountToTransfer);
+                .adminSendEth(user2.address, amountToTransfer))
+                .not.to.be.reverted;
 
             const recipientBalanceAfter = await ethers.provider.getBalance(user2.address);
             const contractBalanceAfter = await ethers.provider.getBalance(await ethCustodian.getAddress());
@@ -628,7 +630,7 @@ describe('EthCustodian contract', () => {
             expect(recipientBalanceAfter)
                 .to
                 .be
-                .equal(recipientBalanceBefore - amountToTransfer);
+                .equal(recipientBalanceBefore + amountToTransfer);
             expect(contractBalanceAfter)
                 .to
                 .be
