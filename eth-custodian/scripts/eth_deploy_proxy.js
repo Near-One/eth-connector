@@ -13,9 +13,9 @@ async function main() {
         [ethereumConfig.ethConnectorAddress]
     );
 
-    await proxy.deployed();
+    await proxy.waitForDeployment();
 
-    console.log("EthCustodianProxy deployed to:", proxy.address);
+    console.log("EthCustodianProxy deployed to:", await proxy.getAddress());
 
     console.log(`Next, proxy must be made the admin of EthCustodian. The existing admin needs to first call nominateAdmin and then acceptAdmin on EthCustodian passing the proxy address`);
 }

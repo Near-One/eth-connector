@@ -2,10 +2,10 @@
  * @type import('hardhat/config').HardhatUserConfig
  */
 require('dotenv').config();
-require('@nomiclabs/hardhat-waffle');
 require('hardhat-gas-reporter');
 require('@openzeppelin/hardhat-upgrades');
 require("@nomicfoundation/hardhat-verify");
+require("@nomicfoundation/hardhat-chai-matchers");
 
 const ROPSTEN_WEB3_RPC_ENDPOINT = process.env.ROPSTEN_WEB3_RPC_ENDPOINT;
 const SEPOLIA_WEB3_RPC_ENDPOINT = process.env.SEPOLIA_WEB3_RPC_ENDPOINT;
@@ -294,6 +294,12 @@ module.exports = {
           optimizer: {
             enabled: true,
             runs: 200
+          },
+          metadata: {
+            // do not include the metadata hash, since this is machine dependent
+            // and we want all generated code to be deterministic
+            // https://docs.soliditylang.org/en/v0.8.24/metadata.html
+            bytecodeHash: "none"
           }
         }
       }

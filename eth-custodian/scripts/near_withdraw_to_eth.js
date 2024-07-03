@@ -31,8 +31,8 @@ const withdrawCallArgsSchema = new Map([
 ]);
 
 async function nearWithdrawBridgedEth(nearAccount, nearJsonRpc, nearNetwork, ethRecipient, amount, fee) {
-    amount = ethers.BigNumber.from(amount);
-    fee = ethers.BigNumber.from(fee);
+    amount = BigInt(amount);
+    fee = BigInt(fee);
 
     console.log(`Starting the withdrawal. ETH recipient: ${ethRecipient}; amount: ${amount} wei; fee: ${fee} wei`);
     console.log(`--------------------------------------------------------------------------------`);
@@ -64,7 +64,7 @@ async function nearWithdrawBridgedEth(nearAccount, nearJsonRpc, nearNetwork, eth
                 + ` (${accountBalanceBefore} bridgedWei)`);
 
     const args = new BorshWithdrawArgs({
-        recipient_id: ethers.utils.arrayify(ethers.utils.getAddress(ethRecipient)),
+        recipient_id: ethers.getBytes(ethers.utils.getAddress(ethRecipient)),
         amount: amount.toString(),
         //fee: fee.toString(),
     });

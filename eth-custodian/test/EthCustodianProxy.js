@@ -1,4 +1,4 @@
-const { ethers } = require('hardhat');
+const { ethers, upgrades } = require("hardhat");
 const { expect } = require('chai');
 const { serialize } = require('rainbow-bridge-lib/rainbow/borsh.js');
 const { borshifyOutcomeProof } = require('rainbow-bridge-lib/rainbow/borshify-proof.js');
@@ -47,7 +47,7 @@ describe('EthCustodianProxy contract', () => {
             .connect(adminAccount)
             .deploy(
                 nearEvmAccount,
-                nearProver.address,
+                await nearProver.getAddress(),
                 0,
                 adminAccount.address,
                 UNPAUSED_ALL);
@@ -55,13 +55,13 @@ describe('EthCustodianProxy contract', () => {
         const ethCustodianProxyContractFactory = await ethers.getContractFactory('EthCustodianProxy');
         ethCustodianProxy = await upgrades.deployProxy(
             ethCustodianProxyContractFactory,
-            [ethCustodian.address]
+            [await ethCustodian.getAddress()]
         );
 
-        const nominateTx = await ethCustodian.nominateAdmin(ethCustodianProxy.address);
+        const nominateTx = await ethCustodian.nominateAdmin(await ethCustodianProxy.getAddress());
         await nominateTx.wait();
 
-        const acceptTx = await ethCustodian.acceptAdmin(ethCustodianProxy.address);
+        const acceptTx = await ethCustodian.acceptAdmin(await ethCustodianProxy.getAddress());
         await acceptTx.wait();
 
         const pauseTx = await ethCustodianProxy.pauseImpl(PAUSED_ALL);
@@ -72,17 +72,17 @@ describe('EthCustodianProxy contract', () => {
         it('Should be paused', async () => {
             const paused = await ethCustodian.paused();
 
-            expect(paused & PAUSED_DEPOSIT_TO_EVM).to.not.equal(0);
-            expect(paused & PAUSED_DEPOSIT_TO_NEAR).to.not.equal(0);
-            expect(paused & PAUSED_WITHDRAW_POST_MIGRATION).to.not.equal(0);
+            expect(paused & BigInt(PAUSED_DEPOSIT_TO_EVM)).to.not.equal(0);
+            expect(paused & BigInt(PAUSED_DEPOSIT_TO_NEAR)).to.not.equal(0);
+            expect(paused & BigInt(PAUSED_WITHDRAW_POST_MIGRATION)).to.not.equal(0);
         });
     });
 
     describe('Deposit', () => {
         it('to EVM Should change the balance and emit the event', async () => {
             const amountToTransfer = 50000;
-            const balanceBefore = ethers.BigNumber.from(
-                await ethers.provider.getBalance(ethCustodian.address));
+            const balanceBefore = BigInt(
+                await ethers.provider.getBalance(await ethCustodian.getAddress()));
 
             const protocolMessage = nearEvmAccount + ':' + String(ethRecipientOnNear.address);
             const options = { value: amountToTransfer };
@@ -92,11 +92,11 @@ describe('EthCustodianProxy contract', () => {
                     .depositToEVM(ethRecipientOnNear.address, 0, options)
             )
                 .to.emit(ethCustodian, 'Deposited')
-                .withArgs(ethCustodianProxy.address, protocolMessage, amountToTransfer, 0);
+                .withArgs(await ethCustodianProxy.getAddress(), protocolMessage, amountToTransfer, 0);
 
-            const balanceAfter = ethers.BigNumber.from(
-                await ethers.provider.getBalance(ethCustodian.address));
-            const balanceDiff = balanceAfter.sub(balanceBefore);
+            const balanceAfter = BigInt(
+                await ethers.provider.getBalance(await ethCustodian.getAddress()));
+            const balanceDiff = balanceAfter - balanceBefore;
             expect(balanceDiff).to.equal(amountToTransfer);
         });
 
@@ -104,8 +104,8 @@ describe('EthCustodianProxy contract', () => {
             const nearRecipientAccountId = 'recipient.near';
 
             const amountToTransfer = 50000;
-            const balanceBefore = ethers.BigNumber.from(
-                await ethers.provider.getBalance(ethCustodian.address));
+            const balanceBefore = BigInt(
+                await ethers.provider.getBalance(await ethCustodian.getAddress()));
 
             const options = { value: amountToTransfer };
             await expect(
@@ -114,11 +114,11 @@ describe('EthCustodianProxy contract', () => {
                     .depositToNear(nearRecipientAccountId, 0, options)
             )
                 .to.emit(ethCustodian, 'Deposited')
-                .withArgs(ethCustodianProxy.address, nearRecipientAccountId, amountToTransfer, 0);
+                .withArgs(await ethCustodianProxy.getAddress(), nearRecipientAccountId, amountToTransfer, 0);
 
-            const balanceAfter = ethers.BigNumber.from(
-                await ethers.provider.getBalance(ethCustodian.address));
-            const balanceDiff = balanceAfter.sub(balanceBefore);
+            const balanceAfter = BigInt(
+                await ethers.provider.getBalance(await ethCustodian.getAddress()));
+            const balanceDiff = balanceAfter - balanceBefore;
             expect(balanceDiff).to.equal(amountToTransfer);
         });
     });
@@ -196,14 +196,14 @@ describe('EthCustodianProxy contract', () => {
             await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, migrationBlock);
 
             await expect(ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, migrationBlock))
-                .to.be.revertedWith('AlreadyMigrated');
+                .to.be.revertedWithCustomError(ethCustodianProxy, 'AlreadyMigrated');
         });
 
         it('Should fail when block producer id is too long', async () => {
             await expect(
                 ethCustodianProxy.migrateToNewProofProducer(Buffer.from('new-loooooooong-producer.testnet'), migrationBlock)
             )
-                .to.be.revertedWith('ProducerAccountIdTooLong');
+                .to.be.revertedWithCustomError(ethCustodianProxy, 'ProducerAccountIdTooLong');
         });
     });
 
@@ -220,8 +220,8 @@ describe('EthCustodianProxy contract', () => {
 
             proof.outcome_proof.outcome.status.SuccessValue = serialize(SCHEMA, 'WithdrawResult', {
                 amount: amount,
-                recipient: ethers.utils.arrayify(user2.address),
-                ethCustodian: ethers.utils.arrayify(ethCustodian.address),
+                recipient: ethers.getBytes(user2.address),
+                ethCustodian: ethers.getBytes(await ethCustodian.getAddress()),
             }).toString('base64');
         });
 
@@ -230,7 +230,7 @@ describe('EthCustodianProxy contract', () => {
             postMigrationProof.outcome_proof.outcome.executor_id = 'new-producer.testnet';
 
             const proofProducerBefore = await ethCustodian.nearProofProducerAccount_();
-            const balanceBefore = ethers.BigNumber.from(
+            const balanceBefore = BigInt(
                 await ethers.provider.getBalance(user2.address));
 
             await expect(
@@ -240,16 +240,15 @@ describe('EthCustodianProxy contract', () => {
                 .withArgs(user2.address, amount);
 
             const proofProducerAfter = await ethCustodian.nearProofProducerAccount_();
-            const balanceAfter = ethers.BigNumber.from(
-                await ethers.provider.getBalance(user2.address));
-            const balanceDiff = balanceAfter.sub(balanceBefore);
+            const balanceAfter = await ethers.provider.getBalance(user2.address);
+            const balanceDiff = balanceAfter - balanceBefore;
 
             expect(proofProducerBefore).to.equal(proofProducerAfter);
             expect(balanceDiff).to.equal(amount)
         });
 
         it('Should successfully withdraw and emit the event pre-migration', async () => {
-            const balanceBefore = ethers.BigNumber.from(await ethers.provider.getBalance(user2.address));
+            const balanceBefore = BigInt(await ethers.provider.getBalance(user2.address));
 
             await expect(
                 ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), 1099)
@@ -257,15 +256,15 @@ describe('EthCustodianProxy contract', () => {
                 .to.emit(ethCustodian, 'Withdrawn')
                 .withArgs(user2.address, amount);
 
-            const balanceAfter = ethers.BigNumber.from(await ethers.provider.getBalance(user2.address));
-            const balanceDiff = balanceAfter.sub(balanceBefore);
+            const balanceAfter = BigInt(await ethers.provider.getBalance(user2.address));
+            const balanceDiff = balanceAfter - balanceBefore;
 
             expect(balanceDiff).to.equal(amount)
         });
 
 
         it('Should successfully withdraw and emit the event at migration block', async () => {
-            const balanceBefore = ethers.BigNumber.from(await ethers.provider.getBalance(user2.address));
+            const balanceBefore = BigInt(await ethers.provider.getBalance(user2.address));
             const migrationBlock = await ethCustodianProxy.migrationBlockHeight();
 
             await expect(
@@ -274,8 +273,8 @@ describe('EthCustodianProxy contract', () => {
                 .to.emit(ethCustodian, 'Withdrawn')
                 .withArgs(user2.address, amount);
 
-            const balanceAfter = ethers.BigNumber.from(await ethers.provider.getBalance(user2.address));
-            const balanceDiff = balanceAfter.sub(balanceBefore);
+            const balanceAfter = BigInt(await ethers.provider.getBalance(user2.address));
+            const balanceDiff = balanceAfter - balanceBefore;
 
             expect(balanceDiff).to.equal(amount)
         });
@@ -283,7 +282,7 @@ describe('EthCustodianProxy contract', () => {
 
     describe('callImpl', () => {
         it('Should change the admin of the implementation', async () => {
-            const implInterface = new ethers.utils.Interface(['function nominateAdmin(address)', 'function acceptAdmin(address)']);
+            const implInterface = new ethers.Interface(['function nominateAdmin(address)', 'function acceptAdmin(address)']);
 
             const nominate = implInterface.encodeFunctionData('nominateAdmin', [user2.address]);
             const nominateTx = await ethCustodianProxy.callImpl(nominate);
@@ -297,11 +296,11 @@ describe('EthCustodianProxy contract', () => {
         });
 
         it('Should fail when called by non-admin', async () => {
-            const implInterface = new ethers.utils.Interface(['function nominateAdmin(address)']);
+            const implInterface = new ethers.Interface(['function nominateAdmin(address)']);
 
             const nominate = implInterface.encodeFunctionData('nominateAdmin', [user2.address]);
             await expect(ethCustodianProxy.connect(user2).callImpl(nominate))
-                .to.be.revertedWith('AccessControlUnauthorizedAccount');
+                .to.be.revertedWithCustomError(ethCustodianProxy, 'AccessControlUnauthorizedAccount');
         });
     });
 });

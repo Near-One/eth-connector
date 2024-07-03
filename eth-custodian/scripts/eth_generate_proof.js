@@ -37,7 +37,7 @@ async function findProof (depositTxHash, shouldBorshifyProof=false) {
     const ethCustodianContractFactory = await hre.ethers.getContractFactory('EthCustodian');
     const ethCustodian = await ethCustodianContractFactory.attach(ethereumConfig.ethConnectorAddress);
 
-    console.log(`EthCustodian address: ${ethCustodian.address}`);
+    console.log(`EthCustodian address: ${await ethCustodian.getAddress()}`);
     console.log(`Generating the proof for TX with hash: ${depositTxHash}`);
 
     const receipt = await hre.ethers.provider.getTransactionReceipt(depositTxHash);
@@ -128,7 +128,7 @@ async function extractProof (block, tree, transactionIndex) {
 
     const blockData = await hre.ethers.provider.send(
         'eth_getBlockByNumber',
-        [ethers.BigNumber.from(block.number)._hex, true]);
+        [BigInt(block.number)._hex, true]);
 
     // Correctly compose and encode the header.
     const header = Header.fromObject(blockData);

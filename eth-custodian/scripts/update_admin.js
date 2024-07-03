@@ -9,19 +9,19 @@ async function updateAdminLegacy(provider, newAdmin) {
     let signer = new hre.ethers.Wallet(process.env.SEPOLIA_PRIVATE_KEY, provider);
     const ethCustodianContractFactory = await hre.ethers.getContractFactory('EthCustodian');
     const ethCustodian = await ethCustodianContractFactory.attach(ethereumConfig.ethConnectorAddress);
-    console.log(`EthCustodian address: ${ethCustodian.address}`);
+    console.log(`EthCustodian address: ${await ethCustodian.getAddress()}`);
     console.log(`New admin address: ${newAdmin}`);
 
     // Mask matches only on the latest 20 bytes (to store the address)
     const adminAddressSlot = 4;
-    const mask = ethers.BigNumber.from('0x000000000000000000000000ffffffffffffffffffffffffffffffffffffffff');
+    const mask = BigInt('0x000000000000000000000000ffffffffffffffffffffffffffffffffffffffff');
     console.log(`Used mask: ${mask}`);
 
-    const slotContent = ethers.BigNumber.from(await provider.getStorageAt(ethCustodian.address, Number(adminAddressSlot))).toHexString();
+    const slotContent = BigInt(await provider.getStorageAt(await ethCustodian.getAddress(), Number(adminAddressSlot))).toHexString();
     assert.equal(
         slotContent.toUpperCase(),
         signer.address.toUpperCase(),
-        `The current admin doesn't match at the slot ${adminAddressSlot} contract ${ethCustodian.address}`,
+        `The current admin doesn't match at the slot ${adminAddressSlot} contract ${await ethCustodian.getAddress()}`,
     );
 
     console.log(`Call adminSstoreWithMask with the account: ${signer.address}`);
@@ -63,7 +63,7 @@ async function nominateAdmin(provider, newAdmin) {
     const ethCustodianContractFactory = await hre.ethers.getContractFactory('EthCustodian');
     const ethCustodian = await ethCustodianContractFactory.attach(ethereumConfig.ethConnectorAddress);
 
-    console.log(`EthCustodian address: ${ethCustodian.address}`);
+    console.log(`EthCustodian address: ${await ethCustodian.getAddress()}`);
 
     const deployerWallet = new hre.ethers.Wallet(process.env.SEPOLIA_PRIVATE_KEY, provider);
     let unsignedTx = await ethCustodian
@@ -102,7 +102,7 @@ async function acceptAdmin(provider, newAdmin) {
     const ethCustodianContractFactory = await hre.ethers.getContractFactory('EthCustodian');
     const ethCustodian = await ethCustodianContractFactory.attach(ethereumConfig.ethConnectorAddress);
 
-    console.log(`EthCustodian address: ${ethCustodian.address}`);
+    console.log(`EthCustodian address: ${await ethCustodian.getAddress()}`);
 
     const deployerWallet = new hre.ethers.Wallet(process.env.SEPOLIA_PRIVATE_KEY, provider);
     let unsignedTx = await ethCustodian

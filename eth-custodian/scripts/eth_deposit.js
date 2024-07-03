@@ -6,8 +6,8 @@ const ethereumConfig = require('./json/ethereum-config.json');
 
 
 async function ethDeposit(provider, depositToNear, recipient, amountToTransfer, fee) {
-    amountToTransfer = ethers.BigNumber.from(amountToTransfer);
-    fee = ethers.BigNumber.from(fee);
+    amountToTransfer = BigInt(amountToTransfer);
+    fee = BigInt(fee);
 
     if (amountToTransfer.lte(ethers.constants.Zero) || fee.gt(amountToTransfer)) {
         throw new Error(
@@ -26,7 +26,7 @@ async function ethDeposit(provider, depositToNear, recipient, amountToTransfer, 
     const ethCustodianContractFactory = await hre.ethers.getContractFactory('EthCustodian');
     const ethCustodian = await ethCustodianContractFactory.attach(ethereumConfig.ethConnectorAddress);
 
-    console.log(`EthCustodian address: ${ethCustodian.address}`);
+    console.log(`EthCustodian address: ${await ethCustodian.getAddress()}`);
 
     const deployerWallet = new hre.ethers.Wallet(process.env.ROPSTEN_PRIVATE_KEY, provider);
     let unsignedTx;

@@ -52,7 +52,7 @@ describe('EthCustodian contract', () => {
             .connect(adminAccount)
             .deploy(
                 nearEvmAccount,
-                nearProver.address,
+                await nearProver.getAddress(),
                 minBlockAcceptanceHeight,
                 adminAccount.address,
                 UNPAUSED_ALL);
@@ -63,7 +63,7 @@ describe('EthCustodian contract', () => {
             await expect(
                 ethCustodianContractFactory.deploy(
                     nearEvmAccount,
-                    ethers.constants.AddressZero,
+                    ethers.ZeroAddress,
                     minBlockAcceptanceHeight,
                     adminAccount.address,
                     UNPAUSED_ALL)
@@ -77,7 +77,7 @@ describe('EthCustodian contract', () => {
             await expect(
                 ethCustodianContractFactory.deploy(
                     Buffer.from(''),
-                    nearProver.address,
+                    await nearProver.getAddress(),
                     minBlockAcceptanceHeight,
                     adminAccount.address,
                     UNPAUSED_ALL)
@@ -97,7 +97,7 @@ describe('EthCustodian contract', () => {
     });
 
     describe('Deposit', () => {
-        it('Should revert when the provided fee is bigger than the transferred amount', async () => {
+        it('Should revert when the provided fee is bigger than the transferred amount.', async () => {
             const fee = 100;  // wei
             const options = { value: fee };
             await expect (ethCustodian
@@ -106,13 +106,13 @@ describe('EthCustodian contract', () => {
             )
                 .to
                 .be
-                .revertedWith('The fee cannot be bigger than the transferred amount');
+                .revertedWith('The fee cannot be bigger than the transferred amount.');
         });
 
         it('Should change the balance of the custodian when calling depositToEVM and emit the Deposited event', async () => {
             const fee = 100;  // wei
             const amountToTransfer = 50000; // wei
-            const balanceBefore = ethers.BigNumber.from(await ethers.provider.getBalance(ethCustodian.address));
+            const balanceBefore = await ethers.provider.getBalance(await ethCustodian.getAddress());
 
             // The protocol is `<nearAccount>:<ethRecipientOnNear>`
             const protocolMessage = nearEvmAccount + ':' + String(ethRecipientOnNear.address);
@@ -126,8 +126,8 @@ describe('EthCustodian contract', () => {
                 .emit(ethCustodian, 'Deposited')
                 .withArgs(user1.address, protocolMessage, amountToTransfer, fee);
 
-            const balanceAfter = ethers.BigNumber.from(await ethers.provider.getBalance(ethCustodian.address));
-            const balanceDiff = balanceAfter.sub(balanceBefore);
+            const balanceAfter = await ethers.provider.getBalance(await ethCustodian.getAddress());
+            const balanceDiff = balanceAfter - balanceBefore;
             expect(balanceDiff)
                 .to
                 .equal(amountToTransfer);
@@ -138,7 +138,7 @@ describe('EthCustodian contract', () => {
 
             const fee = 100;  // wei
             const amountToTransfer = 50000; // wei
-            const balanceBefore = ethers.BigNumber.from(await ethers.provider.getBalance(ethCustodian.address));
+            const balanceBefore = await ethers.provider.getBalance(await ethCustodian.getAddress());
 
             const options = { value: amountToTransfer };
             await expect(
@@ -150,8 +150,8 @@ describe('EthCustodian contract', () => {
                 .emit(ethCustodian, 'Deposited')
                 .withArgs(user1.address, nearRecipientAccountId, amountToTransfer, fee);
 
-            const balanceAfter = ethers.BigNumber.from(await ethers.provider.getBalance(ethCustodian.address));
-            const balanceDiff = balanceAfter.sub(balanceBefore);
+            const balanceAfter = await ethers.provider.getBalance(await ethCustodian.getAddress());
+            const balanceDiff = balanceAfter - balanceBefore;
             expect(balanceDiff)
                 .to
                 .equal(amountToTransfer);
@@ -179,8 +179,8 @@ describe('EthCustodian contract', () => {
             const amount = 5000; // wei
             proof.outcome_proof.outcome.status.SuccessValue = serialize(SCHEMA, 'WithdrawResult', {
                 amount: amount,
-                recipient: ethers.utils.arrayify(user2.address),
-                ethCustodian: ethers.utils.arrayify(ethCustodian.address),
+                recipient: ethers.getBytes(user2.address),
+                ethCustodian: ethers.getBytes(await ethCustodian.getAddress()),
             }).toString('base64');
             // Manually set the incorrect proof producer
             proof.outcome_proof.outcome.executor_id = 'evm2.near';
@@ -197,9 +197,9 @@ describe('EthCustodian contract', () => {
             const amount = 5000; // wei
             proof.outcome_proof.outcome.status.SuccessValue = serialize(SCHEMA, 'WithdrawResult', {
                 amount: amount,
-                recipient: ethers.utils.arrayify(user2.address),
+                recipient: ethers.getBytes(user2.address),
                 // Manually setting the incorrect eth custodian address
-                ethCustodian: ethers.utils.arrayify("0xabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"),
+                ethCustodian: ethers.getBytes("0xabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"),
             }).toString('base64');
 
             await expect(
@@ -214,12 +214,12 @@ describe('EthCustodian contract', () => {
             const amount = 5000; // wei
             proof.outcome_proof.outcome.status.SuccessValue = serialize(SCHEMA, 'WithdrawResult', {
                 amount: amount,
-                recipient: ethers.utils.arrayify(user2.address),
-                ethCustodian: ethers.utils.arrayify(ethCustodian.address),
+                recipient: ethers.getBytes(user2.address),
+                ethCustodian: ethers.getBytes(await ethCustodian.getAddress()),
             }).toString('base64');
 
             console.log(`User2 address: ${user2.address}`);
-            const balanceBefore = ethers.BigNumber.from(await ethers.provider.getBalance(user2.address));
+            const balanceBefore = await ethers.provider.getBalance(user2.address);
 
             await expect(
                 ethCustodian.withdraw(borshifyOutcomeProof(proof), proofBlockHeight)
@@ -228,8 +228,8 @@ describe('EthCustodian contract', () => {
                 .emit(ethCustodian, 'Withdrawn')
                 .withArgs(user2.address, amount);
 
-            const balanceAfter = ethers.BigNumber.from(await ethers.provider.getBalance(user2.address));
-            const balanceDiff = balanceAfter.sub(balanceBefore);
+            const balanceAfter = await ethers.provider.getBalance(user2.address);
+            const balanceDiff = balanceAfter - balanceBefore;
 
             expect(balanceDiff)
                 .to
@@ -240,8 +240,8 @@ describe('EthCustodian contract', () => {
             const amount = 5000; // wei
             proof.outcome_proof.outcome.status.SuccessValue = serialize(SCHEMA, 'WithdrawResult', {
                 amount: amount,
-                recipient: ethers.utils.arrayify(user2.address),
-                ethCustodian: ethers.utils.arrayify(ethCustodian.address),
+                recipient: ethers.getBytes(user2.address),
+                ethCustodian: ethers.getBytes(await ethCustodian.getAddress()),
             }).toString('base64');
 
             // Withdraw for the first time
@@ -260,8 +260,8 @@ describe('EthCustodian contract', () => {
             const amount = 5000; // wei
             proof.outcome_proof.outcome.status.SuccessValue = serialize(SCHEMA, 'WithdrawResult', {
                 amount: amount,
-                recipient: ethers.utils.arrayify(user2.address),
-                ethCustodian: ethers.utils.arrayify(ethCustodian.address),
+                recipient: ethers.getBytes(user2.address),
+                ethCustodian: ethers.getBytes(await ethCustodian.getAddress()),
             }).toString('base64');
 
             const proofBlockHeight = minBlockAcceptanceHeight - 1;
@@ -282,7 +282,7 @@ describe('EthCustodian contract', () => {
 
             // Let's try to deposit some tokens to Near NEP-141
             // The balance should be changed and the `Deposited` event emitted
-            const balanceBefore = ethers.BigNumber.from(await ethers.provider.getBalance(ethCustodian.address));
+            const balanceBefore = await ethers.provider.getBalance(await ethCustodian.getAddress());
 
             // Prepare the 1st TX (should succeed)
             const amountToTransfer = 5000; // wei
@@ -296,8 +296,8 @@ describe('EthCustodian contract', () => {
                 .emit(ethCustodian, 'Deposited')
                 .withArgs(user1.address, nearRecipientAccountId, amountToTransfer, fee);
 
-            const balanceAfter = ethers.BigNumber.from(await ethers.provider.getBalance(ethCustodian.address));
-            const balanceDiff = balanceAfter.sub(balanceBefore);
+            const balanceAfter = await ethers.provider.getBalance(await ethCustodian.getAddress());
+            const balanceDiff = balanceAfter - balanceBefore;
             expect(balanceDiff)
                 .to
                 .equal(amountToTransfer);
@@ -321,8 +321,8 @@ describe('EthCustodian contract', () => {
                 .be
                 .reverted;
 
-            const balanceAfter2 = ethers.BigNumber.from(await ethers.provider.getBalance(ethCustodian.address));
-            const balanceDiff2 = balanceAfter2.sub(balanceBefore2);
+            const balanceAfter2 = await ethers.provider.getBalance(await ethCustodian.getAddress());
+            const balanceDiff2 = balanceAfter2 - balanceBefore2;
             // The balance should not be changed
             expect(balanceDiff2)
                 .to
@@ -347,8 +347,8 @@ describe('EthCustodian contract', () => {
                 .emit(ethCustodian, 'Deposited')
                 .withArgs(user1.address, nearRecipientAccountId, amountToTransfer3, fee);
 
-            const balanceAfter3 = ethers.BigNumber.from(await ethers.provider.getBalance(ethCustodian.address));
-            const balanceDiff3 = balanceAfter3.sub(balanceBefore3);
+            const balanceAfter3 = await ethers.provider.getBalance(await ethCustodian.getAddress());
+            const balanceDiff3 = balanceAfter3 - balanceBefore3;
 
             expect(balanceDiff3)
                 .to
@@ -363,7 +363,7 @@ describe('EthCustodian contract', () => {
 
             // Let's try to deposit some tokens to Near NEP-141
             // The balance should be changed and the `Deposited` event emitted
-            const balanceBefore = ethers.BigNumber.from(await ethers.provider.getBalance(ethCustodian.address));
+            const balanceBefore = await ethers.provider.getBalance(await ethCustodian.getAddress());
 
             // Prepare the 1st TX (should suceed)
             const amountToTransfer = 5000; // wei
@@ -377,8 +377,8 @@ describe('EthCustodian contract', () => {
                 .emit(ethCustodian, 'Deposited')
                 .withArgs(user1.address, protocolMessage, amountToTransfer, fee);
 
-            const balanceAfter = ethers.BigNumber.from(await ethers.provider.getBalance(ethCustodian.address));
-            const balanceDiff = balanceAfter.sub(balanceBefore);
+            const balanceAfter = await ethers.provider.getBalance(await ethCustodian.getAddress());
+            const balanceDiff = balanceAfter - balanceBefore;
             expect(balanceDiff)
                 .to
                 .equal(amountToTransfer);
@@ -402,8 +402,8 @@ describe('EthCustodian contract', () => {
                 .be
                 .reverted;
 
-            const balanceAfter2 = ethers.BigNumber.from(await ethers.provider.getBalance(ethCustodian.address));
-            const balanceDiff2 = balanceAfter2.sub(balanceBefore2);
+            const balanceAfter2 = await ethers.provider.getBalance(await ethCustodian.getAddress());
+            const balanceDiff2 = balanceAfter2 - balanceBefore2;
             // The balance should not be changed
             expect(balanceDiff2)
                 .to
@@ -428,8 +428,8 @@ describe('EthCustodian contract', () => {
                 .emit(ethCustodian, 'Deposited')
                 .withArgs(user1.address, protocolMessage, amountToTransfer3, fee);
 
-            const balanceAfter3 = ethers.BigNumber.from(await ethers.provider.getBalance(ethCustodian.address));
-            const balanceDiff3 = balanceAfter3.sub(balanceBefore3);
+            const balanceAfter3 = await ethers.provider.getBalance(await ethCustodian.getAddress());
+            const balanceDiff3 = balanceAfter3 - balanceBefore3;
 
             expect(balanceDiff3)
                 .to
@@ -453,11 +453,11 @@ describe('EthCustodian contract', () => {
             const amountToWithdraw = 5000; // wei
             proof.outcome_proof.outcome.status.SuccessValue = serialize(SCHEMA, 'WithdrawResult', {
                 amount: amountToWithdraw,
-                recipient: ethers.utils.arrayify(user2.address),
-                ethCustodian: ethers.utils.arrayify(ethCustodian.address),
+                recipient: ethers.getBytes(user2.address),
+                ethCustodian: ethers.getBytes(await ethCustodian.getAddress()),
             }).toString('base64');
 
-            const recipientBalanceBefore = ethers.BigNumber.from(await ethers.provider.getBalance(user2.address));
+            const recipientBalanceBefore = await ethers.provider.getBalance(user2.address);
 
             await expect(
                 ethCustodian
@@ -468,8 +468,8 @@ describe('EthCustodian contract', () => {
                 .emit(ethCustodian, 'Withdrawn')
                 .withArgs(user2.address, amountToWithdraw);
 
-            const recipientBalanceAfter = ethers.BigNumber.from(await ethers.provider.getBalance(user2.address));
-            const recipientBalanceDiff = recipientBalanceAfter.sub(recipientBalanceBefore);
+            const recipientBalanceAfter = await ethers.provider.getBalance(user2.address);
+            const recipientBalanceDiff = recipientBalanceAfter - recipientBalanceBefore;
 
             expect(recipientBalanceDiff)
                 .to
@@ -480,7 +480,7 @@ describe('EthCustodian contract', () => {
                 .connect(adminAccount)
                 .adminPause(PAUSED_WITHDRAW);
 
-            const recipientBalanceBefore2 = ethers.BigNumber.from(await ethers.provider.getBalance(user2.address));
+            const recipientBalanceBefore2 = await ethers.provider.getBalance(user2.address);
 
             // Prepare the 2nd TX (should fail)
             let proof2 = proof;
@@ -496,8 +496,8 @@ describe('EthCustodian contract', () => {
                 .be
                 .reverted;
 
-            const recipientBalanceAfter2 = ethers.BigNumber.from(await ethers.provider.getBalance(user2.address));
-            const recipientBalanceDiff2 = recipientBalanceAfter2.sub(recipientBalanceBefore2);
+            const recipientBalanceAfter2 = await ethers.provider.getBalance(user2.address);
+            const recipientBalanceDiff2 = recipientBalanceAfter2 - recipientBalanceBefore2;
 
             expect(recipientBalanceDiff2)
                 .to
@@ -508,7 +508,7 @@ describe('EthCustodian contract', () => {
                 .connect(adminAccount)
                 .adminPause(UNPAUSED_ALL);
 
-            const recipientBalanceBefore3 = ethers.BigNumber.from(await ethers.provider.getBalance(user2.address));
+            const recipientBalanceBefore3 = await ethers.provider.getBalance(user2.address);
 
             // Prepare the 3rd TX (should succeed)
             let proof3 = proof;
@@ -524,8 +524,8 @@ describe('EthCustodian contract', () => {
                 .emit(ethCustodian, 'Withdrawn')
                 .withArgs(user2.address, amountToWithdraw);
 
-            const recipientBalanceAfter3 = ethers.BigNumber.from(await ethers.provider.getBalance(user2.address));
-            const recipientBalanceDiff3 = recipientBalanceAfter3.sub(recipientBalanceBefore3);
+            const recipientBalanceAfter3 = await ethers.provider.getBalance(user2.address);
+            const recipientBalanceDiff3 = recipientBalanceAfter3 - recipientBalanceBefore3;
             expect(recipientBalanceDiff3)
                 .to
                 .equal(amountToWithdraw);
@@ -543,8 +543,8 @@ describe('EthCustodian contract', () => {
         });
 
         it('Regular user can not perform admin functions', async() => {
-            const recipientBalanceBefore = ethers.BigNumber.from(await ethers.provider.getBalance(user3.address));
-            const contractBalanceBefore = ethers.BigNumber.from(await ethers.provider.getBalance(ethCustodian.address));
+            const recipientBalanceBefore = await ethers.provider.getBalance(user3.address);
+            const contractBalanceBefore = await ethers.provider.getBalance(await ethCustodian.getAddress());
 
             const amountToTransfer = 4000; // wei
             // user2 tries to perform `adminSendEth()` to replenish user3 balance
@@ -557,8 +557,8 @@ describe('EthCustodian contract', () => {
                 .be
                 .reverted;
 
-            const recipientBalanceAfter = ethers.BigNumber.from(await ethers.provider.getBalance(user3.address));
-            const contractBalanceAfter = ethers.BigNumber.from(await ethers.provider.getBalance(ethCustodian.address));
+            const recipientBalanceAfter = await ethers.provider.getBalance(user3.address);
+            const contractBalanceAfter = await ethers.provider.getBalance(await ethCustodian.getAddress());
 
             expect(recipientBalanceAfter)
                 .to
@@ -590,7 +590,7 @@ describe('EthCustodian contract', () => {
             await expect(
                 ethCustodian
                     .connect(user2)
-                    .adminSstoreWithMask(0, 1, ethers.BigNumber.from('0x0000ffff'))
+                    .adminSstoreWithMask(0, 1, BigInt('0x0000ffff'))
             )
                 .to
                 .be
@@ -607,8 +607,8 @@ describe('EthCustodian contract', () => {
                 .connect(adminAccount)
                 .adminReceiveEth(options);
 
-            const recipientBalanceBefore = ethers.BigNumber.from(await ethers.provider.getBalance(user2.address));
-            const contractBalanceBefore = ethers.BigNumber.from(await ethers.provider.getBalance(ethCustodian.address));
+            const recipientBalanceBefore = await ethers.provider.getBalance(user2.address);
+            const contractBalanceBefore = await ethers.provider.getBalance(await ethCustodian.getAddress());
 
             // Check the contract has the specified balance available
             expect(contractBalanceBefore)
@@ -617,22 +617,22 @@ describe('EthCustodian contract', () => {
                 .equal(replenishBalanceValue);
 
             // Send eth using admin access
-            const amountToTransfer = 4000; // wei
+            const amountToTransfer = BigInt(4000); // wei
             await ethCustodian
                 .connect(adminAccount)
                 .adminSendEth(user2.address, amountToTransfer);
 
-            const recipientBalanceAfter = ethers.BigNumber.from(await ethers.provider.getBalance(user2.address));
-            const contractBalanceAfter = ethers.BigNumber.from(await ethers.provider.getBalance(ethCustodian.address));
+            const recipientBalanceAfter = await ethers.provider.getBalance(user2.address);
+            const contractBalanceAfter = await ethers.provider.getBalance(await ethCustodian.getAddress());
 
             expect(recipientBalanceAfter)
                 .to
                 .be
-                .equal(recipientBalanceBefore.add(amountToTransfer));
+                .equal(recipientBalanceBefore - amountToTransfer);
             expect(contractBalanceAfter)
                 .to
                 .be
-                .equal(contractBalanceBefore.sub(amountToTransfer));
+                .equal(contractBalanceBefore - amountToTransfer);
         });
     });
 });

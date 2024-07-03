@@ -38,7 +38,7 @@ async function main() {
 
     await ethCustodian.deployed();
 
-    console.log("EthCustodian deployed to:", ethCustodian.address);
+    console.log("EthCustodian deployed to:", await ethCustodian.getAddress());
 }
 
 // We recommend this pattern to be able to use async/await everywhere

@@ -100,7 +100,7 @@ async function auroraRegisterRelayer (nearAccount, nearJsonRpc, nearNetwork, rel
         }
     );
 
-    const args = ethers.utils.arrayify(relayerAddressInAurora);
+    const args = ethers.getBytes(relayerAddressInAurora);
     await aurora.register_relayer(args);
 }
 
@@ -123,7 +123,7 @@ async function auroraMakeItRain(nearAccount, nearJsonRpc, nearNetwork, rainRecei
         }
     );
 
-    const address = ethers.utils.arrayify(ethers.utils.getAddress(rainReceiverAddress));
+    const address = ethers.getBytes(ethers.utils.getAddress(rainReceiverAddress));
     await nearEvmContract.make_it_rain(address);
 }
 
@@ -146,7 +146,7 @@ async function auroraNewState(nearAccount, nearJsonRpc, nearNetwork, chain_id, o
         }
     );
 
-    //const address = ethers.utils.arrayify(ethers.utils.getAddress(rainReceiverAddress));
+    //const address = ethers.getBytes(ethers.utils.getAddress(rainReceiverAddress));
     //await nearEvmContract.new(address);
 }
 
@@ -232,7 +232,7 @@ async function auroraGetNep141FromErc20(nearAccount, nearJsonRpc, nearNetwork, e
     );
 
     const erc20Address = ethers.utils.getAddress(erc20TokenAddressInAurora);
-    const nep141Address = await nearEvmContract.get_nep141_from_erc20(ethers.utils.arrayify(erc20Address));
+    const nep141Address = await nearEvmContract.get_nep141_from_erc20(ethers.getBytes(erc20Address));
     return nep141Address;
 }
 
@@ -272,8 +272,8 @@ async function auroraSetErc20Metadata(nearAccount, nearJsonRpc, nearNetwork, erc
     console.log(`Prepared unsigned TX to set the metadata: ${JSON.stringify(unsignedTx)}`);
 
     const formattedArgs = new BorshArgs({
-        contract: ethers.utils.arrayify(address),
-        input: ethers.utils.arrayify(unsignedTx.data),
+        contract: ethers.getBytes(address),
+        input: ethers.getBytes(unsignedTx.data),
     });
     const borshCallArgs = serializeBorsh(functionCallArgsBorshSchema, formattedArgs);
     const gas_limit = new BN('300' + '0'.repeat(12)); // Gas limit
