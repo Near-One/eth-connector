@@ -5,7 +5,7 @@ require('dotenv').config();
 require('@nomiclabs/hardhat-waffle');
 require('hardhat-gas-reporter');
 require('@openzeppelin/hardhat-upgrades');
-require("@nomiclabs/hardhat-etherscan");
+require("@nomicfoundation/hardhat-verify");
 
 const ROPSTEN_WEB3_RPC_ENDPOINT = process.env.ROPSTEN_WEB3_RPC_ENDPOINT;
 const SEPOLIA_WEB3_RPC_ENDPOINT = process.env.SEPOLIA_WEB3_RPC_ENDPOINT;
