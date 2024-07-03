@@ -25,6 +25,7 @@ ERC20_SYMBOL=
 ERC20_DECIMALS=
 
 NEAR_RECIPIENT=${NEAR_ACCOUNT}
+ETH_CUSTODIAN_PROXY=
 
 compile:
 	mkdir -p build/proofs && yarn hardhat compile
@@ -40,6 +41,9 @@ eth-deploy-contracts:
 
 eth-deploy-proxy:
 	yarn hardhat run --network ${NETWORK} scripts/eth_deploy_proxy.js
+
+update-admin-legacy:
+	yarn hardhat --network ${NETWORK} update-admin-legacy --new-admin ${ETH_CUSTODIAN_PROXY}
 
 nominate-admin:
 	yarn hardhat --network ${NETWORK} nominate-admin --new-admin ${ETH_CUSTODIAN_PROXY}

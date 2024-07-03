@@ -22,6 +22,13 @@ const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
 const PROVER_ACCOUNT_MAINNET = 'prover.bridge.near';
 const PROVER_ACCOUNT_TESTNET = 'prover.goerli.testnet';
 
+task('update-admin-legacy', 'Nominate new admin for Eth Custodian')
+    .addParam('newAdmin', 'Eth address of new admin')
+    .setAction(async taskArgs => {
+        const { updateAdminLegacy } = require('./scripts/update_admin');
+        await updateAdminLegacy(hre.ethers.provider, taskArgs.newAdmin);
+    });
+
 task('nominate-admin', 'Nominate new admin for Eth Custodian')
     .addParam('newAdmin', 'Eth address of new admin')
     .setAction(async taskArgs => {
