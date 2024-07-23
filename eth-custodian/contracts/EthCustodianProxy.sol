@@ -4,7 +4,7 @@ import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol'
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
-import 'rainbow-bridge-sol/nearbridge/contracts/Borsh.sol';
+import './BlockHeightFromProofExtractor.sol';
 import {EthCustodian} from './EthCustodian.sol';
 import {ProofKeeperGap} from './ProofKeeperGap.sol';
 import {SelectivePausableUpgradable} from './SelectivePausableUpgradable.sol';
@@ -16,8 +16,6 @@ contract EthCustodianProxy is
     AccessControlUpgradeable,
     SelectivePausableUpgradable
 {
-    using Borsh for Borsh.Data;
-
     bytes32 public constant PAUSABLE_ADMIN_ROLE = keccak256('PAUSABLE_ADMIN_ROLE');
 
     uint constant UNPAUSED_ALL = 0;
@@ -100,7 +98,7 @@ contract EthCustodianProxy is
         bytes calldata proofData,
         uint64 proofBlockHeight
     ) external {
-        if (getBlockHeightFromProof(proofData) > migrationBlockHeight) {
+        if (BlockHeightFromProofExtractor.getBlockHeightFromProof(proofData) > migrationBlockHeight) {
             _requireNotPaused(PAUSED_WITHDRAW_POST_MIGRATION);
             ethCustodianImpl.withdraw(proofData, proofBlockHeight);
         } else {
@@ -150,62 +148,6 @@ contract EthCustodianProxy is
 
     function pauseProxy(uint flags) external onlyRole(DEFAULT_ADMIN_ROLE) {
         _pause(flags);
-    }
-
-    function skipNBytes(Borsh.Data memory data, uint skipBytesCount) internal pure {
-        Borsh.requireSpace(data, skipBytesCount);
-        unchecked {
-            data.ptr += skipBytesCount;
-        }
-    }
-
-    function skipArray(Borsh.Data memory data, uint itemSizeInBytes) internal pure {
-        uint itemsCount = Borsh.decodeU32(data);
-        uint skipBytesCount = itemsCount * itemSizeInBytes;
-
-        skipNBytes(data, skipBytesCount);
-    }
-
-    function skipBytesArray(Borsh.Data memory data) internal pure {
-        uint itemCount = data.decodeU32();
-        for (uint i = 0; i < itemCount; i++) {
-            data.skipBytes();
-        }
-    }
-
-    function skipMerklePath(Borsh.Data memory data) internal pure {
-        uint MerklePathItemSize = 32 + 1;
-        skipArray(data, MerklePathItemSize);
-    }
-
-    function skipExecutionStatus(Borsh.Data memory data) internal pure {
-        uint enumIndex = data.decodeU8();
-        if (enumIndex == 2) {
-            data.skipBytes();
-        } else if (enumIndex == 3) {
-            skipNBytes(data, 32);
-        }
-    }
-
-    function skipExecutionOutcomeWithIdAndProof(Borsh.Data memory data) internal pure  {
-        skipMerklePath(data);
-        skipNBytes(data, 32 + 32);
-        skipBytesArray(data);
-        skipArray(data, 32);
-        skipNBytes(data, 8 + 16);
-        data.skipBytes();
-        skipExecutionStatus(data);
-    }
-
-    function getBlockHeightFromProof(bytes calldata proofData) public pure returns(uint64) {
-        Borsh.Data memory data = Borsh.from(proofData);
-
-        skipExecutionOutcomeWithIdAndProof(data);
-        skipMerklePath(data);
-        skipNBytes(data, 32 + 32);
-
-        uint64 height = data.decodeU64();
-        return height;
     }
 
     /**
