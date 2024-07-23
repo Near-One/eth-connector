@@ -204,7 +204,6 @@ contract EthCustodianProxy is
         skipMerklePath(data);
         skipNBytes(data, 32 + 32);
 
-        skipNBytes(data, 208);
         uint64 height = data.decodeU64();
         return height;
     }
