@@ -2,6 +2,7 @@ const { ethers, upgrades } = require("hardhat");
 const { expect } = require('chai');
 const { serialize } = require('rainbow-bridge-lib/rainbow/borsh.js');
 const { borshifyOutcomeProof } = require('rainbow-bridge-lib/rainbow/borshify-proof.js');
+const proof = require("./proof_template_from_testnet.json");
 
 const UNPAUSED_ALL = 0;
 const PAUSED_DEPOSIT_TO_EVM = 1 << 0;
@@ -243,6 +244,22 @@ describe('EthCustodianProxy contract', () => {
             const balanceDiff = balanceAfter - balanceBefore;
 
             expect(proofProducerBefore).to.equal(proofProducerAfter);
+            expect(balanceDiff).to.equal(amount)
+        });
+
+        it('Should successfully withdraw and emit the event pre-migration with post-migration block height', async () => {
+            await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, blockHeightFromProof + 1);
+            const balanceBefore = ethers.BigNumber.from(await ethers.provider.getBalance(user2.address));
+
+            await expect(
+                ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), blockHeightFromProof + 2)
+            )
+                .to.emit(ethCustodian, 'Withdrawn')
+                .withArgs(user2.address, amount);
+
+            const balanceAfter = ethers.BigNumber.from(await ethers.provider.getBalance(user2.address));
+            const balanceDiff = balanceAfter.sub(balanceBefore);
+
             expect(balanceDiff).to.equal(amount)
         });
 
