@@ -249,7 +249,7 @@ describe('EthCustodianProxy contract', () => {
 
         it('Should successfully withdraw and emit the event pre-migration with post-migration block height', async () => {
             await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, blockHeightFromProof + 1);
-            const balanceBefore = ethers.BigNumber.from(await ethers.provider.getBalance(user2.address));
+            const balanceBefore = BigInt(await ethers.provider.getBalance(user2.address));
 
             await expect(
                 ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), blockHeightFromProof + 2)
@@ -257,8 +257,8 @@ describe('EthCustodianProxy contract', () => {
                 .to.emit(ethCustodian, 'Withdrawn')
                 .withArgs(user2.address, amount);
 
-            const balanceAfter = ethers.BigNumber.from(await ethers.provider.getBalance(user2.address));
-            const balanceDiff = balanceAfter.sub(balanceBefore);
+            const balanceAfter = BigInt(await ethers.provider.getBalance(user2.address));
+            const balanceDiff = balanceAfter - balanceBefore;
 
             expect(balanceDiff).to.equal(amount)
         });
