@@ -149,6 +149,63 @@ contract EthCustodianProxy is
         _pause(flags);
     }
 
+    function skipNBytes(Borsh.Data memory data, uint skipBytesCount) internal pure {
+        data.requireSpace(skipBytesCount);
+        unchecked {
+            data.ptr += skipBytesCount;
+        }
+    }
+
+    function skipArray(Borsh.Data memory data, uint itemSizeInBytes) internal pure {
+        uint itemsCount = data.decodeU32();
+        uint skipBytesCount = itemsCount * itemSizeInBytes;
+
+        data.skipNBytes(skipBytesCount);
+    }
+
+    function skipBytesArray(Borsh.Data memory data) internal pure {
+        uint itemCount = data.decodeU32();
+        for (uint i = 0; i < itemCount; i++) {
+            data.skipBytes();
+        }
+    }
+
+    function skipMerklePath(Borsh.Data memory data) internal pure {
+        uint MerklePathItemSize = 32 + 1;
+        data.skipArray(MerklePathItemSize);
+    }
+
+    function skipExecutionStatus(Borsh.Data memory data) internal pure {
+        uint enumIndex = data.decodeU8();
+        if (enumIndex == 2) {
+            data.skipBytes();
+        } else if (enumIndex == 3) {
+            data.skipNBytes(32);
+        }
+    }
+
+    function skipExecutionOutcomeWithIdAndProof(Borsh.Data memory data) internal pure  {
+        data.skipMerklePath();
+        data.skipNBytes(32 + 32);
+        data.skipBytesArray();
+        data.skipArray(32);
+        data.skipNBytes(8 + 16);
+        data.skipBytes();
+        data.skipExecutionStatus();
+    }
+
+    function getBlockHeightFromProof(bytes calldata proofData) internal returns(uint64) {
+        Borsh.Data memory data = Borsh.from(proofData);
+
+        data.skipExecutionOutcomeWithIdAndProof();
+        data.skipMerklePath();
+        data.skipNBytes(32 + 32);
+
+        data.skipNBytes(208);
+        uint64 height = data.decodeU64();
+        return height;
+    }
+
     /**
      * @dev Internal function called by the proxy contract to authorize an upgrade to a new implementation address
      * using the UUPS proxy upgrade pattern. Overrides the default `_authorizeUpgrade` function from the `UUPSUpgradeable` contract.
