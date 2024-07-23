@@ -156,6 +156,13 @@ describe('EthCustodianProxy contract', () => {
                 .to.be.revertedWith('Pausable: paused');
         });
 
+        it('Check block height', async () => {
+            await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, migrationBlock);
+            const proof = require('./proof_template_from_testnet.json');
+
+            await expect(await ethCustodianProxy.getBlockHeightFromProof(borshifyOutcomeProof(proof))).to.equal(39884271);
+        })
+
         it('Should pause all', async () => {
             await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, migrationBlock);
             await ethCustodianProxy.pauseAll();
