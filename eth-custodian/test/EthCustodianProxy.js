@@ -198,12 +198,12 @@ describe('EthCustodianProxy contract', () => {
 
             await expect(ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, blockHeightFromProof))
                 .to.be.revertedWithCustomError(ethCustodianProxy, 'AlreadyMigrated');
+        });
 
         it('Should fail when block producer id is too long', async () => {
-            await expect(
-                ethCustodianProxy.migrateToNewProofProducer(Buffer.from('new-loooooooong-producer.testnet'), blockHeightFromProof)
-            )
-                .to.be.revertedWithCustomError(ethCustodianProxy, 'ProducerAccountIdTooLong');
+                await expect(
+                    ethCustodianProxy.migrateToNewProofProducer(Buffer.from('new-loooooooong-producer.testnet'), blockHeightFromProof)
+                ).to.be.revertedWithCustomError(ethCustodianProxy, 'ProducerAccountIdTooLong');
         });
     });
 
