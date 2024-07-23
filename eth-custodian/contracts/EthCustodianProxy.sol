@@ -100,7 +100,7 @@ contract EthCustodianProxy is
         bytes calldata proofData,
         uint64 proofBlockHeight
     ) external {
-        if (proofBlockHeight > migrationBlockHeight) {
+        if (getBlockHeightFromProof(proofData) > migrationBlockHeight) {
             _requireNotPaused(PAUSED_WITHDRAW_POST_MIGRATION);
             ethCustodianImpl.withdraw(proofData, proofBlockHeight);
         } else {
@@ -197,7 +197,7 @@ contract EthCustodianProxy is
         skipExecutionStatus(data);
     }
 
-    function getBlockHeightFromProof(bytes calldata proofData) external pure returns(uint64) {
+    function getBlockHeightFromProof(bytes calldata proofData) public pure returns(uint64) {
         Borsh.Data memory data = Borsh.from(proofData);
 
         skipExecutionOutcomeWithIdAndProof(data);
