@@ -94,6 +94,16 @@ contract EthCustodianProxy is
         );
     }
 
+    /// Withdraws the appropriate amount of ETH which is encoded in `proofData`
+    /// * `proofData` -- this is the proof that a tokens were burned on Near.
+    /// * `proofBlockHeight` -- this is the block height relative to which the proof is constructed.
+    ///                         Note that the height of this block can be significantly different
+    ///                         from the block number in which the tokens were burned on Near.
+    /// * `checkPreMigration` -- if set to true, the block height at which the tokens were burned on Near
+    ///                         will be extracted from proofData, and if it occurred before the migration,
+    ///                         the proofProducer will be updated accordingly.
+    ///                         If you are sure that the tokens were burned after the migration,
+    ///                         set this value to false to optimize gas consumption.
     function withdraw(
         bytes calldata proofData,
         uint64 proofBlockHeight,
