@@ -247,6 +247,30 @@ describe('EthCustodianProxy contract', () => {
             expect(balanceDiff).to.equal(amount)
         });
 
+        it('Should successfully withdraw and emit the event: checkPreMigration switched off', async () => {
+            await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, blockHeightFromProof + 1);
+
+            const postMigrationProof = structuredClone(proof);
+            postMigrationProof.outcome_proof.outcome.executor_id = 'new-producer.testnet';
+
+            const proofProducerBefore = await ethCustodian.nearProofProducerAccount_();
+            const balanceBefore = BigInt(
+                await ethers.provider.getBalance(user2.address));
+
+            await expect(
+                ethCustodianProxy.withdraw(borshifyOutcomeProof(postMigrationProof), blockHeightFromProof, false)
+            )
+                .to.emit(ethCustodian, 'Withdrawn')
+                .withArgs(user2.address, amount);
+
+            const proofProducerAfter = await ethCustodian.nearProofProducerAccount_();
+            const balanceAfter = await ethers.provider.getBalance(user2.address);
+            const balanceDiff = balanceAfter - balanceBefore;
+
+            expect(proofProducerBefore).to.equal(proofProducerAfter);
+            expect(balanceDiff).to.equal(amount)
+        });
+
         it('Should successfully withdraw and emit the event pre-migration with post-migration block height', async () => {
             await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, blockHeightFromProof + 1);
             const balanceBefore = BigInt(await ethers.provider.getBalance(user2.address));
