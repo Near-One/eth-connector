@@ -43,20 +43,37 @@ library BlockHeightFromProofExtractor {
     }
 
     function skipExecutionOutcomeWithIdAndProof(Borsh.Data memory data) internal pure  {
+        //proof
         data.skipMerklePath();
+
+        //block_hash(bytes32) + outcome.id(bytes32)
         data.skipNBytes(32 + 32);
+
+        //logs
         data.skipBytesArray();
+
+        //receipt_ids(bytes32[])
         data.skipArray(32);
+
+        //gas_burnt(uint64) + tokens_burnt(uint128)
         data.skipNBytes(8 + 16);
+
+        //executor_id
         data.skipBytes();
+
         data.skipExecutionStatus();
     }
 
     function getBlockHeightFromProof(bytes calldata proofData) internal pure returns(uint64) {
         Borsh.Data memory data = Borsh.from(proofData);
 
+        //outcome_proof
         data.skipExecutionOutcomeWithIdAndProof();
+
+        //outcome_root_proof
         data.skipMerklePath();
+
+        // prev_block_hash(bytes32) + inner_rest_hash(bytes32)
         data.skipNBytes(32 + 32);
 
         return data.decodeU64();
