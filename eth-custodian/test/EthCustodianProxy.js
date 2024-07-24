@@ -144,7 +144,7 @@ describe('EthCustodianProxy contract', () => {
             await ethCustodianProxy.pauseProxy(PAUSED_WITHDRAW_POST_MIGRATION);
             const proof = require('./proof_template_from_testnet.json');
 
-            await expect(ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), blockHeightFromProof + 1))
+            await expect(ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), blockHeightFromProof + 1, true))
                 .to.be.revertedWith('Pausable: paused');
         });
 
@@ -153,7 +153,7 @@ describe('EthCustodianProxy contract', () => {
             await ethCustodianProxy.pauseProxy(PAUSED_WITHDRAW_PRE_MIGRATION);
             const proof = require('./proof_template_from_testnet.json');
 
-            await expect(ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), blockHeightFromProof))
+            await expect(ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), blockHeightFromProof, true))
                 .to.be.revertedWith('Pausable: paused');
         });
 
@@ -169,10 +169,10 @@ describe('EthCustodianProxy contract', () => {
 
             const proof = require('./proof_template_from_testnet.json');
 
-            await expect(ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), 1099))
+            await expect(ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), 1099, true))
                 .to.be.revertedWith('Pausable: paused');
 
-            await expect(ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), blockHeightFromProof + 1))
+            await expect(ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), blockHeightFromProof + 1, true))
                 .to.be.revertedWith('Pausable: paused');
         });
     });
@@ -234,7 +234,7 @@ describe('EthCustodianProxy contract', () => {
                 await ethers.provider.getBalance(user2.address));
 
             await expect(
-                ethCustodianProxy.withdraw(borshifyOutcomeProof(postMigrationProof), blockHeightFromProof + 1)
+                ethCustodianProxy.withdraw(borshifyOutcomeProof(postMigrationProof), blockHeightFromProof + 1, true)
             )
                 .to.emit(ethCustodian, 'Withdrawn')
                 .withArgs(user2.address, amount);
@@ -252,7 +252,7 @@ describe('EthCustodianProxy contract', () => {
             const balanceBefore = BigInt(await ethers.provider.getBalance(user2.address));
 
             await expect(
-                ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), blockHeightFromProof + 2)
+                ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), blockHeightFromProof + 2, true)
             )
                 .to.emit(ethCustodian, 'Withdrawn')
                 .withArgs(user2.address, amount);
@@ -268,7 +268,7 @@ describe('EthCustodianProxy contract', () => {
             const balanceBefore = BigInt(await ethers.provider.getBalance(user2.address));
 
             await expect(
-                ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), blockHeightFromProof)
+                ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), blockHeightFromProof, true)
             )
                 .to.emit(ethCustodian, 'Withdrawn')
                 .withArgs(user2.address, amount);
@@ -286,7 +286,7 @@ describe('EthCustodianProxy contract', () => {
             const migrationBlock = await ethCustodianProxy.migrationBlockHeight();
 
             await expect(
-                ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), parseInt(migrationBlock))
+                ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), parseInt(migrationBlock), true)
             )
                 .to.emit(ethCustodian, 'Withdrawn')
                 .withArgs(user2.address, amount);

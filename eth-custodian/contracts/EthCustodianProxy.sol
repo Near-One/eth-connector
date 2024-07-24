@@ -96,17 +96,18 @@ contract EthCustodianProxy is
 
     function withdraw(
         bytes calldata proofData,
-        uint64 proofBlockHeight
+        uint64 proofBlockHeight,
+        bool checkPreMigration
     ) external {
-        if (BlockHeightFromProofExtractor.getBlockHeightFromProof(proofData) > migrationBlockHeight) {
-            _requireNotPaused(PAUSED_WITHDRAW_POST_MIGRATION);
-            ethCustodianImpl.withdraw(proofData, proofBlockHeight);
-        } else {
+        if (isPreMigration(proofData, checkPreMigration)) {
             _requireNotPaused(PAUSED_WITHDRAW_PRE_MIGRATION);
             bytes memory postMigrationProducer = ethCustodianImpl.nearProofProducerAccount_();
             _writeProofProducerSlot(preMigrationProducerAccount);
             ethCustodianImpl.withdraw(proofData, proofBlockHeight);
             _writeProofProducerSlot(postMigrationProducer);
+        } else {
+            _requireNotPaused(PAUSED_WITHDRAW_POST_MIGRATION);
+            ethCustodianImpl.withdraw(proofData, proofBlockHeight);
         }
     }
 
@@ -148,6 +149,14 @@ contract EthCustodianProxy is
 
     function pauseProxy(uint flags) external onlyRole(DEFAULT_ADMIN_ROLE) {
         _pause(flags);
+    }
+
+    function isPreMigration(bytes calldata proofData, bool checkPreMigration) internal view returns(bool) {
+        if (checkPreMigration) {
+            return BlockHeightFromProofExtractor.getBlockHeightFromProof(proofData) <= migrationBlockHeight;
+        }
+
+        return false;
     }
 
     /**
