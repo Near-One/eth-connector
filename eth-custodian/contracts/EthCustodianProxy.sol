@@ -99,17 +99,17 @@ contract EthCustodianProxy is
     /// * `proofBlockHeight` -- this is the block height relative to which the proof is constructed.
     ///                         Note that the height of this block can be significantly different
     ///                         from the block number in which the tokens were burned on Near.
-    /// * `checkPreMigration` -- if set to true, the block height at which the tokens were burned on Near
-    ///                         will be extracted from proofData, and if it occurred before the migration,
-    ///                         the proofProducer will be updated accordingly.
-    ///                         If you are sure that the tokens were burned after the migration,
-    ///                         set this value to false to optimize gas consumption.
+    /// * `receiptBlockHeight` -- the block height at which the tokens were burned on Near.
+    ///                           Should be equal to the block height in proofData.
+    ///                           Checked only for `receiptBlockHeight < <= migrationBlockHeight` for gas optimization.
+    ///                           If the tokens were burned before migration
+    ///                           the proofProducer will be updated accordingly.
     function withdraw(
         bytes calldata proofData,
         uint64 proofBlockHeight,
-        bool checkPreMigration
+        uint64 receiptBlockHeight
     ) external {
-        if (isPreMigration(proofData, checkPreMigration)) {
+        if (isPreMigration(proofData, receiptBlockHeight)) {
             _requireNotPaused(PAUSED_WITHDRAW_PRE_MIGRATION);
             bytes memory postMigrationProducer = ethCustodianImpl.nearProofProducerAccount_();
             _writeProofProducerSlot(preMigrationProducerAccount);
@@ -161,9 +161,11 @@ contract EthCustodianProxy is
         _pause(flags);
     }
 
-    function isPreMigration(bytes calldata proofData, bool checkPreMigration) internal view returns(bool) {
-        if (checkPreMigration) {
-            return BlockHeightFromProofExtractor.getBlockHeightFromProof(proofData) <= migrationBlockHeight;
+    function isPreMigration(bytes calldata proofData, uint64 receiptBlockHeight) internal view returns(bool) {
+        if (receiptBlockHeight <= migrationBlockHeight) {
+            require(BlockHeightFromProofExtractor.getBlockHeightFromProof(proofData) == receiptBlockHeight,
+                'Incorrect receiptBlockHeight');
+            return true;
         }
 
         return false;
