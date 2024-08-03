@@ -2,6 +2,7 @@ const { ethers, upgrades } = require("hardhat");
 const { expect } = require('chai');
 const { serialize } = require('rainbow-bridge-lib/rainbow/borsh.js');
 const { borshifyOutcomeProof } = require('rainbow-bridge-lib/rainbow/borshify-proof.js');
+const proof = require("./proof_template_from_testnet.json");
 
 const UNPAUSED_ALL = 0;
 const PAUSED_DEPOSIT_TO_EVM = 1 << 0;
@@ -32,7 +33,7 @@ describe('EthCustodianProxy contract', () => {
 
     const nearEvmAccount = Buffer.from('v1.eth-connector.testnet');
     const newProofProducerData = Buffer.from('new-producer.testnet');
-    const migrationBlock = 19672697;
+    const blockHeightFromProof = 39884271;
 
     beforeEach(async () => {
         [adminAccount, ethRecipientOnNear, user1, user2] = await ethers.getSigners();
@@ -139,25 +140,25 @@ describe('EthCustodianProxy contract', () => {
         });
 
         it('Should pause withdraw', async () => {
-            await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, migrationBlock);
+            await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, blockHeightFromProof - 1);
             await ethCustodianProxy.pauseProxy(PAUSED_WITHDRAW_POST_MIGRATION);
             const proof = require('./proof_template_from_testnet.json');
 
-            await expect(ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), migrationBlock + 1))
+            await expect(ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), blockHeightFromProof + 1, blockHeightFromProof))
                 .to.be.revertedWith('Pausable: paused');
         });
 
         it('Should pause withdraw pre-migration', async () => {
-            await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, migrationBlock);
+            await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, blockHeightFromProof + 1);
             await ethCustodianProxy.pauseProxy(PAUSED_WITHDRAW_PRE_MIGRATION);
             const proof = require('./proof_template_from_testnet.json');
 
-            await expect(ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), 1099))
+            await expect(ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), blockHeightFromProof, blockHeightFromProof))
                 .to.be.revertedWith('Pausable: paused');
         });
 
         it('Should pause all', async () => {
-            await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, migrationBlock);
+            await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, blockHeightFromProof - 1);
             await ethCustodianProxy.pauseAll();
 
             await expect(ethCustodianProxy.depositToNear('recipient.near', 0, { value: 50000 }))
@@ -168,10 +169,10 @@ describe('EthCustodianProxy contract', () => {
 
             const proof = require('./proof_template_from_testnet.json');
 
-            await expect(ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), 1099))
+            await expect(ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), 1099, blockHeightFromProof))
                 .to.be.revertedWith('Pausable: paused');
 
-            await expect(ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), migrationBlock + 1))
+            await expect(ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), blockHeightFromProof + 1, blockHeightFromProof))
                 .to.be.revertedWith('Pausable: paused');
         });
     });
@@ -180,10 +181,10 @@ describe('EthCustodianProxy contract', () => {
         it('Should change proof producer for EthCustodian', async () => {
             const oldProofProducer = await ethCustodian.nearProofProducerAccount_();
 
-            await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, migrationBlock);
+            await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, blockHeightFromProof);
 
             expect(await ethCustodianProxy.migrationBlockHeight())
-                .to.equal(migrationBlock);
+                .to.equal(blockHeightFromProof);
 
             expect(await ethCustodianProxy.preMigrationProducerAccount())
                 .to.equal(oldProofProducer);
@@ -193,17 +194,16 @@ describe('EthCustodianProxy contract', () => {
         });
 
         it('Should fail when invoked for the second time', async () => {
-            await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, migrationBlock);
+            await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, blockHeightFromProof);
 
-            await expect(ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, migrationBlock))
+            await expect(ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, blockHeightFromProof))
                 .to.be.revertedWithCustomError(ethCustodianProxy, 'AlreadyMigrated');
         });
 
         it('Should fail when block producer id is too long', async () => {
-            await expect(
-                ethCustodianProxy.migrateToNewProofProducer(Buffer.from('new-loooooooong-producer.testnet'), migrationBlock)
-            )
-                .to.be.revertedWithCustomError(ethCustodianProxy, 'ProducerAccountIdTooLong');
+                await expect(
+                    ethCustodianProxy.migrateToNewProofProducer(Buffer.from('new-loooooooong-producer.testnet'), blockHeightFromProof)
+                ).to.be.revertedWithCustomError(ethCustodianProxy, 'ProducerAccountIdTooLong');
         });
     });
 
@@ -216,8 +216,6 @@ describe('EthCustodianProxy contract', () => {
                 .connect(user1)
                 .depositToEVM(ethRecipientOnNear.address, 0, { value: 200000 });
 
-            await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, migrationBlock);
-
             proof.outcome_proof.outcome.status.SuccessValue = serialize(SCHEMA, 'WithdrawResult', {
                 amount: amount,
                 recipient: ethers.getBytes(user2.address),
@@ -226,6 +224,8 @@ describe('EthCustodianProxy contract', () => {
         });
 
         it('Should successfully withdraw and emit the event post-migration', async () => {
+            await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, blockHeightFromProof - 1);
+
             const postMigrationProof = structuredClone(proof);
             postMigrationProof.outcome_proof.outcome.executor_id = 'new-producer.testnet';
 
@@ -234,7 +234,7 @@ describe('EthCustodianProxy contract', () => {
                 await ethers.provider.getBalance(user2.address));
 
             await expect(
-                ethCustodianProxy.withdraw(borshifyOutcomeProof(postMigrationProof), migrationBlock + 1)
+                ethCustodianProxy.withdraw(borshifyOutcomeProof(postMigrationProof), blockHeightFromProof + 1, blockHeightFromProof)
             )
                 .to.emit(ethCustodian, 'Withdrawn')
                 .withArgs(user2.address, amount);
@@ -247,11 +247,61 @@ describe('EthCustodianProxy contract', () => {
             expect(balanceDiff).to.equal(amount)
         });
 
-        it('Should successfully withdraw and emit the event pre-migration', async () => {
+        it('Should successfully withdraw and emit the event: checkPreMigration switched off', async () => {
+            await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, blockHeightFromProof + 1);
+
+            const postMigrationProof = structuredClone(proof);
+            postMigrationProof.outcome_proof.outcome.executor_id = 'new-producer.testnet';
+
+            const proofProducerBefore = await ethCustodian.nearProofProducerAccount_();
+            const balanceBefore = BigInt(
+                await ethers.provider.getBalance(user2.address));
+
+            await expect(
+                ethCustodianProxy.withdraw(borshifyOutcomeProof(postMigrationProof), blockHeightFromProof, blockHeightFromProof + 2)
+            )
+                .to.emit(ethCustodian, 'Withdrawn')
+                .withArgs(user2.address, amount);
+
+            const proofProducerAfter = await ethCustodian.nearProofProducerAccount_();
+            const balanceAfter = await ethers.provider.getBalance(user2.address);
+            const balanceDiff = balanceAfter - balanceBefore;
+
+            expect(proofProducerBefore).to.equal(proofProducerAfter);
+            expect(balanceDiff).to.equal(amount)
+        });
+
+        it('Should revert on withdraw: incorrect receiptBlockHeight', async () => {
+            await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, blockHeightFromProof + 1);
             const balanceBefore = BigInt(await ethers.provider.getBalance(user2.address));
 
             await expect(
-                ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), 1099)
+                ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), blockHeightFromProof, blockHeightFromProof - 1)
+            ).to.be.revertedWith('Incorrect receiptBlockHeight');
+        });
+
+        it('Should successfully withdraw and emit the event pre-migration with post-migration block height', async () => {
+            await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, blockHeightFromProof + 1);
+            const balanceBefore = BigInt(await ethers.provider.getBalance(user2.address));
+
+            await expect(
+                ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), blockHeightFromProof + 2, blockHeightFromProof)
+            )
+                .to.emit(ethCustodian, 'Withdrawn')
+                .withArgs(user2.address, amount);
+
+            const balanceAfter = BigInt(await ethers.provider.getBalance(user2.address));
+            const balanceDiff = balanceAfter - balanceBefore;
+
+            expect(balanceDiff).to.equal(amount)
+        });
+
+        it('Should successfully withdraw and emit the event pre-migration', async () => {
+            await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, blockHeightFromProof + 1);
+            const balanceBefore = BigInt(await ethers.provider.getBalance(user2.address));
+
+            await expect(
+                ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), blockHeightFromProof, blockHeightFromProof)
             )
                 .to.emit(ethCustodian, 'Withdrawn')
                 .withArgs(user2.address, amount);
@@ -264,11 +314,12 @@ describe('EthCustodianProxy contract', () => {
 
 
         it('Should successfully withdraw and emit the event at migration block', async () => {
+            await ethCustodianProxy.migrateToNewProofProducer(newProofProducerData, blockHeightFromProof);
             const balanceBefore = BigInt(await ethers.provider.getBalance(user2.address));
             const migrationBlock = await ethCustodianProxy.migrationBlockHeight();
 
             await expect(
-                ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), parseInt(migrationBlock))
+                ethCustodianProxy.withdraw(borshifyOutcomeProof(proof), parseInt(migrationBlock), blockHeightFromProof)
             )
                 .to.emit(ethCustodian, 'Withdrawn')
                 .withArgs(user2.address, amount);

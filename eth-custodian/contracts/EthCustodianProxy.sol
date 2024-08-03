@@ -4,6 +4,7 @@ import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol'
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
+import './BlockHeightFromProofExtractor.sol';
 import {EthCustodian} from './EthCustodian.sol';
 import {ProofKeeperGap} from './ProofKeeperGap.sol';
 import {SelectivePausableUpgradable} from './SelectivePausableUpgradable.sol';
@@ -93,19 +94,30 @@ contract EthCustodianProxy is
         );
     }
 
+    /// Withdraws the appropriate amount of ETH which is encoded in `proofData`
+    /// * `proofData` -- this is the proof that a tokens were burned on Near.
+    /// * `proofBlockHeight` -- this is the block height relative to which the proof is constructed.
+    ///                         Note that the height of this block can be significantly different
+    ///                         from the block number in which the tokens were burned on Near.
+    /// * `receiptBlockHeight` -- the block height at which the tokens were burned on Near.
+    ///                           Should be equal to the block height in proofData.
+    ///                           Checked only for `receiptBlockHeight < <= migrationBlockHeight` for gas optimization.
+    ///                           If the tokens were burned before migration
+    ///                           the proofProducer will be updated accordingly.
     function withdraw(
         bytes calldata proofData,
-        uint64 proofBlockHeight
+        uint64 proofBlockHeight,
+        uint64 receiptBlockHeight
     ) external {
-        if (proofBlockHeight > migrationBlockHeight) {
-            _requireNotPaused(PAUSED_WITHDRAW_POST_MIGRATION);
-            ethCustodianImpl.withdraw(proofData, proofBlockHeight);
-        } else {
+        if (isPreMigration(proofData, receiptBlockHeight)) {
             _requireNotPaused(PAUSED_WITHDRAW_PRE_MIGRATION);
             bytes memory postMigrationProducer = ethCustodianImpl.nearProofProducerAccount_();
             _writeProofProducerSlot(preMigrationProducerAccount);
             ethCustodianImpl.withdraw(proofData, proofBlockHeight);
             _writeProofProducerSlot(postMigrationProducer);
+        } else {
+            _requireNotPaused(PAUSED_WITHDRAW_POST_MIGRATION);
+            ethCustodianImpl.withdraw(proofData, proofBlockHeight);
         }
     }
 
@@ -147,6 +159,16 @@ contract EthCustodianProxy is
 
     function pauseProxy(uint flags) external onlyRole(DEFAULT_ADMIN_ROLE) {
         _pause(flags);
+    }
+
+    function isPreMigration(bytes calldata proofData, uint64 receiptBlockHeight) internal view returns(bool) {
+        if (receiptBlockHeight <= migrationBlockHeight) {
+            require(BlockHeightFromProofExtractor.getBlockHeightFromProof(proofData) == receiptBlockHeight,
+                'Incorrect receiptBlockHeight');
+            return true;
+        }
+
+        return false;
     }
 
     /**
