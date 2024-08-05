@@ -3,5 +3,6 @@
     "clientAddress": "0x202cdf10bfa45a3d2190901373edd864f071d707",
     "ethConnectorAddress": "0xe0320b199863D7f6D5bBa62741aACB312110DEf7",
     "nearEvmAccount": "aurora",
-    "bridgeFactoryAccount": "factory.sepolia.testnet"
+    "bridgeFactoryAccount": "factory.sepolia.testnet",
+    "proxyAddress": "0x4C8afA2fD22dB1c6091A96c382e6546529475B5c"
 }

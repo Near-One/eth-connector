@@ -42,6 +42,9 @@ eth-deploy-contracts:
 eth-deploy-proxy:
 	yarn hardhat run --network ${NETWORK} scripts/eth_deploy_proxy.js
 
+eth-upgrade-proxy:
+	yarn hardhat run --network ${NETWORK} scripts/eth_upgrade_proxy.js	
+
 update-admin-legacy:
 	yarn hardhat --network ${NETWORK} update-admin-legacy --new-admin ${ETH_CUSTODIAN_PROXY}
 
