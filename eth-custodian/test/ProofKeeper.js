@@ -34,13 +34,13 @@ describe('ProofKeeper contract', () => {
         minBlockAcceptanceHeight = 1000;
 
         proofKeeperContractFactory = await ethers.getContractFactory('ProofKeeperInheritorMock');
-        proofKeeper = await proofKeeperContractFactory.deploy(nearProofProducerAccount, nearProver.address, minBlockAcceptanceHeight);
+        proofKeeper = await proofKeeperContractFactory.deploy(nearProofProducerAccount, await nearProver.getAddress(), minBlockAcceptanceHeight);
     });
 
     describe('Deployment', () => {
         it('Should revert when prover is zero address', async () => {
             await expect(
-                proofKeeperContractFactory.deploy(nearProofProducerAccount, ethers.constants.AddressZero, minBlockAcceptanceHeight)
+                proofKeeperContractFactory.deploy(nearProofProducerAccount, ethers.ZeroAddress, minBlockAcceptanceHeight)
             )
                 .to
                 .be
@@ -49,7 +49,7 @@ describe('ProofKeeper contract', () => {
 
         it('Should revert when nearProofProducerAccount is zero address', async () => {
             await expect(
-                proofKeeperContractFactory.deploy(Buffer.from(''), nearProver.address, minBlockAcceptanceHeight)
+                proofKeeperContractFactory.deploy(Buffer.from(''), await nearProver.getAddress(), minBlockAcceptanceHeight)
             )
                 .to
                 .be
@@ -66,8 +66,8 @@ describe('ProofKeeper contract', () => {
             let amount = 1000;
             proof.outcome_proof.outcome.status.SuccessValue = serialize(SCHEMA, 'Withdrawn', {
                 amount: amount,
-                recipient: ethers.utils.arrayify(ethRecipient.address),
-                ethCustodian: ethers.utils.arrayify("0xabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"),
+                recipient: ethers.getBytes(ethRecipient.address),
+                ethCustodian: ethers.getBytes("0xabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"),
             }).toString('base64');
             proofBlockHeight = 1099
 
@@ -92,7 +92,7 @@ describe('ProofKeeper contract', () => {
             let nearNegativeProverMockContractFactory = await ethers.getContractFactory('NearNegativeProverMock')
             let nearNegativeProver = await nearNegativeProverMockContractFactory.deploy();
             let proofKeeperWithNegativeMockProver
-                = await proofKeeperContractFactory.deploy(nearProofProducerAccount, nearNegativeProver.address, minBlockAcceptanceHeight);
+                = await proofKeeperContractFactory.deploy(nearProofProducerAccount, await nearNegativeProver.getAddress(), minBlockAcceptanceHeight);
 
             await expect(
                 proofKeeperWithNegativeMockProver.parseAndConsumeProof(serializedProof, proofBlockHeight)

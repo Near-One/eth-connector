@@ -1,7 +1,8 @@
 {
-    "proverAddress": "0xb3df48b0ea3e91b43226fb3c5eb335b7e3d76faa",
-    "clientAddress": "0xb289c6e6c98644dc9f6a03c044564bc8558b6087",
-    "ethConnectorAddress": "0x9006a6D7d08A388Eeea0112cc1b6b6B15a4289AF",
+    "proverAddress": "0x847821f85b675c5fce9fe53cf79f623d1a039579",
+    "clientAddress": "0x202cdf10bfa45a3d2190901373edd864f071d707",
+    "ethConnectorAddress": "0xe0320b199863D7f6D5bBa62741aACB312110DEf7",
     "nearEvmAccount": "aurora",
-    "bridgeFactoryAccount": "f.ropsten.testnet"
+    "bridgeFactoryAccount": "factory.sepolia.testnet",
+    "proxyAddress": "0x4C8afA2fD22dB1c6091A96c382e6546529475B5c"
 }

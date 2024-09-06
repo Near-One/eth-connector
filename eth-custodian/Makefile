@@ -1,6 +1,6 @@
 .PHONY: compile test
 
-NETWORK=ropsten
+NETWORK=sepolia
 NEAR_NETWORK=testnet
 NEAR_EVM_ACCOUNT=aurora
 NEAR_ACCOUNT=
@@ -25,6 +25,7 @@ ERC20_SYMBOL=
 ERC20_DECIMALS=
 
 NEAR_RECIPIENT=${NEAR_ACCOUNT}
+ETH_CUSTODIAN_PROXY=
 
 compile:
 	mkdir -p build/proofs && yarn hardhat compile
@@ -37,6 +38,21 @@ eth-get-prover-address:
 
 eth-deploy-contracts:
 	yarn hardhat run --network ${NETWORK} scripts/eth_deploy_contracts.js
+
+eth-deploy-proxy:
+	yarn hardhat run --network ${NETWORK} scripts/eth_deploy_proxy.js
+
+eth-upgrade-proxy:
+	yarn hardhat run --network ${NETWORK} scripts/eth_upgrade_proxy.js	
+
+update-admin-legacy:
+	yarn hardhat --network ${NETWORK} update-admin-legacy --new-admin ${ETH_CUSTODIAN_PROXY}
+
+nominate-admin:
+	yarn hardhat --network ${NETWORK} nominate-admin --new-admin ${ETH_CUSTODIAN_PROXY}
+
+accept-admin:
+	yarn hardhat --network ${NETWORK} accept-admin --new-admin ${ETH_CUSTODIAN_PROXY}
 
 eth-deposit-to-near:
 	yarn hardhat --network ${NETWORK} eth-deposit-to-near --near-recipient ${NEAR_RECIPIENT} --amount ${AMOUNT} --fee ${FEE}

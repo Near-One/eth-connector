@@ -20,7 +20,7 @@ async function main() {
     const ethCustodianContractFactory = await hre.ethers.getContractFactory('EthCustodian');
     const ethCustodian = await ethCustodianContractFactory.attach(ethereumConfig.ethConnectorAddress);
 
-    console.log(`EthCustodian address: ${ethCustodian.address}`);
+    console.log(`EthCustodian address: ${await ethCustodian.getAddress()}`);
 
     const proofJson = require('../test/proof_template_from_testnet.json');
     const clientHeight = 1099;

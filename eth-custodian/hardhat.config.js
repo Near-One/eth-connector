@@ -2,21 +2,46 @@
  * @type import('hardhat/config').HardhatUserConfig
  */
 require('dotenv').config();
-require('@nomiclabs/hardhat-waffle');
 require('hardhat-gas-reporter');
+require('@openzeppelin/hardhat-upgrades');
+require("@nomicfoundation/hardhat-verify");
+require("@nomicfoundation/hardhat-chai-matchers");
 
 const ROPSTEN_WEB3_RPC_ENDPOINT = process.env.ROPSTEN_WEB3_RPC_ENDPOINT;
-const GOERLI_WEB3_RPC_ENDPOINT = process.env.GOERLI_WEB3_RPC_ENDPOINT;
+const SEPOLIA_WEB3_RPC_ENDPOINT = process.env.SEPOLIA_WEB3_RPC_ENDPOINT;
 const MAINNET_WEB3_RPC_ENDPOINT = process.env.MAINNET_WEB3_RPC_ENDPOINT;
 const AURORA_WEB3_RPC_ENDPOINT = process.env.AURORA_WEB3_RPC_ENDPOINT;
 // Hardhat workaround to specify some random private key so this won't fail in CI
 const ROPSTEN_PRIVATE_KEY = process.env.ROPSTEN_PRIVATE_KEY ? process.env.ROPSTEN_PRIVATE_KEY : "00".repeat(32);
-const GOERLI_PRIVATE_KEY = process.env.GOERLI_PRIVATE_KEY ? process.env.GOERLI_PRIVATE_KEY : "00".repeat(32);
+const SEPOLIA_PRIVATE_KEY = process.env.SEPOLIA_PRIVATE_KEY ? process.env.SEPOLIA_PRIVATE_KEY : "00".repeat(32);
 const MAINNET_PRIVATE_KEY = process.env.MAINNET_PRIVATE_KEY ? process.env.MAINNET_PRIVATE_KEY : "00".repeat(32);
 const AURORA_PRIVATE_KEY = process.env.AURORA_PRIVATE_KEY ? process.env.AURORA_PRIVATE_KEY : "00".repeat(32);
 
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
+
 const PROVER_ACCOUNT_MAINNET = 'prover.bridge.near';
 const PROVER_ACCOUNT_TESTNET = 'prover.goerli.testnet';
+
+task('update-admin-legacy', 'Nominate new admin for Eth Custodian')
+    .addParam('newAdmin', 'Eth address of new admin')
+    .setAction(async taskArgs => {
+        const { updateAdminLegacy } = require('./scripts/update_admin');
+        await updateAdminLegacy(hre.ethers.provider, taskArgs.newAdmin);
+    });
+
+task('nominate-admin', 'Nominate new admin for Eth Custodian')
+    .addParam('newAdmin', 'Eth address of new admin')
+    .setAction(async taskArgs => {
+        const { nominateAdmin } = require('./scripts/update_admin');
+        await nominateAdmin(hre.ethers.provider, taskArgs.newAdmin);
+    });
+
+task('accept-admin', 'Accept new admin for Eth Custodian')
+    .addParam('newAdmin', 'Eth address of new admin')
+    .setAction(async taskArgs => {
+        const { acceptAdmin } = require('./scripts/update_admin');
+        await acceptAdmin(hre.ethers.provider, taskArgs.newAdmin);
+    });
 
 task('eth-deposit-to-near', 'Deposits the provided `amount` (wei) having `fee`(wei) to ETH Custodian to transfer it to Near')
     .addParam('nearRecipient', 'AccountID of recipient on Near')
@@ -264,11 +289,17 @@ module.exports = {
   solidity: {
     compilers: [
       {
-        version: "0.8.11",
+        version: "0.8.20",
         settings: {
           optimizer: {
             enabled: true,
             runs: 200
+          },
+          metadata: {
+            // do not include the metadata hash, since this is machine dependent
+            // and we want all generated code to be deterministic
+            // https://docs.soliditylang.org/en/v0.8.24/metadata.html
+            bytecodeHash: "none"
           }
         }
       }
@@ -279,9 +310,9 @@ module.exports = {
       url: `${ROPSTEN_WEB3_RPC_ENDPOINT}`,
       accounts: [`0x${ROPSTEN_PRIVATE_KEY}`]
     },
-    goerli: {
-      url: `${GOERLI_WEB3_RPC_ENDPOINT}`,
-      accounts: [`0x${GOERLI_PRIVATE_KEY}`]
+    sepolia: {
+      url: `${SEPOLIA_WEB3_RPC_ENDPOINT}`,
+      accounts: [`0x${SEPOLIA_PRIVATE_KEY}`]
     },
     mainnet: {
       url: `${MAINNET_WEB3_RPC_ENDPOINT}`,
@@ -306,5 +337,8 @@ module.exports = {
   gasReporter: {
     currency: 'USD',
     enabled: false
+  },
+  etherscan: {
+      apiKey: `${ETHERSCAN_API_KEY}`
   }
 };

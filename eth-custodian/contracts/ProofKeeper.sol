@@ -9,15 +9,15 @@ contract ProofKeeper {
     using Borsh for Borsh.Data;
     using ProofDecoder for Borsh.Data;
 
-    INearProver public prover;
-    bytes public nearProofProducerAccount;
+    INearProver public prover_;
+    bytes public nearProofProducerAccount_;
 
     /// Proofs from blocks that are below the acceptance height will be rejected.
     // If `minBlockAcceptanceHeight` value is zero - proofs from block with any height are accepted.
-    uint64 public minBlockAcceptanceHeight;
+    uint64 public minBlockAcceptanceHeight_;
 
     // OutcomeReciptId -> Used
-    mapping(bytes32 => bool) public usedEvents;
+    mapping(bytes32 => bool) public usedEvents_;
 
     constructor(
         bytes memory _nearProofProducerAccount,
@@ -34,9 +34,9 @@ contract ProofKeeper {
             'Invalid Near prover address'
         );
 
-        nearProofProducerAccount = _nearProofProducerAccount;
-        prover = _prover;
-        minBlockAcceptanceHeight = _minBlockAcceptanceHeight;
+        nearProofProducerAccount_ = _nearProofProducerAccount;
+        prover_ = _prover;
+        minBlockAcceptanceHeight_ = _minBlockAcceptanceHeight;
     }
 
     /// Parses the provided proof and consumes it if it's not already used.
@@ -49,11 +49,11 @@ contract ProofKeeper {
         returns(ProofDecoder.ExecutionStatus memory result)
     {
         require(
-            proofBlockHeight >= minBlockAcceptanceHeight,
+            proofBlockHeight >= minBlockAcceptanceHeight_,
             'Proof is from an ancient block'
         );
         require(
-            prover.proveOutcome(proofData,proofBlockHeight),
+            prover_.proveOutcome(proofData,proofBlockHeight),
             'Proof should be valid'
         );
 
@@ -66,14 +66,14 @@ contract ProofKeeper {
         bytes32 receiptId = fullOutcomeProof.outcome_proof.outcome_with_id.outcome.receipt_ids[0];
 
         require(
-            !usedEvents[receiptId],
+            !usedEvents_[receiptId],
             'The burn event cannot be reused'
         );
-        usedEvents[receiptId] = true;
+        usedEvents_[receiptId] = true;
 
         require(
             keccak256(fullOutcomeProof.outcome_proof.outcome_with_id.outcome.executor_id) == 
-            keccak256(nearProofProducerAccount),
+            keccak256(nearProofProducerAccount_),
             'Can only withdraw coins from the linked proof producer on Near blockchain'
         );
 

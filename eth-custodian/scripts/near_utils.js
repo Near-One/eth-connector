@@ -62,7 +62,7 @@ async function nearFtBalanceOf(nearAccount, nearJsonRpc, nearNetwork, queryNearA
     );
 
     const accountBalance = await nearEvmContract.ft_balance_of({ account_id: queryNearAccount.toString() });
-    return ethers.BigNumber.from(accountBalance.toString());
+    return BigInt(accountBalance.toString());
 }
 
 async function nearFtBalanceOfEth(nearAccount, nearJsonRpc, nearNetwork, ethAddress) {
@@ -84,10 +84,10 @@ async function nearFtBalanceOfEth(nearAccount, nearJsonRpc, nearNetwork, ethAddr
         }
     );
 
-    const address = ethers.utils.arrayify(ethers.utils.getAddress(ethAddress));
+    const address = ethers.getBytes(ethers.utils.getAddress(ethAddress));
 
     const accountBalance = await nearEvmContract.ft_balance_of_eth(address);
-    return ethers.BigNumber.from(accountBalance.toString());
+    return BigInt(accountBalance.toString());
 }
 
 async function nearSetPausedFlags(nearAccount, nearJsonRpc, nearNetwork, _pausedFlags) {
