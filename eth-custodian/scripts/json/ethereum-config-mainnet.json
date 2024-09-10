@@ -1,8 +1,9 @@
 {
     "proverAddress": "0x051ad3f020274910065dcb421629cd2e6e5b46c4",
-    "clientAddress": "0x0151568af92125fb289f1dd81d9d8f7484efc362",
+    "clientAddress": "0x3FEFc5A4B1c02f21cBc8D3613643ba0635b9a873",
     "ethConnectorAddress": "0x6BFaD42cFC4EfC96f529D786D643Ff4A8B89FA52",
     "nearEvmAccount": "aurora",
-    "bridgeFactoryAccount": "factory.bridge.near"
+    "bridgeFactoryAccount": "factory.bridge.near",
+    "proxyAddress": "TODO"
 }
 
