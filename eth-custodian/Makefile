@@ -26,6 +26,7 @@ ERC20_DECIMALS=
 
 NEAR_RECIPIENT=${NEAR_ACCOUNT}
 ETH_CUSTODIAN_PROXY=
+CONFIG_NAME=ethereum-config
 
 compile:
 	mkdir -p build/proofs && yarn hardhat compile
@@ -40,10 +41,10 @@ eth-deploy-contracts:
 	yarn hardhat run --network ${NETWORK} scripts/eth_deploy_contracts.js
 
 eth-deploy-proxy:
-	yarn hardhat run --network ${NETWORK} scripts/eth_deploy_proxy.js
+	yarn hardhat --network ${NETWORK} eth-deploy-proxy --config-name ${CONFIG_NAME}
 
 eth-upgrade-proxy:
-	yarn hardhat run --network ${NETWORK} scripts/eth_upgrade_proxy.js	
+	yarn hardhat run --network ${NETWORK} scripts/eth_upgrade_proxy.js
 
 update-admin-legacy:
 	yarn hardhat --network ${NETWORK} update-admin-legacy --new-admin ${ETH_CUSTODIAN_PROXY}

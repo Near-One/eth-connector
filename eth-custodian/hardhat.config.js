@@ -29,6 +29,23 @@ task('update-admin-legacy', 'Nominate new admin for Eth Custodian')
         await updateAdminLegacy(hre.ethers.provider, taskArgs.newAdmin);
     });
 
+task('eth-deploy-proxy', 'Deploy Eth Custodian Proxy')
+    .addParam('configName', 'File name without extension for the config')
+    .setAction(async taskArgs => {
+        const { deployEthProxy } = require('./scripts/eth_deploy_proxy');
+        const ethereumConfig = require(`./scripts/json/${taskArgs.configName}.json`);
+        await deployEthProxy(ethereumConfig);
+    });
+
+task('update-admin-proxy', 'Update admin for Eth Custodian Proxy')
+    .addParam('configName', 'File name without extension for the config')
+    .addParam('newAdmin', 'Eth address of new admin')
+    .setAction(async taskArgs => {
+        const { updateAdminProxy } = require('./scripts/update_admin_proxy');
+        const ethereumConfig = require(`./scripts/json/${taskArgs.configName}.json`);
+        await updateAdminProxy(ethereumConfig, taskArgs.newAdmin);
+    });
+
 task('nominate-admin', 'Nominate new admin for Eth Custodian')
     .addParam('newAdmin', 'Eth address of new admin')
     .setAction(async taskArgs => {
